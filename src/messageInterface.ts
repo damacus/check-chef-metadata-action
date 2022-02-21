@@ -2,5 +2,5 @@ export interface Message {
   name: string
   message: string
   conclusion: string
-  comment?: string
+  comment: string | Error
 }

@@ -1,11 +1,13 @@
-import {Message} from './messageInterface'
+import * as core from '@actions/core'
 import {checkMetadata} from './checkMetadata'
 
 async function run(): Promise<void> {
-  const checks: Message[] = []
   const metadataCheck = await checkMetadata()
+  core.info(metadataCheck.message)
 
-  checks.push(metadataCheck)
+  if (metadataCheck.conclusion === 'failure') {
+    core.setFailed(metadataCheck.comment)
+  }
 }
 
 run()

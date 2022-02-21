@@ -1,6 +1,6 @@
- <a href="https://github.com/actions/typescript-action/actions"><img alt="typescript-action status" src="https://github.com/damacus/check-chef-metadata-action/workflows/build-test/badge.svg"></a>
-
 # Check Chef Cookbook Metdata
+
+<a href="https://github.com/actions/typescript-action/actions"><img alt="typescript-action status" src="https://github.com/damacus/check-chef-metadata-action/workflows/build-test/badge.svg"></a>
 
 This GitHub Action checks the metdata.rb in the root directory by default.
 
@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Check Metadata
-        uses:
+        uses: damacus/check-chef-metadata-action
         with:
           maintainer_email: bots@acme.org
           maintainer: 'Bob the great

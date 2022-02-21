@@ -1,7 +1,8 @@
 import * as core from '@actions/core'
+import * as fs from 'fs'
 import * as github from '@actions/github'
-import { Message } from './messageInterface'
-import { metadata } from './metadata'
+import {Message} from './messageInterface'
+import {metadata} from './metadata'
 
 export async function checkMetadata(file = 'metadata.rb'): Promise<Message> {
   /**
@@ -12,6 +13,12 @@ export async function checkMetadata(file = 'metadata.rb'): Promise<Message> {
    * maintainer URL should be the same as is configured in the config.yaml
    * contain one of the accepted licences
    */
+
+  try {
+    fs.accessSync(file, fs.constants.R_OK)
+  } catch (err) {
+    core.error(`${file}: access error!`)
+  }
 
   const data = metadata(file)
   const maintainer: String = core.getInput('maintainer')
