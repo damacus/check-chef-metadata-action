@@ -37,6 +37,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.checkMetadata = void 0;
 const core = __importStar(__nccwpck_require__(2186));
+const fs = __importStar(__nccwpck_require__(7147));
 const github = __importStar(__nccwpck_require__(5438));
 const metadata_1 = __nccwpck_require__(5708);
 function checkMetadata(file = 'metadata.rb') {
@@ -49,6 +50,12 @@ function checkMetadata(file = 'metadata.rb') {
          * maintainer URL should be the same as is configured in the config.yaml
          * contain one of the accepted licences
          */
+        try {
+            fs.accessSync(file, fs.constants.R_OK);
+        }
+        catch (err) {
+            core.error(`${file}: access error!`);
+        }
         const data = (0, metadata_1.metadata)(file);
         const maintainer = core.getInput('maintainer');
         const maintainer_email = core.getInput('maintainer_email');
@@ -59,27 +66,38 @@ function checkMetadata(file = 'metadata.rb') {
             message: 'Metadata matches',
             conclusion: 'success',
             comment: '',
-            name: 'Metadata validation'
+            name: 'Metadata validation',
+            summary: 'Metadata validation passed',
+            title: 'Metadata validation result'
         };
         if (data.get('maintainer_email') !== maintainer_email) {
-            message.comment += `\nMaintainer email is not set to ${maintainer_email}`;
+            message.comment += `\nMaintainer email is not set to ${maintainer_email} (currently set to ${data.get('maintainer_email')})`;
             message.conclusion = 'failure';
+            message.summary = 'Metadata validation failed';
         }
         if (data.get('maintainer') !== maintainer) {
-            message.comment += `\nMaintainer is not set to ${maintainer}`;
+            message.message = "Metadata doesn't match";
+            message.comment += `\nMaintainer is not set to ${maintainer} (currently set to ${data.get('maintainer')})`;
             message.conclusion = 'failure';
+            message.summary = 'Metadata validation failed';
         }
         if (data.get('license') !== license) {
-            message.comment += `\nLicense is not set to ${license}`;
+            message.message = "Metadata doesn't match";
+            message.comment += `\nLicense is not set to ${license} (currently set to ${data.get('license')})`;
             message.conclusion = 'failure';
+            message.summary = 'Metadata validation failed';
         }
         if (data.get('source_url') !== source_url) {
-            message.comment += `\nSource URL is not set to ${source_url}`;
+            message.message = "Metadata doesn't match";
+            message.comment += `\nSource URL is not set to ${source_url} (currently set to ${data.get('source_url')})`;
             message.conclusion = 'failure';
+            message.summary = 'Metadata validation failed';
         }
         if (data.get('issues_url') !== issues_url) {
-            message.comment += `\nIssues URL is not set to ${issues_url}`;
+            message.message = "Metadata doesn't match";
+            message.comment += `\nIssues URL is not set to ${issues_url} (currently set to ${data.get(issues_url)})`;
             message.conclusion = 'failure';
+            message.summary = 'Metadata validation failed';
         }
         return message;
     });
@@ -105,11 +123,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const checkMetadata_1 = __nccwpck_require__(6294);
+const reportChecks_1 = __nccwpck_require__(9795);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
-        const checks = [];
         const metadataCheck = yield (0, checkMetadata_1.checkMetadata)();
-        checks.push(metadataCheck);
+        yield (0, reportChecks_1.reportChecks)(metadataCheck);
     });
 }
 run();
@@ -169,6 +187,63 @@ function metadata(file_path = 'metadata.rb') {
     return metadata_structure;
 }
 exports.metadata = metadata;
+
+
+/***/ }),
+
+/***/ 9795:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.reportChecks = void 0;
+const core = __importStar(__nccwpck_require__(2186));
+const github = __importStar(__nccwpck_require__(5438));
+const reportChecks = (message) => __awaiter(void 0, void 0, void 0, function* () {
+    const octokit = github.getOctokit(core.getInput('token', { required: true }));
+    yield octokit.rest.checks.create({
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        name: message.name,
+        head_sha: github.context.sha,
+        status: 'completed',
+        conclusion: message.conclusion,
+        output: {
+            title: message.title,
+            summary: message.summary
+        }
+    });
+});
+exports.reportChecks = reportChecks;
 
 
 /***/ }),

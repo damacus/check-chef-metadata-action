@@ -18,7 +18,9 @@ describe('Correct metadata', () => {
       message: 'Metadata matches',
       conclusion: 'success',
       comment: '',
-      name: 'Metadata validation'
+      name: 'Metadata validation',
+      summary: 'Metadata validation passed',
+      title: 'Metadata validation result'
     })
   })
 })
@@ -30,8 +32,10 @@ describe('An incorrect maintainer', () => {
       message: "Metadata doesn't match",
       conclusion: 'failure',
       comment: `
-Maintainer is not set to Sous Chefs`,
-      name: 'Metadata validation'
+Maintainer is not set to Sous Chefs (currently set to Bob)`,
+      name: 'Metadata validation',
+      summary: 'Metadata validation failed',
+      title: 'Metadata validation result'
     })
   })
 })

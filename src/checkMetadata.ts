@@ -31,36 +31,53 @@ export async function checkMetadata(file = 'metadata.rb'): Promise<Message> {
     message: 'Metadata matches',
     conclusion: 'success',
     comment: '',
-    name: 'Metadata validation'
+    name: 'Metadata validation',
+    summary: 'Metadata validation passed',
+    title: 'Metadata validation result'
   }
 
   if (data.get('maintainer_email') !== maintainer_email) {
-    message.comment += `\nMaintainer email is not set to ${maintainer_email}`
+    message.comment += `\nMaintainer email is not set to ${maintainer_email} (currently set to ${data.get(
+      'maintainer_email'
+    )})`
     message.conclusion = 'failure'
+    message.summary = 'Metadata validation failed'
   }
 
   if (data.get('maintainer') !== maintainer) {
     message.message = "Metadata doesn't match"
-    message.comment += `\nMaintainer is not set to ${maintainer}`
+    message.comment += `\nMaintainer is not set to ${maintainer} (currently set to ${data.get(
+      'maintainer'
+    )})`
     message.conclusion = 'failure'
+    message.summary = 'Metadata validation failed'
   }
 
   if (data.get('license') !== license) {
     message.message = "Metadata doesn't match"
-    message.comment += `\nLicense is not set to ${license}`
+    message.comment += `\nLicense is not set to ${license} (currently set to ${data.get(
+      'license'
+    )})`
     message.conclusion = 'failure'
+    message.summary = 'Metadata validation failed'
   }
 
   if (data.get('source_url') !== source_url) {
     message.message = "Metadata doesn't match"
-    message.comment += `\nSource URL is not set to ${source_url}`
+    message.comment += `\nSource URL is not set to ${source_url} (currently set to ${data.get(
+      'source_url'
+    )})`
     message.conclusion = 'failure'
+    message.summary = 'Metadata validation failed'
   }
 
   if (data.get('issues_url') !== issues_url) {
     message.message = "Metadata doesn't match"
-    message.comment += `\nIssues URL is not set to ${issues_url}`
+    message.comment += `\nIssues URL is not set to ${issues_url} (currently set to ${data.get(
+      issues_url
+    )})`
     message.conclusion = 'failure'
+    message.summary = 'Metadata validation failed'
   }
 
   return message
