@@ -30,5 +30,5 @@ jobs:
         uses: damacus/check-chef-metadata-action
         with:
           maintainer_email: bots@acme.org
-          maintainer: 'Bob the great
+          maintainer: 'Bob the great'
 ```
