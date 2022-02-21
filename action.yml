@@ -1,7 +1,7 @@
 name: "Check Chef Cookbook Metadata"
 description: "A GitHub Action to check cookbook metadata is correct."
 branding:
-  icon: alert-triangle
+  icon: user-check
   color: green
 author: "damacus"
 inputs:
