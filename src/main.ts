@@ -8,7 +8,7 @@ async function run(): Promise<void> {
   core.debug(`Metadata check: ${JSON.stringify(metadataCheck)}`)
   core.error(`Metadata check: ${JSON.stringify(metadataCheck)}`)
   core.warning(`Metadata check: ${JSON.stringify(metadataCheck)}`)
-  console.log('Metadata check:', JSON.stringify(metadataCheck))
+
   await reportChecks(metadataCheck)
 }
 
