@@ -146,12 +146,16 @@ const checkMetadata_1 = __nccwpck_require__(6294);
 const reportChecks_1 = __nccwpck_require__(9795);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
-        const metadataCheck = yield (0, checkMetadata_1.checkMetadata)();
-        core.info(`Metadata check: ${metadataCheck.message}`);
-        core.debug(`Metadata check: ${JSON.stringify(metadataCheck)}`);
-        core.error(`Metadata check: ${JSON.stringify(metadataCheck)}`);
-        core.warning(`Metadata check: ${JSON.stringify(metadataCheck)}`);
-        yield (0, reportChecks_1.reportChecks)(metadataCheck);
+        try {
+            const result = (0, checkMetadata_1.checkMetadata)();
+            (0, reportChecks_1.reportChecks)(yield result);
+            core.info(`Metadata check: ${JSON.stringify(result)}`);
+            // core.warning(`Metadata check: ${JSON.stringify(metadataCheck)}`)
+        }
+        catch (error) {
+            const err = error.message;
+            core.setFailed(err);
+        }
     });
 }
 run();
