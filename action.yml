@@ -1,11 +1,21 @@
-name: 'Your name here'
-description: 'Provide a description here'
-author: 'Your name or organization here'
+name: "Check Chef Cookbook Metadata"
+description: "A GitHub Action to check cookbook metadata is correct."
+branding:
+  icon: alert-triangle
+  color: green
+author: "damacus"
 inputs:
-  milliseconds: # change this
+  token:
+    description: "Github token"
     required: true
-    description: 'input description here'
-    default: 'default value if applicable'
+  maintainer_email:
+    description: "Maintainer email"
+    required: false
+    default: help@sous-chefs.org
+  maintainer:
+    description: "Desired name of the maintainer"
+    required: false
+    default: 'Sous Chefs'
 runs:
-  using: 'node12'
-  main: 'dist/index.js'
+  using: "node16"
+  main: "dist/index.js"
