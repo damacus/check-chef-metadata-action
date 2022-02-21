@@ -16,6 +16,11 @@ inputs:
     description: "Desired name of the maintainer"
     required: false
     default: 'Sous Chefs'
+  license:
+    description: "A SPDX licence"
+    required: false
+    default: 'Apache-2.0'
+
 runs:
   using: "node16"
   main: "dist/index.js"

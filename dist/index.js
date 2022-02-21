@@ -49,10 +49,10 @@ function checkMetadata(file = 'metadata.rb') {
          * maintainer URL should be the same as is configured in the config.yaml
          * contain one of the accepted licences
          */
-        const maintainer_email = core.getInput('maintainer_email');
         const data = (0, metadata_1.metadata)(file);
         const maintainer = core.getInput('maintainer');
-        const license = 'Apache-2.0';
+        const maintainer_email = core.getInput('maintainer_email');
+        const license = core.getInput('license');
         const source_url = `https://github.com/${github.context.repo.owner}/${github.context.repo.repo}`;
         const issues_url = `${source_url}/issues`;
         const message = {

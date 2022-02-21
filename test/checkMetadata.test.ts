@@ -3,6 +3,7 @@ import {checkMetadata} from '../src/checkMetadata'
 const testEnvVars = {
   INPUT_MAINTAINER: 'Sous Chefs',
   INPUT_MAINTAINER_EMAIL: 'help@sous-chefs.org',
+  INPUT_LICENSE: 'Apache-2.0',
   GITHUB_REPOSITORY: 'sous-chefs/java'
 }
 
@@ -12,10 +13,6 @@ describe('Correct metadata', () => {
       process.env[key] = testEnvVars[key as keyof typeof testEnvVars]
   })
   it('an empty validation message', async () => {
-    // beforeEach(() => {
-    //   for (const key in testEnvVars)
-    //     process.env[key] = testEnvVars[key as keyof typeof testEnvVars]
-    // })
     const message = await checkMetadata('./test/fixtures/metadata.rb')
     expect(message).toEqual({
       message: 'Metadata matches',
@@ -30,7 +27,7 @@ describe('An incorrect maintainer', () => {
   it('tells the user which property is not set correctly', async () => {
     const message = await checkMetadata('./test/fixtures/metadata.incorrect.rb')
     expect(message).toEqual({
-      message: 'Metadata matches',
+      message: "Metadata doesn't match",
       conclusion: 'failure',
       comment: `
 Maintainer is not set to Sous Chefs`,

@@ -14,6 +14,8 @@ We check for the following items:
 | source_url       | `https://github.com/${github.context.repo.owner}/${github.context.repo.repo}` |
 | issues_url       | `${source_url}/issues`                                                        |
 
+Source URL and Issues URL are not configurable.
+
 ## Changing the defaults
 
 ```yaml
