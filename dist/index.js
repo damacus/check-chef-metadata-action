@@ -150,7 +150,6 @@ function run() {
             const result = (0, checkMetadata_1.checkMetadata)();
             (0, reportChecks_1.reportChecks)(yield result);
             core.info(`Metadata check: ${JSON.stringify(result)}`);
-            // core.warning(`Metadata check: ${JSON.stringify(metadataCheck)}`)
         }
         catch (error) {
             const err = error.message;
