@@ -32,7 +32,7 @@ describe('An incorrect maintainer', () => {
       message: "Metadata doesn't match",
       conclusion: 'failure',
       comment: `
-Maintainer is not set to Sous Chefs`,
+Maintainer is not set to Sous Chefs (currently set to Bob)`,
       name: 'Metadata validation',
       summary: 'Metadata validation failed',
       title: 'Metadata validation result'
