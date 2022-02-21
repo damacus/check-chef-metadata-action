@@ -13,9 +13,9 @@ export async function checkMetadata(file = 'metadata.rb'): Promise<Message> {
    * contain one of the accepted licences
    */
 
-  const maintainer_email: String = core.getInput('maintainer_email')
   const data = metadata(file)
   const maintainer: String = core.getInput('maintainer')
+  const maintainer_email: String = core.getInput('maintainer_email')
   const license: String = 'Apache-2.0'
   const source_url = `https://github.com/${github.context.repo.owner}/${github.context.repo.repo}`
   const issues_url = `${source_url}/issues`
