@@ -4,4 +4,5 @@ export interface Message {
   conclusion: string
   comment: string | Error
   summary: string
+  title: string
 }

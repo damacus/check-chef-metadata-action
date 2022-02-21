@@ -1,8 +1,8 @@
 import * as core from '@actions/core'
 import * as fs from 'fs'
 import * as github from '@actions/github'
-import { Message } from './messageInterface'
-import { metadata } from './metadata'
+import {Message} from './messageInterface'
+import {metadata} from './metadata'
 
 export async function checkMetadata(file = 'metadata.rb'): Promise<Message> {
   /**
@@ -32,7 +32,8 @@ export async function checkMetadata(file = 'metadata.rb'): Promise<Message> {
     conclusion: 'success',
     comment: '',
     name: 'Metadata validation',
-    summary: 'Metadata validation passed'
+    summary: 'Metadata validation passed',
+    title: 'Metadata validation result'
   }
 
   if (data.get('maintainer_email') !== maintainer_email) {
