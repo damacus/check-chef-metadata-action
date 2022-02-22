@@ -29,10 +29,10 @@ export async function checkMetadata(file = 'metadata.rb'): Promise<Message> {
   const issues_url = `${source_url}/issues`
 
   const message = {
+    name: 'Metadata validation',
     message: 'Metadata matches',
     conclusion: 'success',
     comment: '',
-    name: 'Metadata validation',
     summary: 'Metadata validation passed',
     title: 'Metadata validation result'
   }
