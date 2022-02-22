@@ -20,6 +20,8 @@ export const reportChecks = async (message: Message): Promise<void> => {
       }
     })
 
-  core.info(`Report checks result: ${JSON.stringify(github.context)}`)
-  core.info(`Report checks result: ${JSON.stringify(github.context.payload)}`)
+  // core.info(`Report checks result: ${JSON.stringify(github.context)}`)
+  core.info(
+    `Report checks result: ${JSON.stringify(github.context.payload.after)}`
+  )
 }

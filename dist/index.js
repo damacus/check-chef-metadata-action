@@ -273,8 +273,8 @@ const reportChecks = (message) => __awaiter(void 0, void 0, void 0, function* ()
             summary: message.summary
         }
     });
-    core.info(`Report checks result: ${JSON.stringify(github.context)}`);
-    core.info(`Report checks result: ${JSON.stringify(github.context.payload)}`);
+    // core.info(`Report checks result: ${JSON.stringify(github.context)}`)
+    core.info(`Report checks result: ${JSON.stringify(github.context.payload.after)}`);
 });
 exports.reportChecks = reportChecks;
 
