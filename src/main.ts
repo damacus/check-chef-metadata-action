@@ -4,9 +4,11 @@ import {reportChecks} from './reportChecks'
 
 async function run(): Promise<void> {
   try {
-    const result = checkMetadata()
-    reportChecks(await result)
+    const result = await checkMetadata()
+
     core.info(`Metadata check: ${JSON.stringify(result)}`)
+
+    await reportChecks(result)
   } catch (error: unknown) {
     const err = (error as Error).message
     core.setFailed(err)

@@ -100,7 +100,7 @@ function checkMetadata(file = 'metadata.rb') {
             message.conclusion = 'failure';
             message.summary = 'Metadata validation failed';
         }
-        core.info(`Metadata check: ${JSON.stringify(message)}`);
+        core.debug(`Metadata check: ${JSON.stringify(message)}`);
         return message;
     });
 }
@@ -149,9 +149,9 @@ const reportChecks_1 = __nccwpck_require__(9795);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const result = (0, checkMetadata_1.checkMetadata)();
-            (0, reportChecks_1.reportChecks)(yield result);
+            const result = yield (0, checkMetadata_1.checkMetadata)();
             core.info(`Metadata check: ${JSON.stringify(result)}`);
+            yield (0, reportChecks_1.reportChecks)(result);
         }
         catch (error) {
             const err = error.message;
