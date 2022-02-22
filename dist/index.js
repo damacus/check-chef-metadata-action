@@ -265,7 +265,8 @@ const reportChecks = (message) => __awaiter(void 0, void 0, void 0, function* ()
         .rest.checks.update({
         owner: github.context.repo.owner,
         repo: github.context.repo.repo,
-        name: message.name,
+        // name: message.name,
+        run_id: github.context.runId,
         head_sha: pr === null || pr === void 0 ? void 0 : pr.head.sha,
         status: 'completed',
         conclusion: message.conclusion,
