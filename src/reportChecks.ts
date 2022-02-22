@@ -4,6 +4,7 @@ import {Message} from './messageInterface'
 
 export const reportChecks = async (message: Message): Promise<void> => {
   core.info(`Reporting checks: ${JSON.stringify(message)}`)
+  const pr = github.context.payload.pull_request
 
   await github
     .getOctokit(core.getInput('token', {required: true}))
@@ -11,7 +12,7 @@ export const reportChecks = async (message: Message): Promise<void> => {
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
       name: message.name,
-      head_sha: github.context.sha,
+      head_sha: pr?.head.sha,
       status: 'completed',
       conclusion: message.conclusion,
       output: {
@@ -20,7 +21,6 @@ export const reportChecks = async (message: Message): Promise<void> => {
       }
     })
 
-  // core.info(`Report checks result: ${JSON.stringify(github.context)}`)
   core.info(
     `Report checks result: ${JSON.stringify(github.context.payload.after)}`
   )
