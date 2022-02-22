@@ -273,7 +273,7 @@ const reportChecks = (message) => __awaiter(void 0, void 0, void 0, function* ()
             conclusion: message.conclusion,
             output: {
                 title: message.title,
-                summary: message.summary
+                summary: message.summary.join('\n')
             }
         });
         core.info(JSON.stringify(result));

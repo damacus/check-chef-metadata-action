@@ -17,7 +17,7 @@ export const reportChecks = async (message: Message): Promise<void> => {
         conclusion: message.conclusion,
         output: {
           title: message.title,
-          summary: message.summary
+          summary: message.summary.join('\n')
         }
       })
     core.info(JSON.stringify(result))
