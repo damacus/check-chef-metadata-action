@@ -5,6 +5,8 @@ import {Message} from './messageInterface'
 export const reportChecks = async (message: Message): Promise<void> => {
   const octokit = github.getOctokit(core.getInput('token', {required: true}))
 
+  core.info(`Reporting checks: ${JSON.stringify(message)}`)
+
   await octokit.rest.checks.create({
     owner: github.context.repo.owner,
     repo: github.context.repo.repo,
