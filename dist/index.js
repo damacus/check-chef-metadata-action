@@ -100,6 +100,7 @@ function checkMetadata(file = 'metadata.rb') {
             message.conclusion = 'failure';
             message.summary = 'Metadata validation failed';
         }
+        core.info(`Metadata check: ${JSON.stringify(message)}`);
         return message;
     });
 }
