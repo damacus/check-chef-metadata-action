@@ -270,7 +270,7 @@ const reportChecks = (message) => __awaiter(void 0, void 0, void 0, function* ()
         name: message.name,
         // run_id: github.context.runId,
         // head_sha: pr?.head.sha,
-        head_sha: github.context.payload.after,
+        head_sha: github.context.sha,
         status: 'completed',
         conclusion: message.conclusion,
         output: {
