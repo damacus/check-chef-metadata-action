@@ -275,7 +275,7 @@ const reportPR = (message) => __awaiter(void 0, void 0, void 0, function* () {
     if (!pullRequestId) {
         throw new Error('Cannot find the PR id.');
     }
-    const title = core.getInput('title', { required: true });
+    const title = message.title;
     if (message.conclusion) {
         yield (0, actions_replace_comment_1.deleteComment)(Object.assign(Object.assign({}, (yield commentGeneralOptions())), { body: title, startsWith: true }));
         return;
