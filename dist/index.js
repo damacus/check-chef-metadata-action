@@ -258,9 +258,10 @@ exports.reportChecks = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const reportChecks = (message) => __awaiter(void 0, void 0, void 0, function* () {
-    const octokit = github.getOctokit(core.getInput('token', { required: true }));
     core.info(`Reporting checks: ${JSON.stringify(message)}`);
-    yield octokit.rest.checks.create({
+    yield github
+        .getOctokit(core.getInput('token', { required: true }))
+        .rest.checks.create({
         owner: github.context.repo.owner,
         repo: github.context.repo.repo,
         name: message.name,
