@@ -260,7 +260,7 @@ const github = __importStar(__nccwpck_require__(5438));
 const reportChecks = (message) => __awaiter(void 0, void 0, void 0, function* () {
     core.info(`Reporting checks: ${JSON.stringify(message)}`);
     core.info('Finding PR number');
-    const pr = github.context.payload.pull_request;
+    // const pr = github.context.payload.pull_request
     core.info('posting check');
     yield github
         .getOctokit(core.getInput('token', { required: true }))
@@ -269,7 +269,8 @@ const reportChecks = (message) => __awaiter(void 0, void 0, void 0, function* ()
         repo: github.context.repo.repo,
         name: message.name,
         // run_id: github.context.runId,
-        head_sha: pr === null || pr === void 0 ? void 0 : pr.head.sha,
+        // head_sha: pr?.head.sha,
+        head_sha: github.context.payload.after,
         status: 'completed',
         conclusion: message.conclusion,
         output: {

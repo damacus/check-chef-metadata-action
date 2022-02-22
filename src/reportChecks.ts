@@ -6,7 +6,7 @@ export const reportChecks = async (message: Message): Promise<void> => {
   core.info(`Reporting checks: ${JSON.stringify(message)}`)
 
   core.info('Finding PR number')
-  const pr = github.context.payload.pull_request
+  // const pr = github.context.payload.pull_request
 
   core.info('posting check')
   await github
@@ -16,7 +16,8 @@ export const reportChecks = async (message: Message): Promise<void> => {
       repo: github.context.repo.repo,
       name: message.name,
       // run_id: github.context.runId,
-      head_sha: pr?.head.sha,
+      // head_sha: pr?.head.sha,
+      head_sha: github.context.payload.after,
       status: 'completed',
       conclusion: message.conclusion,
       output: {
