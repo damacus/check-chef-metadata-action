@@ -5,7 +5,7 @@ import {Message} from './messageInterface'
 export const reportChecks = async (message: Message): Promise<void> => {
   core.info(`Reporting checks: ${JSON.stringify(message)}`)
 
-  await github
+  const result = await github
     .getOctokit(core.getInput('token', {required: true}))
     .rest.checks.create({
       owner: github.context.repo.owner,
@@ -19,4 +19,6 @@ export const reportChecks = async (message: Message): Promise<void> => {
         summary: message.summary
       }
     })
+
+  core.info(JSON.stringify(result))
 }
