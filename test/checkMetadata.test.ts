@@ -15,11 +15,11 @@ describe('Correct metadata', () => {
   it('an empty validation message', async () => {
     const message = await checkMetadata('./test/fixtures/metadata.rb')
     expect(message).toEqual({
-      message: 'Metadata matches',
       conclusion: 'success',
       comment: '',
       name: 'Check Metadata',
-      summary: 'Metadata validated',
+      message: 'Metadata matches',
+      summary: ['Metadata validated'],
       title: 'Metadata validated'
     })
   })
@@ -29,12 +29,11 @@ describe('An incorrect maintainer', () => {
   it('tells the user which property is not set correctly', async () => {
     const message = await checkMetadata('./test/fixtures/metadata.incorrect.rb')
     expect(message).toEqual({
-      message: "Metadata doesn't match",
       conclusion: 'failure',
-      comment: `
-Maintainer is not set to Sous Chefs (currently set to Bob)`,
+      comment: '',
       name: 'Check Metadata',
-      summary: 'Metadata validation failed',
+      message: "Metadata doesn't match",
+      summary: ['Maintainer is not set to Sous Chefs (currently set to Bob)'],
       title: 'Metadata validation failed'
     })
   })
