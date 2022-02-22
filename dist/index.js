@@ -259,7 +259,7 @@ const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const reportChecks = (message) => __awaiter(void 0, void 0, void 0, function* () {
     core.info(`Reporting checks: ${JSON.stringify(message)}`);
-    const result = yield github
+    yield github
         .getOctokit(core.getInput('token', { required: true }))
         .rest.checks.create({
         owner: github.context.repo.owner,
@@ -273,7 +273,8 @@ const reportChecks = (message) => __awaiter(void 0, void 0, void 0, function* ()
             summary: message.summary
         }
     });
-    core.info(`Report checks result: ${JSON.stringify(result)}`);
+    core.info(`Report checks result: ${JSON.stringify(github.context)}`);
+    core.info(`Report checks result: ${JSON.stringify(github.context.payload)}`);
 });
 exports.reportChecks = reportChecks;
 
