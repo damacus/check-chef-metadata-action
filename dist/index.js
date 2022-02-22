@@ -64,41 +64,40 @@ function checkMetadata(file = 'metadata.rb') {
         const source_url = `https://github.com/${github.context.repo.owner}/${github.context.repo.repo}`;
         const issues_url = `${source_url}/issues`;
         const message = {
-            name: 'Metadata validation',
+            name: 'Check Metadata',
             message: 'Metadata matches',
             conclusion: 'success',
             comment: '',
-            summary: 'Metadata validation passed',
-            title: 'Metadata validation result'
+            summary: 'Metadata validated',
+            title: 'Metadata validated'
         };
         if (data.get('maintainer_email') !== maintainer_email) {
             message.comment += `\nMaintainer email is not set to ${maintainer_email} (currently set to ${data.get('maintainer_email')})`;
             message.conclusion = 'failure';
-            message.summary = 'Metadata validation failed';
         }
         if (data.get('maintainer') !== maintainer) {
             message.message = "Metadata doesn't match";
             message.comment += `\nMaintainer is not set to ${maintainer} (currently set to ${data.get('maintainer')})`;
             message.conclusion = 'failure';
-            message.summary = 'Metadata validation failed';
         }
         if (data.get('license') !== license) {
             message.message = "Metadata doesn't match";
             message.comment += `\nLicense is not set to ${license} (currently set to ${data.get('license')})`;
             message.conclusion = 'failure';
-            message.summary = 'Metadata validation failed';
         }
         if (data.get('source_url') !== source_url) {
             message.message = "Metadata doesn't match";
             message.comment += `\nSource URL is not set to ${source_url} (currently set to ${data.get('source_url')})`;
             message.conclusion = 'failure';
-            message.summary = 'Metadata validation failed';
         }
         if (data.get('issues_url') !== issues_url) {
             message.message = "Metadata doesn't match";
             message.comment += `\nIssues URL is not set to ${issues_url} (currently set to ${data.get(issues_url)})`;
             message.conclusion = 'failure';
+        }
+        if (message.conclusion === 'failure') {
             message.summary = 'Metadata validation failed';
+            message.title = 'Metadata validation failed';
         }
         core.debug(`Metadata check: ${JSON.stringify(message)}`);
         return message;
@@ -258,11 +257,7 @@ exports.reportChecks = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const reportChecks = (message) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
-    core.info(`SHA: ${JSON.stringify(github.context.payload.after)}
-    SHA: ${JSON.stringify(github.context.sha)}
-    SHA: ${JSON.stringify((_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.head.sha)}
-    `);
+    var _a;
     try {
         const result = yield github
             .getOctokit(core.getInput('token', { required: true }))
@@ -272,7 +267,7 @@ const reportChecks = (message) => __awaiter(void 0, void 0, void 0, function* ()
             name: message.name,
             // run_id: github.context.runId,
             // head_sha: pr?.head.sha,
-            head_sha: (_b = github.context.payload.pull_request) === null || _b === void 0 ? void 0 : _b.head.sha,
+            head_sha: (_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.head.sha,
             status: 'completed',
             conclusion: message.conclusion,
             output: {

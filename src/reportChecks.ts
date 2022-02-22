@@ -3,12 +3,6 @@ import * as github from '@actions/github'
 import {Message} from './messageInterface'
 
 export const reportChecks = async (message: Message): Promise<void> => {
-  core.info(
-    `SHA: ${JSON.stringify(github.context.payload.after)}
-    SHA: ${JSON.stringify(github.context.sha)}
-    SHA: ${JSON.stringify(github.context.payload.pull_request?.head.sha)}
-    `
-  )
   try {
     const result = await github
       .getOctokit(core.getInput('token', {required: true}))

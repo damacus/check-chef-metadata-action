@@ -29,12 +29,12 @@ export async function checkMetadata(file = 'metadata.rb'): Promise<Message> {
   const issues_url = `${source_url}/issues`
 
   const message = {
-    name: 'Metadata validation',
+    name: 'Check Metadata',
     message: 'Metadata matches',
     conclusion: 'success',
     comment: '',
-    summary: 'Metadata validation passed',
-    title: 'Metadata validation result'
+    summary: 'Metadata validated',
+    title: 'Metadata validated'
   }
 
   if (data.get('maintainer_email') !== maintainer_email) {
@@ -42,7 +42,6 @@ export async function checkMetadata(file = 'metadata.rb'): Promise<Message> {
       'maintainer_email'
     )})`
     message.conclusion = 'failure'
-    message.summary = 'Metadata validation failed'
   }
 
   if (data.get('maintainer') !== maintainer) {
@@ -51,7 +50,6 @@ export async function checkMetadata(file = 'metadata.rb'): Promise<Message> {
       'maintainer'
     )})`
     message.conclusion = 'failure'
-    message.summary = 'Metadata validation failed'
   }
 
   if (data.get('license') !== license) {
@@ -60,7 +58,6 @@ export async function checkMetadata(file = 'metadata.rb'): Promise<Message> {
       'license'
     )})`
     message.conclusion = 'failure'
-    message.summary = 'Metadata validation failed'
   }
 
   if (data.get('source_url') !== source_url) {
@@ -69,7 +66,6 @@ export async function checkMetadata(file = 'metadata.rb'): Promise<Message> {
       'source_url'
     )})`
     message.conclusion = 'failure'
-    message.summary = 'Metadata validation failed'
   }
 
   if (data.get('issues_url') !== issues_url) {
@@ -78,7 +74,11 @@ export async function checkMetadata(file = 'metadata.rb'): Promise<Message> {
       issues_url
     )})`
     message.conclusion = 'failure'
+  }
+
+  if (message.conclusion === 'failure') {
     message.summary = 'Metadata validation failed'
+    message.title = 'Metadata validation failed'
   }
 
   core.debug(`Metadata check: ${JSON.stringify(message)}`)
