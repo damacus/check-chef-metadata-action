@@ -259,9 +259,6 @@ const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const reportChecks = (message) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
-    core.info(`Reporting checks: ${JSON.stringify(message)}`);
-    core.info('posting check');
-    core.info(`Report checks result: ${JSON.stringify(github.context.payload.after)}`);
     core.info(`SHA: ${JSON.stringify(github.context.payload.after)}
     SHA: ${JSON.stringify(github.context.sha)}
     SHA: ${JSON.stringify((_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.head.sha)}
@@ -272,8 +269,8 @@ const reportChecks = (message) => __awaiter(void 0, void 0, void 0, function* ()
             .rest.checks.update({
             owner: github.context.repo.owner,
             repo: github.context.repo.repo,
-            // name: message.name,
-            run_id: github.context.runId,
+            name: message.name,
+            // run_id: github.context.runId,
             // head_sha: pr?.head.sha,
             head_sha: github.context.sha,
             status: 'completed',

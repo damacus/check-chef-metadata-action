@@ -3,12 +3,6 @@ import * as github from '@actions/github'
 import {Message} from './messageInterface'
 
 export const reportChecks = async (message: Message): Promise<void> => {
-  core.info(`Reporting checks: ${JSON.stringify(message)}`)
-
-  core.info('posting check')
-  core.info(
-    `Report checks result: ${JSON.stringify(github.context.payload.after)}`
-  )
   core.info(
     `SHA: ${JSON.stringify(github.context.payload.after)}
     SHA: ${JSON.stringify(github.context.sha)}
@@ -18,11 +12,11 @@ export const reportChecks = async (message: Message): Promise<void> => {
   try {
     const result = await github
       .getOctokit(core.getInput('token', {required: true}))
-      .rest.checks.update({
+      .rest.checks.create({
         owner: github.context.repo.owner,
         repo: github.context.repo.repo,
-        // name: message.name,
-        run_id: github.context.runId,
+        name: message.name,
+        // run_id: github.context.runId,
         // head_sha: pr?.head.sha,
         head_sha: github.context.sha,
         status: 'completed',
