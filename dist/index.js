@@ -258,7 +258,7 @@ exports.reportChecks = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const reportChecks = (message) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
+    var _a, _b;
     core.info(`SHA: ${JSON.stringify(github.context.payload.after)}
     SHA: ${JSON.stringify(github.context.sha)}
     SHA: ${JSON.stringify((_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.head.sha)}
@@ -266,13 +266,13 @@ const reportChecks = (message) => __awaiter(void 0, void 0, void 0, function* ()
     try {
         const result = yield github
             .getOctokit(core.getInput('token', { required: true }))
-            .rest.checks.update({
+            .rest.checks.create({
             owner: github.context.repo.owner,
             repo: github.context.repo.repo,
             name: message.name,
             // run_id: github.context.runId,
             // head_sha: pr?.head.sha,
-            head_sha: github.context.sha,
+            head_sha: (_b = github.context.payload.pull_request) === null || _b === void 0 ? void 0 : _b.head.sha,
             status: 'completed',
             conclusion: message.conclusion,
             output: {

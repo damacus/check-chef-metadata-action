@@ -18,7 +18,7 @@ export const reportChecks = async (message: Message): Promise<void> => {
         name: message.name,
         // run_id: github.context.runId,
         // head_sha: pr?.head.sha,
-        head_sha: github.context.sha,
+        head_sha: github.context.payload.pull_request?.head.sha,
         status: 'completed',
         conclusion: message.conclusion,
         output: {
