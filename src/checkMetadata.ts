@@ -15,6 +15,7 @@ export async function checkMetadata(file = 'metadata.rb'): Promise<Message> {
    */
 
   try {
+    core.info('Reading metadata file')
     fs.accessSync(file, fs.constants.R_OK)
   } catch (err) {
     core.error(`${file}: access error!`)

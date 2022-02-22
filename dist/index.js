@@ -51,6 +51,7 @@ function checkMetadata(file = 'metadata.rb') {
          * contain one of the accepted licences
          */
         try {
+            core.info('Reading metadata file');
             fs.accessSync(file, fs.constants.R_OK);
         }
         catch (err) {
