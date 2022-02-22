@@ -24,7 +24,7 @@ export const reportPR = async (message: Message): Promise<void> => {
     throw new Error('Cannot find the PR id.')
   }
 
-  const title = core.getInput('title', {required: true})
+  const title = message.title
 
   if (message.conclusion) {
     await deleteComment({
