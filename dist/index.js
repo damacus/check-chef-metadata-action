@@ -145,13 +145,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const checkMetadata_1 = __nccwpck_require__(6294);
-// import {reportChecks} from './reportChecks'
-const reportPR_1 = __nccwpck_require__(7762);
+const reportChecks_1 = __nccwpck_require__(9795);
+// import {reportPR} from './reportPR'
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const result = yield (0, checkMetadata_1.checkMetadata)();
-            yield (0, reportPR_1.reportPR)(result);
+            yield (0, reportChecks_1.reportChecks)(result);
         }
         catch (error) {
             const err = error.message;
@@ -220,7 +220,7 @@ exports.metadata = metadata;
 
 /***/ }),
 
-/***/ 7762:
+/***/ 9795:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -254,35 +254,28 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.reportPR = void 0;
+exports.reportChecks = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
-const actions_replace_comment_1 = __importStar(__nccwpck_require__(94));
-const commentGeneralOptions = () => __awaiter(void 0, void 0, void 0, function* () {
-    const pullRequestId = github.context.issue.number;
-    if (!pullRequestId) {
-        throw new Error('Cannot find the PR id.');
-    }
-    return {
-        token: core.getInput('token', { required: true }),
+const reportChecks = (message) => __awaiter(void 0, void 0, void 0, function* () {
+    core.info(`Reporting checks: ${JSON.stringify(message)}`);
+    const result = yield github
+        .getOctokit(core.getInput('token', { required: true }))
+        .rest.checks.create({
         owner: github.context.repo.owner,
         repo: github.context.repo.repo,
-        issue_number: pullRequestId
-    };
+        name: message.name,
+        head_sha: github.context.sha,
+        status: 'completed',
+        conclusion: message.conclusion,
+        output: {
+            title: message.title,
+            summary: message.summary
+        }
+    });
+    core.info(`Report checks result: ${JSON.stringify(result)}`);
 });
-const reportPR = (message) => __awaiter(void 0, void 0, void 0, function* () {
-    const pullRequestId = github.context.issue.number;
-    if (!pullRequestId) {
-        throw new Error('Cannot find the PR id.');
-    }
-    const title = message.title;
-    if (message.conclusion) {
-        yield (0, actions_replace_comment_1.deleteComment)(Object.assign(Object.assign({}, (yield commentGeneralOptions())), { body: title, startsWith: true }));
-        return;
-    }
-    yield (0, actions_replace_comment_1.default)(Object.assign(Object.assign({}, (yield commentGeneralOptions())), { body: `${message.comment}` }));
-});
-exports.reportPR = reportPR;
+exports.reportChecks = reportChecks;
 
 
 /***/ }),
@@ -1776,65 +1769,6 @@ exports.checkBypass = checkBypass;
 
 /***/ }),
 
-/***/ 94:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.createComment = exports.deleteComment = exports.findComment = void 0;
-const rest_1 = __nccwpck_require__(5375);
-const issues = (auth) => {
-    return new rest_1.Octokit({ auth }).issues;
-};
-const findComment = ({ token, owner, repo, issue_number, body }) => __awaiter(void 0, void 0, void 0, function* () {
-    const firstLine = body.split('\n', 1)[0];
-    const { data: existingComments } = yield issues(token).listComments({ owner, repo, issue_number });
-    const comment = existingComments.find(comment => { var _a; return (_a = comment.body) === null || _a === void 0 ? void 0 : _a.startsWith(firstLine); });
-    return {
-        comment_id: comment ? comment.id : undefined,
-        exactMatch: comment && comment.body === body
-    };
-});
-exports.findComment = findComment;
-const deleteComment = ({ token, owner, repo, issue_number, body, startsWith = false }) => __awaiter(void 0, void 0, void 0, function* () {
-    const { comment_id, exactMatch } = yield exports.findComment({ token, owner, repo, issue_number, body });
-    if (comment_id && (startsWith || exactMatch)) {
-        yield issues(token).deleteComment({ owner, repo, comment_id });
-    }
-});
-exports.deleteComment = deleteComment;
-const createComment = ({ token, owner, repo, issue_number, body }) => __awaiter(void 0, void 0, void 0, function* () {
-    const responce = yield issues(token).createComment({ owner, repo, issue_number, body });
-    return responce.data;
-});
-exports.createComment = createComment;
-function replaceComment({ token, owner, repo, issue_number, body }) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const { comment_id, exactMatch } = yield exports.findComment({ token, owner, repo, issue_number, body });
-        if (exactMatch) {
-            return;
-        }
-        if (comment_id) {
-            yield issues(token).deleteComment({ owner, repo, comment_id });
-        }
-        return exports.createComment({ token, owner, repo, issue_number, body });
-    });
-}
-exports["default"] = replaceComment;
-
-
-/***/ }),
-
 /***/ 334:
 /***/ ((__unused_webpack_module, exports) => {
 
@@ -2826,44 +2760,6 @@ exports.composePaginateRest = composePaginateRest;
 exports.isPaginatingEndpoint = isPaginatingEndpoint;
 exports.paginateRest = paginateRest;
 exports.paginatingEndpoints = paginatingEndpoints;
-//# sourceMappingURL=index.js.map
-
-
-/***/ }),
-
-/***/ 8883:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-
-const VERSION = "1.0.4";
-
-/**
- * @param octokit Octokit instance
- * @param options Options passed to Octokit constructor
- */
-
-function requestLog(octokit) {
-  octokit.hook.wrap("request", (request, options) => {
-    octokit.log.debug("request", options);
-    const start = Date.now();
-    const requestOptions = octokit.request.endpoint.parse(options);
-    const path = requestOptions.url.replace(options.baseUrl, "");
-    return request(options).then(response => {
-      octokit.log.info(`${requestOptions.method} ${path} - ${response.status} in ${Date.now() - start}ms`);
-      return response;
-    }).catch(error => {
-      octokit.log.info(`${requestOptions.method} ${path} - ${error.status} in ${Date.now() - start}ms`);
-      throw error;
-    });
-  });
-}
-requestLog.VERSION = VERSION;
-
-exports.requestLog = requestLog;
 //# sourceMappingURL=index.js.map
 
 
@@ -4164,31 +4060,6 @@ const request = withDefaults(endpoint.endpoint, {
 });
 
 exports.request = request;
-//# sourceMappingURL=index.js.map
-
-
-/***/ }),
-
-/***/ 5375:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-
-var core = __nccwpck_require__(6762);
-var pluginRequestLog = __nccwpck_require__(8883);
-var pluginPaginateRest = __nccwpck_require__(4193);
-var pluginRestEndpointMethods = __nccwpck_require__(3044);
-
-const VERSION = "18.12.0";
-
-const Octokit = core.Octokit.plugin(pluginRequestLog.requestLog, pluginRestEndpointMethods.legacyRestEndpointMethods, pluginPaginateRest.paginateRest).defaults({
-  userAgent: `octokit-rest.js/${VERSION}`
-});
-
-exports.Octokit = Octokit;
 //# sourceMappingURL=index.js.map
 
 
