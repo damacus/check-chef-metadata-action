@@ -266,23 +266,29 @@ const reportChecks = (message) => __awaiter(void 0, void 0, void 0, function* ()
     SHA: ${JSON.stringify(github.context.sha)}
     SHA: ${JSON.stringify((_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.head.sha)}
     `);
-    const result = yield github
-        .getOctokit(core.getInput('token', { required: true }))
-        .rest.checks.update({
-        owner: github.context.repo.owner,
-        repo: github.context.repo.repo,
-        name: message.name,
-        run_id: github.context.runId,
-        // head_sha: pr?.head.sha,
-        head_sha: github.context.sha,
-        status: 'completed',
-        conclusion: message.conclusion,
-        output: {
-            title: message.title,
-            summary: message.summary
-        }
-    });
-    core.info(JSON.stringify(result));
+    try {
+        const result = yield github
+            .getOctokit(core.getInput('token', { required: true }))
+            .rest.checks.update({
+            owner: github.context.repo.owner,
+            repo: github.context.repo.repo,
+            // name: message.name,
+            run_id: github.context.runId,
+            // head_sha: pr?.head.sha,
+            head_sha: github.context.sha,
+            status: 'completed',
+            conclusion: message.conclusion,
+            output: {
+                title: message.title,
+                summary: message.summary
+            }
+        });
+        core.info(JSON.stringify(result));
+    }
+    catch (error) {
+        const err = error.message;
+        core.setFailed(err);
+    }
 });
 exports.reportChecks = reportChecks;
 

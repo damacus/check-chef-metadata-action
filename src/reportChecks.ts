@@ -15,22 +15,26 @@ export const reportChecks = async (message: Message): Promise<void> => {
     SHA: ${JSON.stringify(github.context.payload.pull_request?.head.sha)}
     `
   )
-  const result = await github
-    .getOctokit(core.getInput('token', {required: true}))
-    .rest.checks.update({
-      owner: github.context.repo.owner,
-      repo: github.context.repo.repo,
-      name: message.name,
-      run_id: github.context.runId,
-      // head_sha: pr?.head.sha,
-      head_sha: github.context.sha,
-      status: 'completed',
-      conclusion: message.conclusion,
-      output: {
-        title: message.title,
-        summary: message.summary
-      }
-    })
-
-  core.info(JSON.stringify(result))
+  try {
+    const result = await github
+      .getOctokit(core.getInput('token', {required: true}))
+      .rest.checks.update({
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        // name: message.name,
+        run_id: github.context.runId,
+        // head_sha: pr?.head.sha,
+        head_sha: github.context.sha,
+        status: 'completed',
+        conclusion: message.conclusion,
+        output: {
+          title: message.title,
+          summary: message.summary
+        }
+      })
+    core.info(JSON.stringify(result))
+  } catch (error: unknown) {
+    const err = (error as Error).message
+    core.setFailed(err)
+  }
 }
