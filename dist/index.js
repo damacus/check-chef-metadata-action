@@ -274,6 +274,8 @@ const reportChecks = (message) => __awaiter(void 0, void 0, void 0, function* ()
         }
     });
     core.info(JSON.stringify(result));
+    core.info(JSON.stringify(github.context.runNumber));
+    core.info(JSON.stringify(github.context.runId));
 });
 exports.reportChecks = reportChecks;
 

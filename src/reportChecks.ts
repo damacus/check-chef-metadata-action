@@ -21,4 +21,6 @@ export const reportChecks = async (message: Message): Promise<void> => {
     })
 
   core.info(JSON.stringify(result))
+  core.info(JSON.stringify(github.context.runNumber))
+  core.info(JSON.stringify(github.context.runId))
 }
