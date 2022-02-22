@@ -258,11 +258,15 @@ exports.reportChecks = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const reportChecks = (message) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     core.info(`Reporting checks: ${JSON.stringify(message)}`);
-    core.info('Finding PR number');
-    // const pr = github.context.payload.pull_request
     core.info('posting check');
-    yield github
+    core.info(`Report checks result: ${JSON.stringify(github.context.payload.after)}`);
+    core.info(`SHA: ${JSON.stringify(github.context.payload.after)}
+    SHA: ${JSON.stringify(github.context.sha)}
+    SHA: ${JSON.stringify((_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.head.sha)}
+    `);
+    const result = yield github
         .getOctokit(core.getInput('token', { required: true }))
         .rest.checks.update({
         owner: github.context.repo.owner,
@@ -278,7 +282,7 @@ const reportChecks = (message) => __awaiter(void 0, void 0, void 0, function* ()
             summary: message.summary
         }
     });
-    core.info(`Report checks result: ${JSON.stringify(github.context.payload.after)}`);
+    core.info(JSON.stringify(result));
 });
 exports.reportChecks = reportChecks;
 
