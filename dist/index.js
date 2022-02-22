@@ -262,7 +262,7 @@ const reportChecks = (message) => __awaiter(void 0, void 0, void 0, function* ()
     const pr = github.context.payload.pull_request;
     yield github
         .getOctokit(core.getInput('token', { required: true }))
-        .rest.checks.create({
+        .rest.checks.update({
         owner: github.context.repo.owner,
         repo: github.context.repo.repo,
         name: message.name,

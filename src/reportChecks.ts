@@ -8,7 +8,7 @@ export const reportChecks = async (message: Message): Promise<void> => {
 
   await github
     .getOctokit(core.getInput('token', {required: true}))
-    .rest.checks.create({
+    .rest.checks.update({
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
       name: message.name,
