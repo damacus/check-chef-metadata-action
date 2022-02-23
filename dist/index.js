@@ -51,6 +51,7 @@ function checkMetadata(file = 'metadata.rb') {
          * contain one of the accepted licences
          */
         try {
+            core.info('Reading metadata file');
             fs.accessSync(file, fs.constants.R_OK);
         }
         catch (err) {
@@ -63,42 +64,43 @@ function checkMetadata(file = 'metadata.rb') {
         const source_url = `https://github.com/${github.context.repo.owner}/${github.context.repo.repo}`;
         const issues_url = `${source_url}/issues`;
         const message = {
+            name: 'Check Metadata',
             message: 'Metadata matches',
             conclusion: 'success',
             comment: '',
-            name: 'Metadata validation',
-            summary: 'Metadata validation passed',
-            title: 'Metadata validation result'
+            summary: ['Metadata validated'],
+            title: 'Metadata validated'
         };
         if (data.get('maintainer_email') !== maintainer_email) {
-            message.comment += `\nMaintainer email is not set to ${maintainer_email} (currently set to ${data.get('maintainer_email')})`;
             message.conclusion = 'failure';
-            message.summary = 'Metadata validation failed';
+            message.summary = message.summary.filter(s => s !== 'Metadata validated');
+            message.summary.push(`Maintainer email is not set to ${maintainer_email} (currently set to ${data.get('maintainer_email')})`);
         }
         if (data.get('maintainer') !== maintainer) {
-            message.message = "Metadata doesn't match";
-            message.comment += `\nMaintainer is not set to ${maintainer} (currently set to ${data.get('maintainer')})`;
             message.conclusion = 'failure';
-            message.summary = 'Metadata validation failed';
+            message.summary = message.summary.filter(s => s !== 'Metadata validated');
+            message.summary.push(`Maintainer is not set to ${maintainer} (currently set to ${data.get('maintainer')})`);
         }
         if (data.get('license') !== license) {
-            message.message = "Metadata doesn't match";
-            message.comment += `\nLicense is not set to ${license} (currently set to ${data.get('license')})`;
             message.conclusion = 'failure';
-            message.summary = 'Metadata validation failed';
+            message.summary = message.summary.filter(s => s !== 'Metadata validated');
+            message.summary.push(`License is not set to ${license} (currently set to ${data.get('license')})`);
         }
         if (data.get('source_url') !== source_url) {
-            message.message = "Metadata doesn't match";
-            message.comment += `\nSource URL is not set to ${source_url} (currently set to ${data.get('source_url')})`;
             message.conclusion = 'failure';
-            message.summary = 'Metadata validation failed';
+            message.summary = message.summary.filter(s => s !== 'Metadata validated');
+            message.summary.push(`Source URL is not set to ${source_url} (currently set to ${data.get('source_url')})`);
         }
         if (data.get('issues_url') !== issues_url) {
-            message.message = "Metadata doesn't match";
-            message.comment += `\nIssues URL is not set to ${issues_url} (currently set to ${data.get(issues_url)})`;
             message.conclusion = 'failure';
-            message.summary = 'Metadata validation failed';
+            message.summary = message.summary.filter(s => s !== 'Metadata validated');
+            message.summary.push(`Issues URL is not set to ${issues_url} (currently set to ${data.get(issues_url)})`);
         }
+        if (message.conclusion === 'failure') {
+            message.message = "Metadata doesn't match";
+            message.title = 'Metadata validation failed';
+        }
+        core.debug(`Metadata check: ${JSON.stringify(message)}`);
         return message;
     });
 }
@@ -112,6 +114,25 @@ exports.checkMetadata = checkMetadata;
 
 "use strict";
 
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -122,12 +143,20 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+const core = __importStar(__nccwpck_require__(2186));
 const checkMetadata_1 = __nccwpck_require__(6294);
 const reportChecks_1 = __nccwpck_require__(9795);
+// import {reportPR} from './reportPR'
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
-        const metadataCheck = yield (0, checkMetadata_1.checkMetadata)();
-        yield (0, reportChecks_1.reportChecks)(metadataCheck);
+        try {
+            const result = yield (0, checkMetadata_1.checkMetadata)();
+            yield (0, reportChecks_1.reportChecks)(result);
+        }
+        catch (error) {
+            const err = error.message;
+            core.setFailed(err);
+        }
     });
 }
 run();
@@ -229,19 +258,30 @@ exports.reportChecks = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const reportChecks = (message) => __awaiter(void 0, void 0, void 0, function* () {
-    const octokit = github.getOctokit(core.getInput('token', { required: true }));
-    yield octokit.rest.checks.create({
-        owner: github.context.repo.owner,
-        repo: github.context.repo.repo,
-        name: message.name,
-        head_sha: github.context.sha,
-        status: 'completed',
-        conclusion: message.conclusion,
-        output: {
-            title: message.title,
-            summary: message.summary
-        }
-    });
+    var _a;
+    try {
+        const result = yield github
+            .getOctokit(core.getInput('token', { required: true }))
+            .rest.checks.create({
+            owner: github.context.repo.owner,
+            repo: github.context.repo.repo,
+            name: message.name,
+            // run_id: github.context.runId,
+            // head_sha: pr?.head.sha,
+            head_sha: (_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.head.sha,
+            status: 'completed',
+            conclusion: message.conclusion,
+            output: {
+                title: message.title,
+                summary: message.summary.join('\n')
+            }
+        });
+        core.info(JSON.stringify(result));
+    }
+    catch (error) {
+        const err = error.message;
+        core.setFailed(err);
+    }
 });
 exports.reportChecks = reportChecks;
 
