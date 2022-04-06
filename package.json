@@ -26,14 +26,14 @@
   "license": "MIT",
   "dependencies": {
     "@actions/core": "^1.6.0",
-    "@actions/github": "^5.0.0",
+    "@actions/github": "^5.0.1",
     "@aki77/actions-replace-comment": "^0.5.2",
     "markdown-table": "^3.0.2"
   },
   "devDependencies": {
     "@types/jest": "^27.4.0",
     "@types/node": "^16",
-    "@typescript-eslint/parser": "^5.13",
+    "@typescript-eslint/parser": "^5.18",
     "@vercel/ncc": "^0.33",
     "eslint": "^8",
     "eslint-plugin-github": "^4.3.5",
