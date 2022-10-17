@@ -1,8 +1,8 @@
 export interface Message {
-  name: string
-  message: string
   conclusion: string
   comment: string | Error
-  summary: string
+  name: string
+  message: string
+  summary: string[]
   title: string
 }

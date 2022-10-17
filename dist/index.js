@@ -55,6 +55,7 @@ function checkMetadata(file = 'metadata.rb') {
          * contain one of the accepted licences
          */
         try {
+            core.info('Reading metadata file');
             fs.accessSync(file, fs.constants.R_OK);
         }
         catch (err) {
@@ -67,42 +68,43 @@ function checkMetadata(file = 'metadata.rb') {
         const source_url = `https://github.com/${github.context.repo.owner}/${github.context.repo.repo}`;
         const issues_url = `${source_url}/issues`;
         const message = {
+            name: 'Check Metadata',
             message: 'Metadata matches',
             conclusion: 'success',
             comment: '',
-            name: 'Metadata validation',
-            summary: 'Metadata validation passed',
-            title: 'Metadata validation result'
+            summary: ['Metadata validated'],
+            title: 'Metadata validated'
         };
         if (data.get('maintainer_email') !== maintainer_email) {
-            message.comment += `\nMaintainer email is not set to ${maintainer_email} (currently set to ${data.get('maintainer_email')})`;
             message.conclusion = 'failure';
-            message.summary = 'Metadata validation failed';
+            message.summary = message.summary.filter(s => s !== 'Metadata validated');
+            message.summary.push(`Maintainer email is not set to ${maintainer_email} (currently set to ${data.get('maintainer_email')})`);
         }
         if (data.get('maintainer') !== maintainer) {
-            message.message = "Metadata doesn't match";
-            message.comment += `\nMaintainer is not set to ${maintainer} (currently set to ${data.get('maintainer')})`;
             message.conclusion = 'failure';
-            message.summary = 'Metadata validation failed';
+            message.summary = message.summary.filter(s => s !== 'Metadata validated');
+            message.summary.push(`Maintainer is not set to ${maintainer} (currently set to ${data.get('maintainer')})`);
         }
         if (data.get('license') !== license) {
-            message.message = "Metadata doesn't match";
-            message.comment += `\nLicense is not set to ${license} (currently set to ${data.get('license')})`;
             message.conclusion = 'failure';
-            message.summary = 'Metadata validation failed';
+            message.summary = message.summary.filter(s => s !== 'Metadata validated');
+            message.summary.push(`License is not set to ${license} (currently set to ${data.get('license')})`);
         }
         if (data.get('source_url') !== source_url) {
-            message.message = "Metadata doesn't match";
-            message.comment += `\nSource URL is not set to ${source_url} (currently set to ${data.get('source_url')})`;
             message.conclusion = 'failure';
-            message.summary = 'Metadata validation failed';
+            message.summary = message.summary.filter(s => s !== 'Metadata validated');
+            message.summary.push(`Source URL is not set to ${source_url} (currently set to ${data.get('source_url')})`);
         }
         if (data.get('issues_url') !== issues_url) {
-            message.message = "Metadata doesn't match";
-            message.comment += `\nIssues URL is not set to ${issues_url} (currently set to ${data.get(issues_url)})`;
             message.conclusion = 'failure';
-            message.summary = 'Metadata validation failed';
+            message.summary = message.summary.filter(s => s !== 'Metadata validated');
+            message.summary.push(`Issues URL is not set to ${issues_url} (currently set to ${data.get(issues_url)})`);
         }
+        if (message.conclusion === 'failure') {
+            message.message = "Metadata doesn't match";
+            message.title = 'Metadata validation failed';
+        }
+        core.debug(`Metadata check: ${JSON.stringify(message)}`);
         return message;
     });
 }
@@ -116,6 +118,29 @@ exports.checkMetadata = checkMetadata;
 
 "use strict";
 
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -126,12 +151,20 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+const core = __importStar(__nccwpck_require__(2186));
 const checkMetadata_1 = __nccwpck_require__(6294);
 const reportChecks_1 = __nccwpck_require__(9795);
+// import {reportPR} from './reportPR'
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
-        const metadataCheck = yield (0, checkMetadata_1.checkMetadata)();
-        yield (0, reportChecks_1.reportChecks)(metadataCheck);
+        try {
+            const result = yield (0, checkMetadata_1.checkMetadata)();
+            yield (0, reportChecks_1.reportChecks)(result);
+        }
+        catch (error) {
+            const err = error.message;
+            core.setFailed(err);
+        }
     });
 }
 run();
@@ -237,19 +270,30 @@ exports.reportChecks = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const reportChecks = (message) => __awaiter(void 0, void 0, void 0, function* () {
-    const octokit = github.getOctokit(core.getInput('token', { required: true }));
-    yield octokit.rest.checks.create({
-        owner: github.context.repo.owner,
-        repo: github.context.repo.repo,
-        name: message.name,
-        head_sha: github.context.sha,
-        status: 'completed',
-        conclusion: message.conclusion,
-        output: {
-            title: message.title,
-            summary: message.summary
-        }
-    });
+    var _a;
+    try {
+        const result = yield github
+            .getOctokit(core.getInput('token', { required: true }))
+            .rest.checks.create({
+            owner: github.context.repo.owner,
+            repo: github.context.repo.repo,
+            name: message.name,
+            // run_id: github.context.runId,
+            // head_sha: pr?.head.sha,
+            head_sha: (_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.head.sha,
+            status: 'completed',
+            conclusion: message.conclusion,
+            output: {
+                title: message.title,
+                summary: message.summary.join('\n')
+            }
+        });
+        core.info(JSON.stringify(result));
+    }
+    catch (error) {
+        const err = error.message;
+        core.setFailed(err);
+    }
 });
 exports.reportChecks = reportChecks;
 
@@ -4586,63 +4630,67 @@ exports.request = request;
 /***/ 3682:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
-var register = __nccwpck_require__(4670)
-var addHook = __nccwpck_require__(5549)
-var removeHook = __nccwpck_require__(6819)
+var register = __nccwpck_require__(4670);
+var addHook = __nccwpck_require__(5549);
+var removeHook = __nccwpck_require__(6819);
 
 // bind with array of arguments: https://stackoverflow.com/a/21792913
-var bind = Function.bind
-var bindable = bind.bind(bind)
+var bind = Function.bind;
+var bindable = bind.bind(bind);
 
-function bindApi (hook, state, name) {
-  var removeHookRef = bindable(removeHook, null).apply(null, name ? [state, name] : [state])
-  hook.api = { remove: removeHookRef }
-  hook.remove = removeHookRef
-
-  ;['before', 'error', 'after', 'wrap'].forEach(function (kind) {
-    var args = name ? [state, kind, name] : [state, kind]
-    hook[kind] = hook.api[kind] = bindable(addHook, null).apply(null, args)
-  })
+function bindApi(hook, state, name) {
+  var removeHookRef = bindable(removeHook, null).apply(
+    null,
+    name ? [state, name] : [state]
+  );
+  hook.api = { remove: removeHookRef };
+  hook.remove = removeHookRef;
+  ["before", "error", "after", "wrap"].forEach(function (kind) {
+    var args = name ? [state, kind, name] : [state, kind];
+    hook[kind] = hook.api[kind] = bindable(addHook, null).apply(null, args);
+  });
 }
 
-function HookSingular () {
-  var singularHookName = 'h'
+function HookSingular() {
+  var singularHookName = "h";
   var singularHookState = {
-    registry: {}
-  }
-  var singularHook = register.bind(null, singularHookState, singularHookName)
-  bindApi(singularHook, singularHookState, singularHookName)
-  return singularHook
+    registry: {},
+  };
+  var singularHook = register.bind(null, singularHookState, singularHookName);
+  bindApi(singularHook, singularHookState, singularHookName);
+  return singularHook;
 }
 
-function HookCollection () {
+function HookCollection() {
   var state = {
-    registry: {}
-  }
+    registry: {},
+  };
 
-  var hook = register.bind(null, state)
-  bindApi(hook, state)
+  var hook = register.bind(null, state);
+  bindApi(hook, state);
 
-  return hook
+  return hook;
 }
 
-var collectionHookDeprecationMessageDisplayed = false
-function Hook () {
+var collectionHookDeprecationMessageDisplayed = false;
+function Hook() {
   if (!collectionHookDeprecationMessageDisplayed) {
-    console.warn('[before-after-hook]: "Hook()" repurposing warning, use "Hook.Collection()". Read more: https://git.io/upgrade-before-after-hook-to-1.4')
-    collectionHookDeprecationMessageDisplayed = true
+    console.warn(
+      '[before-after-hook]: "Hook()" repurposing warning, use "Hook.Collection()". Read more: https://git.io/upgrade-before-after-hook-to-1.4'
+    );
+    collectionHookDeprecationMessageDisplayed = true;
   }
-  return HookCollection()
+  return HookCollection();
 }
 
-Hook.Singular = HookSingular.bind()
-Hook.Collection = HookCollection.bind()
+Hook.Singular = HookSingular.bind();
+Hook.Collection = HookCollection.bind();
 
-module.exports = Hook
+module.exports = Hook;
 // expose constructors as a named property for TypeScript
-module.exports.Hook = Hook
-module.exports.Singular = Hook.Singular
-module.exports.Collection = Hook.Collection
+module.exports.Hook = Hook;
+module.exports.Singular = Hook.Singular;
+module.exports.Collection = Hook.Collection;
 
 
 /***/ }),

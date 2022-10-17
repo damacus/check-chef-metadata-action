@@ -15,6 +15,7 @@ export async function checkMetadata(file = 'metadata.rb'): Promise<Message> {
    */
 
   try {
+    core.info('Reading metadata file')
     fs.accessSync(file, fs.constants.R_OK)
   } catch (err) {
     core.error(`${file}: access error!`)
@@ -28,57 +29,75 @@ export async function checkMetadata(file = 'metadata.rb'): Promise<Message> {
   const issues_url = `${source_url}/issues`
 
   const message = {
+    name: 'Check Metadata',
     message: 'Metadata matches',
     conclusion: 'success',
     comment: '',
-    name: 'Metadata validation',
-    summary: 'Metadata validation passed',
-    title: 'Metadata validation result'
+    summary: ['Metadata validated'],
+    title: 'Metadata validated'
   }
 
   if (data.get('maintainer_email') !== maintainer_email) {
-    message.comment += `\nMaintainer email is not set to ${maintainer_email} (currently set to ${data.get(
-      'maintainer_email'
-    )})`
     message.conclusion = 'failure'
-    message.summary = 'Metadata validation failed'
+    message.summary = message.summary.filter(s => s !== 'Metadata validated')
+
+    message.summary.push(
+      `Maintainer email is not set to ${maintainer_email} (currently set to ${data.get(
+        'maintainer_email'
+      )})`
+    )
   }
 
   if (data.get('maintainer') !== maintainer) {
-    message.message = "Metadata doesn't match"
-    message.comment += `\nMaintainer is not set to ${maintainer} (currently set to ${data.get(
-      'maintainer'
-    )})`
     message.conclusion = 'failure'
-    message.summary = 'Metadata validation failed'
+    message.summary = message.summary.filter(s => s !== 'Metadata validated')
+
+    message.summary.push(
+      `Maintainer is not set to ${maintainer} (currently set to ${data.get(
+        'maintainer'
+      )})`
+    )
   }
 
   if (data.get('license') !== license) {
-    message.message = "Metadata doesn't match"
-    message.comment += `\nLicense is not set to ${license} (currently set to ${data.get(
-      'license'
-    )})`
     message.conclusion = 'failure'
-    message.summary = 'Metadata validation failed'
+    message.summary = message.summary.filter(s => s !== 'Metadata validated')
+
+    message.summary.push(
+      `License is not set to ${license} (currently set to ${data.get(
+        'license'
+      )})`
+    )
   }
 
   if (data.get('source_url') !== source_url) {
-    message.message = "Metadata doesn't match"
-    message.comment += `\nSource URL is not set to ${source_url} (currently set to ${data.get(
-      'source_url'
-    )})`
     message.conclusion = 'failure'
-    message.summary = 'Metadata validation failed'
+    message.summary = message.summary.filter(s => s !== 'Metadata validated')
+
+    message.summary.push(
+      `Source URL is not set to ${source_url} (currently set to ${data.get(
+        'source_url'
+      )})`
+    )
   }
 
   if (data.get('issues_url') !== issues_url) {
-    message.message = "Metadata doesn't match"
-    message.comment += `\nIssues URL is not set to ${issues_url} (currently set to ${data.get(
-      issues_url
-    )})`
     message.conclusion = 'failure'
-    message.summary = 'Metadata validation failed'
+    message.summary = message.summary.filter(s => s !== 'Metadata validated')
+
+    message.summary.push(
+      `Issues URL is not set to ${issues_url} (currently set to ${data.get(
+        issues_url
+      )})`
+    )
   }
+
+  if (message.conclusion === 'failure') {
+    message.message = "Metadata doesn't match"
+    message.title = 'Metadata validation failed'
+  }
+
+  core.debug(`Metadata check: ${JSON.stringify(message)}`)
 
   return message
 }
