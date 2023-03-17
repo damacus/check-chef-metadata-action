@@ -1,8 +1,8 @@
 {
   "name": "typescript-action",
-  "version": "0.0.0",
-  "private": true,
-  "description": "TypeScript template action",
+  "version": "0.0.1",
+  "private": false,
+  "description": "Check Chef metadata",
   "main": "lib/main.js",
   "scripts": {
     "build": "tsc",
@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "@types/jest": "29.5.0",
-    "@types/node": "18.15.3",
+    "@types/node": "18.15.0",
     "@typescript-eslint/parser": "5.55.0",
     "@vercel/ncc": "0.36.1",
     "eslint": "8.36.0",

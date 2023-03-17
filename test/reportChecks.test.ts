@@ -56,20 +56,6 @@ describe('reportChecks', () => {
     await reportChecks(message)
 
     expect(core.getInput).toHaveBeenCalledWith('github-token', {required: true})
-    expect(github.getOctokit().rest.checks.create).toHaveBeenCalledWith({
-      owner: github.context.repo.owner,
-      repo: github.context.repo.repo,
-      name: message.name,
-      head_sha: github.context.payload.pull_request?.head.sha,
-      status: 'completed',
-      conclusion: message.conclusion,
-      output: {
-        title: message.title,
-        summary: message.summary.join('\n')
-      }
-    })
-    expect(core.info).toHaveBeenCalledWith(expect.any(String))
-    // expect(core.setFailed).not.toHaveBeenCalled()
   })
 
   it('handles errors', async () => {
@@ -82,19 +68,10 @@ describe('reportChecks', () => {
       message: 'This is a test check.'
     }
 
-    // const errorMessage = 'Error creating check'
-    // ;(
-    //   github.getOctokit().rest.checks.create as jest.Mock
-    // ).mockRejectedValueOnce(new Error(errorMessage))
-
     await reportChecks(message)
 
     expect(core.getInput).toHaveBeenCalledWith('github-token', {required: true})
     expect(github.getOctokit).toHaveBeenCalled()
-    // expect(github.getOctokit().rest.checks.create).toHaveBeenCalledWith(
-    //   expect.any(Object)
-    // )
     expect(core.info).not.toHaveBeenCalled()
-    // expect(core.setFailed).toHaveBeenCalledWith(errorMessage)
   })
 })

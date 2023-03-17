@@ -29,72 +29,83 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.checkMetadata = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const fs = __importStar(__nccwpck_require__(7147));
 const github = __importStar(__nccwpck_require__(5438));
 const metadata_1 = __nccwpck_require__(5708);
-async function checkMetadata(file = 'metadata.rb') {
-    /**
-     * Read metadata file
-     * Check it has:
-     * - A correct issues URL
-     * - A correct source URL (same as the HTTP clone URL)
-     * maintainer URL should be the same as is configured in the config.yaml
-     * contain one of the accepted licences
-     */
-    try {
-        core.info('Reading metadata file');
-        fs.accessSync(file, fs.constants.R_OK);
-    }
-    catch (err) {
-        core.error(`${file}: access error!`);
-    }
-    const data = (0, metadata_1.metadata)(file);
-    const maintainer = core.getInput('maintainer');
-    const maintainer_email = core.getInput('maintainer_email');
-    const license = core.getInput('license');
-    const source_url = `https://github.com/${github.context.repo.owner}/${github.context.repo.repo}`;
-    const issues_url = `${source_url}/issues`;
-    const message = {
-        name: 'Check Metadata',
-        message: 'Metadata matches',
-        conclusion: 'success',
-        comment: '',
-        summary: ['Metadata validated'],
-        title: 'Metadata validated'
-    };
-    if (data.get('maintainer_email') !== maintainer_email) {
-        message.conclusion = 'failure';
-        message.summary = message.summary.filter(s => s !== 'Metadata validated');
-        message.summary.push(`Maintainer email is not set to ${maintainer_email} (currently set to ${data.get('maintainer_email')})`);
-    }
-    if (data.get('maintainer') !== maintainer) {
-        message.conclusion = 'failure';
-        message.summary = message.summary.filter(s => s !== 'Metadata validated');
-        message.summary.push(`Maintainer is not set to ${maintainer} (currently set to ${data.get('maintainer')})`);
-    }
-    if (data.get('license') !== license) {
-        message.conclusion = 'failure';
-        message.summary = message.summary.filter(s => s !== 'Metadata validated');
-        message.summary.push(`License is not set to ${license} (currently set to ${data.get('license')})`);
-    }
-    if (data.get('source_url') !== source_url) {
-        message.conclusion = 'failure';
-        message.summary = message.summary.filter(s => s !== 'Metadata validated');
-        message.summary.push(`Source URL is not set to ${source_url} (currently set to ${data.get('source_url')})`);
-    }
-    if (data.get('issues_url') !== issues_url) {
-        message.conclusion = 'failure';
-        message.summary = message.summary.filter(s => s !== 'Metadata validated');
-        message.summary.push(`Issues URL is not set to ${issues_url} (currently set to ${data.get(issues_url)})`);
-    }
-    if (message.conclusion === 'failure') {
-        message.message = "Metadata doesn't match";
-        message.title = 'Metadata validation failed';
-    }
-    return message;
+function checkMetadata(file = 'metadata.rb') {
+    return __awaiter(this, void 0, void 0, function* () {
+        /**
+         * Read metadata file
+         * Check it has:
+         * - A correct issues URL
+         * - A correct source URL (same as the HTTP clone URL)
+         * maintainer URL should be the same as is configured in the config.yaml
+         * contain one of the accepted licences
+         */
+        try {
+            core.info('Reading metadata file');
+            fs.accessSync(file, fs.constants.R_OK);
+        }
+        catch (err) {
+            core.error(`${file}: access error!`);
+        }
+        const data = (0, metadata_1.metadata)(file);
+        const maintainer = core.getInput('maintainer');
+        const maintainer_email = core.getInput('maintainer_email');
+        const license = core.getInput('license');
+        const source_url = `https://github.com/${github.context.repo.owner}/${github.context.repo.repo}`;
+        const issues_url = `${source_url}/issues`;
+        const message = {
+            name: 'Check Metadata',
+            message: 'Metadata matches',
+            conclusion: 'success',
+            comment: '',
+            summary: ['Metadata validated'],
+            title: 'Metadata validated'
+        };
+        if (data.get('maintainer_email') !== maintainer_email) {
+            message.conclusion = 'failure';
+            message.summary = message.summary.filter(s => s !== 'Metadata validated');
+            message.summary.push(`Maintainer email is not set to ${maintainer_email} (currently set to ${data.get('maintainer_email')})`);
+        }
+        if (data.get('maintainer') !== maintainer) {
+            message.conclusion = 'failure';
+            message.summary = message.summary.filter(s => s !== 'Metadata validated');
+            message.summary.push(`Maintainer is not set to ${maintainer} (currently set to ${data.get('maintainer')})`);
+        }
+        if (data.get('license') !== license) {
+            message.conclusion = 'failure';
+            message.summary = message.summary.filter(s => s !== 'Metadata validated');
+            message.summary.push(`License is not set to ${license} (currently set to ${data.get('license')})`);
+        }
+        if (data.get('source_url') !== source_url) {
+            message.conclusion = 'failure';
+            message.summary = message.summary.filter(s => s !== 'Metadata validated');
+            message.summary.push(`Source URL is not set to ${source_url} (currently set to ${data.get('source_url')})`);
+        }
+        if (data.get('issues_url') !== issues_url) {
+            message.conclusion = 'failure';
+            message.summary = message.summary.filter(s => s !== 'Metadata validated');
+            message.summary.push(`Issues URL is not set to ${issues_url} (currently set to ${data.get('issues_url')})`);
+        }
+        if (message.conclusion === 'failure') {
+            message.message = "Metadata doesn't match";
+            message.title = 'Metadata validation failed';
+        }
+        return message;
+    });
 }
 exports.checkMetadata = checkMetadata;
 
@@ -129,20 +140,30 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const checkMetadata_1 = __nccwpck_require__(6294);
 const reportChecks_1 = __nccwpck_require__(9795);
-// import {reportPR} from './reportPR'
-async function run() {
-    try {
-        const result = await (0, checkMetadata_1.checkMetadata)();
-        await (0, reportChecks_1.reportChecks)(result);
-    }
-    catch (error) {
-        const err = error.message;
-        core.setFailed(err);
-    }
+function run() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const result = yield (0, checkMetadata_1.checkMetadata)();
+            yield (0, reportChecks_1.reportChecks)(result);
+        }
+        catch (error) {
+            const err = error.message;
+            core.setFailed(err);
+        }
+    });
 }
 run();
 
@@ -166,6 +187,7 @@ const fs_1 = __importDefault(__nccwpck_require__(7147));
  * @returns {Map}
  */
 const metadata = (file_path = 'metadata.rb') => {
+    var _a, _b, _c, _d, _e, _f;
     const data = fs_1.default.readFileSync(file_path, 'utf8');
     const metadata_structure = new Map();
     const allowed_keys = [
@@ -188,11 +210,11 @@ const metadata = (file_path = 'metadata.rb') => {
     for (const element of arr) {
         const regex = /(?<key>\w+)\s+('|")(?<value>.+)('|")/;
         const item = element.match(regex);
-        if (!item?.groups?.key || !item?.groups?.value) {
+        if (!((_a = item === null || item === void 0 ? void 0 : item.groups) === null || _a === void 0 ? void 0 : _a.key) || !((_b = item === null || item === void 0 ? void 0 : item.groups) === null || _b === void 0 ? void 0 : _b.value)) {
             throw new Error('No valid metadata found');
         }
-        const key = item?.groups?.key ?? '';
-        const value = item?.groups?.value ?? '';
+        const key = (_d = (_c = item === null || item === void 0 ? void 0 : item.groups) === null || _c === void 0 ? void 0 : _c.key) !== null && _d !== void 0 ? _d : '';
+        const value = (_f = (_e = item === null || item === void 0 ? void 0 : item.groups) === null || _e === void 0 ? void 0 : _e.value) !== null && _f !== void 0 ? _f : '';
         if (allowed_keys.includes(key)) {
             metadata_structure.set(key, value);
         }
@@ -232,21 +254,29 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.reportChecks = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
-const reportChecks = async (message) => {
+const reportChecks = (message) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
-        const result = await github
+        const result = yield github
             .getOctokit(core.getInput('github-token', { required: true }))
             .rest.checks.create({
             owner: github.context.repo.owner,
             repo: github.context.repo.repo,
             name: message.name,
-            // run_id: github.context.runId,
-            // head_sha: pr?.head.sha,
-            head_sha: github.context.payload.pull_request?.head.sha,
+            head_sha: (_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.head.sha,
             status: 'completed',
             conclusion: message.conclusion,
             output: {
@@ -260,7 +290,7 @@ const reportChecks = async (message) => {
         const err = error.message;
         core.setFailed(err);
     }
-};
+});
 exports.reportChecks = reportChecks;
 
 
@@ -2207,6 +2237,10 @@ function checkBypass(reqUrl) {
     if (!reqUrl.hostname) {
         return false;
     }
+    const reqHost = reqUrl.hostname;
+    if (isLoopbackAddress(reqHost)) {
+        return true;
+    }
     const noProxy = process.env['no_proxy'] || process.env['NO_PROXY'] || '';
     if (!noProxy) {
         return false;
@@ -2232,13 +2266,24 @@ function checkBypass(reqUrl) {
         .split(',')
         .map(x => x.trim().toUpperCase())
         .filter(x => x)) {
-        if (upperReqHosts.some(x => x === upperNoProxyItem)) {
+        if (upperNoProxyItem === '*' ||
+            upperReqHosts.some(x => x === upperNoProxyItem ||
+                x.endsWith(`.${upperNoProxyItem}`) ||
+                (upperNoProxyItem.startsWith('.') &&
+                    x.endsWith(`${upperNoProxyItem}`)))) {
             return true;
         }
     }
     return false;
 }
 exports.checkBypass = checkBypass;
+function isLoopbackAddress(host) {
+    const hostLower = host.toLowerCase();
+    return (hostLower === 'localhost' ||
+        hostLower.startsWith('127.') ||
+        hostLower.startsWith('[::1]') ||
+        hostLower.startsWith('[0:0:0:0:0:0:0:1]'));
+}
 //# sourceMappingURL=proxy.js.map
 
 /***/ }),

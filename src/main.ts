@@ -1,7 +1,6 @@
 import * as core from '@actions/core'
 import {checkMetadata} from './checkMetadata'
 import {reportChecks} from './reportChecks'
-// import {reportPR} from './reportPR'
 
 async function run(): Promise<void> {
   try {
