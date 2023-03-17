@@ -5,7 +5,7 @@ import fs from 'fs'
  * Returns the metadata without depends or supports lines
  * @returns {Map}
  */
-export function metadata(file_path = 'metadata.rb'): Map<string, string> {
+export const metadata = (file_path = 'metadata.rb'): Map<string, string> => {
   const data = fs.readFileSync(file_path, 'utf8')
   const metadata_structure = new Map<string, string>()
   const allowed_keys = [

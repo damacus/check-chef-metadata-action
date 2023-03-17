@@ -87,7 +87,7 @@ export async function checkMetadata(file = 'metadata.rb'): Promise<Message> {
 
     message.summary.push(
       `Issues URL is not set to ${issues_url} (currently set to ${data.get(
-        issues_url
+        'issues_url'
       )})`
     )
   }
@@ -96,8 +96,6 @@ export async function checkMetadata(file = 'metadata.rb'): Promise<Message> {
     message.message = "Metadata doesn't match"
     message.title = 'Metadata validation failed'
   }
-
-  core.debug(`Metadata check: ${JSON.stringify(message)}`)
 
   return message
 }

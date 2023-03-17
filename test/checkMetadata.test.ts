@@ -12,6 +12,7 @@ describe('Correct metadata', () => {
     for (const key in testEnvVars)
       process.env[key] = testEnvVars[key as keyof typeof testEnvVars]
   })
+
   it('an empty validation message', async () => {
     const message = await checkMetadata('./test/fixtures/metadata.rb')
     expect(message).toEqual({
