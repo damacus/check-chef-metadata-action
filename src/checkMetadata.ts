@@ -97,7 +97,5 @@ export async function checkMetadata(file = 'metadata.rb'): Promise<Message> {
     message.title = 'Metadata validation failed'
   }
 
-  core.debug(`Metadata check: ${JSON.stringify(message)}`)
-
   return message
 }
