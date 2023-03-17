@@ -104,6 +104,16 @@ function checkMetadata(file = 'metadata.rb') {
             message.message = "Metadata doesn't match";
             message.title = 'Metadata validation failed';
         }
+        // If the conclusion of the message is 'failure', throw an error
+        try {
+            if (message.conclusion === 'failure') {
+                throw new Error(message.summary.join(','));
+            }
+        }
+        catch (error) {
+            const err = error.message;
+            core.error(err);
+        }
         return message;
     });
 }

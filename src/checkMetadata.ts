@@ -97,6 +97,7 @@ export async function checkMetadata(file = 'metadata.rb'): Promise<Message> {
     message.title = 'Metadata validation failed'
   }
 
+  // If the conclusion of the message is 'failure', throw an error
   try {
     if (message.conclusion === 'failure') {
       throw new Error(message.summary.join(','))
