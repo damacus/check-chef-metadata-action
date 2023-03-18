@@ -1,26 +1,30 @@
-name: "Check Chef Cookbook Metadata"
-description: "A GitHub Action to check cookbook metadata is correct."
+name: 'Check Chef Cookbook Metadata'
+description: 'A GitHub Action to check cookbook metadata is correct.'
 branding:
   icon: user-check
   color: green
-author: "damacus"
+author: 'damacus'
 inputs:
   token:
-    description: "Github token"
+    description: 'Github token'
     required: true
   maintainer_email:
-    description: "Maintainer email"
+    description: 'Maintainer email'
     required: false
     default: help@sous-chefs.org
   maintainer:
-    description: "Desired name of the maintainer"
+    description: 'Desired name of the maintainer'
     required: false
     default: 'Sous Chefs'
   license:
-    description: "A SPDX licence"
+    description: 'A SPDX licence'
     required: false
     default: 'Apache-2.0'
+  file_path:
+    description: 'Path to the metadata.rb file'
+    required: false
+    default: 'metadata.rb'
 
 runs:
-  using: "node16"
-  main: "dist/index.js"
+  using: 'node16'
+  main: 'dist/index.js'
