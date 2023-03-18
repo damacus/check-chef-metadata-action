@@ -44,7 +44,7 @@ const core = __importStar(__nccwpck_require__(2186));
 const fs = __importStar(__nccwpck_require__(7147));
 const github = __importStar(__nccwpck_require__(5438));
 const metadata_1 = __nccwpck_require__(5708);
-function checkMetadata(file = 'metadata.rb') {
+function checkMetadata(file) {
     return __awaiter(this, void 0, void 0, function* () {
         /**
          * Read metadata file
@@ -55,7 +55,7 @@ function checkMetadata(file = 'metadata.rb') {
          * contain one of the accepted licences
          */
         try {
-            core.info('Reading metadata file');
+            core.info(`Reading metadata file: ${file}`);
             fs.accessSync(file, fs.constants.R_OK);
         }
         catch (err) {
@@ -166,7 +166,8 @@ const reportChecks_1 = __nccwpck_require__(9795);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const result = yield (0, checkMetadata_1.checkMetadata)();
+            const file_path = core.getInput('file_path', { required: false });
+            const result = yield (0, checkMetadata_1.checkMetadata)(file_path);
             yield (0, reportChecks_1.reportChecks)(result);
         }
         catch (error) {
@@ -196,7 +197,7 @@ const fs_1 = __importDefault(__nccwpck_require__(7147));
  * Returns the metadata without depends or supports lines
  * @returns {Map}
  */
-const metadata = (file_path = 'metadata.rb') => {
+const metadata = (file_path) => {
     var _a, _b, _c, _d, _e, _f;
     const data = fs_1.default.readFileSync(file_path, 'utf8');
     const metadata_structure = new Map();

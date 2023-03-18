@@ -12,7 +12,6 @@ name: Check action
 jobs:
   test-failure:
     runs-on: ubuntu-latest
-    continue-on-error: true
     permissions:
       actions: write
       checks: write
