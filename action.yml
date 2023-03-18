@@ -5,7 +5,7 @@ branding:
   color: green
 author: 'damacus'
 inputs:
-  token:
+  github-token:
     description: 'Github token'
     required: true
   maintainer_email:

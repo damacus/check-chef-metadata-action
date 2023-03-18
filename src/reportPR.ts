@@ -11,7 +11,7 @@ const commentGeneralOptions = async (): Promise<Issue> => {
   }
 
   return {
-    token: core.getInput('token', {required: true}),
+    token: core.getInput('github-token', {required: true}),
     owner: github.context.repo.owner,
     repo: github.context.repo.repo,
     issue_number: pullRequestId
