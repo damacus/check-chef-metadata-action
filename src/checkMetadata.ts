@@ -4,7 +4,7 @@ import * as github from '@actions/github'
 import {Message} from './messageInterface'
 import {metadata} from './metadata'
 
-export async function checkMetadata(file = 'metadata.rb'): Promise<Message> {
+export async function checkMetadata(file: fs.PathLike): Promise<Message> {
   /**
    * Read metadata file
    * Check it has:
@@ -15,7 +15,7 @@ export async function checkMetadata(file = 'metadata.rb'): Promise<Message> {
    */
 
   try {
-    core.info('Reading metadata file')
+    core.info(`Reading metadata file: ${file}`)
     fs.accessSync(file, fs.constants.R_OK)
   } catch (err) {
     core.error(`${file}: access error!`)
@@ -32,7 +32,6 @@ export async function checkMetadata(file = 'metadata.rb'): Promise<Message> {
     name: 'Check Metadata',
     message: 'Metadata matches',
     conclusion: 'success',
-    comment: '',
     summary: ['Metadata validated'],
     title: 'Metadata validated'
   }
