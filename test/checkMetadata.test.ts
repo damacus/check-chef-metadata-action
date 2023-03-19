@@ -17,7 +17,6 @@ describe('Correct metadata', () => {
     const message = await checkMetadata('./test/fixtures/metadata.rb')
     expect(message).toEqual({
       conclusion: 'success',
-      comment: '',
       name: 'Check Metadata',
       message: 'Metadata matches',
       summary: ['Metadata validated'],
@@ -31,7 +30,6 @@ describe('An incorrect maintainer', () => {
     const message = await checkMetadata('./test/fixtures/metadata.incorrect.rb')
     expect(message).toEqual({
       conclusion: 'failure',
-      comment: '',
       name: 'Check Metadata',
       message: "Metadata doesn't match",
       summary: ['Maintainer is not set to Sous Chefs (currently set to Bob)'],

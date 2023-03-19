@@ -13,32 +13,27 @@ jobs:
   test-failure:
     runs-on: ubuntu-latest
     permissions:
-      # actions: write
-      checks: write
-      # pull-requests: write
-      statuses: write
-      issues: write
+      checks: write # required for the status check
+      pull-requests: write # required for the PR comment
+      statuses: write # required for the status check
     steps:
       - uses: actions/checkout@v3
       - uses: ./
-        # continue-on-error: true
+        continue-on-error: true
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          maintainer_email: help@sous-chefs.org
           file_path: test/fixtures/metadata.incorrect.rb
 
-  # test-success:
-  #   runs-on: ubuntu-latest
-  #   permissions:
-  #     actions: write
-  #     checks: write
-  #     pull-requests: write
-  #     statuses: write
-  #     issues: write
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - uses: ./
-  #       with:
-  #         github-token: ${{ secrets.GITHUB_TOKEN }}
-  #         maintainer_email: help@sous-chefs.org
-  #         file_path: test/fixtures/metadata-action.rb
+  test-success:
+    needs: test-failure
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      pull-requests: write
+      statuses: write
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          file_path: test/fixtures/metadata-action.rb

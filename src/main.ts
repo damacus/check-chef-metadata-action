@@ -20,6 +20,7 @@ async function run(): Promise<void> {
     }
 
     // If the check failed, set the action as failed
+    // If we don't do this the action will be marked as successful
     if (result.conclusion === 'failure') {
       core.setFailed('Metadata check failed')
     }

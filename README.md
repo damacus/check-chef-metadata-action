@@ -16,24 +16,59 @@ We check for the following items:
 
 Source URL and Issues URL are not configurable.
 
+## Configuration
+
+```yaml
+  maintainer_email:
+    description: 'Maintainer email'
+    required: false
+    default: help@sous-chefs.org
+  maintainer:
+    description: 'Desired name of the maintainer'
+    required: false
+    default: 'Sous Chefs'
+  license:
+    description: 'A SPDX licence'
+    required: false
+    default: 'Apache-2.0'
+  file_path:
+    description: 'Path to the metadata.rb file'
+    required: false
+    default: 'metadata.rb'
+  report_checks:
+    description: 'Report the result as a check'
+    required: false
+    default: 'true'
+  comment_on_pr:
+    description: 'Comment on the PR with the result'
+    required: false
+    default: 'true'
+```
+
 ## Changing the defaults
 
 ```yaml
 jobs:
-  check-metadata:
+  checkmetadata:
     runs-on: ubuntu-latest
+    permissions:
+      checks: write # required for the status check
+      pull-requests: write # required for the PR comment
+      statuses: write # required for the status check
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Check Metadata
-        uses: damacus/check-chef-metadata-action
+      - uses: actions/checkout@v3
+      - uses: ./
         with:
-          maintainer_email: bots@acme.org
-          maintainer: 'Bob the great'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          maintainer_email: help@sous-chefs.org
+          file_path: test/fixtures/metadata.incorrect.rb
 ```
 
 ## Permissions
 
-- `checks:write` - To create check runs
--
+```yaml
+    permissions:
+      checks: write # required for the status check
+      pull-requests: write # required for the PR comment
+      statuses: write # required for the status check
+```

@@ -49,7 +49,6 @@ describe('reportChecks', () => {
       conclusion: 'success',
       title: 'Test Check',
       summary: ['This is a test check.'],
-      comment: 'This is a test check.',
       message: 'This is a test check.'
     }
 
@@ -64,7 +63,6 @@ describe('reportChecks', () => {
       conclusion: 'success',
       title: 'Test Check',
       summary: ['This is a test check.'],
-      comment: 'This is a test check.',
       message: 'This is a test check.'
     }
 

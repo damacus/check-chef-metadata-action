@@ -32,7 +32,6 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
     name: 'Check Metadata',
     message: 'Metadata matches',
     conclusion: 'success',
-    comment: '',
     summary: ['Metadata validated'],
     title: 'Metadata validated'
   }

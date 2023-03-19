@@ -71,7 +71,6 @@ function checkMetadata(file) {
             name: 'Check Metadata',
             message: 'Metadata matches',
             conclusion: 'success',
-            comment: '',
             summary: ['Metadata validated'],
             title: 'Metadata validated'
         };
@@ -178,6 +177,7 @@ function run() {
                 yield (0, reportPR_1.reportPR)(result);
             }
             // If the check failed, set the action as failed
+            // If we don't do this the action will be marked as successful
             if (result.conclusion === 'failure') {
                 core.setFailed('Metadata check failed');
             }
@@ -377,16 +377,18 @@ const commentGeneralOptions = () => __awaiter(void 0, void 0, void 0, function* 
 });
 const reportPR = (message) => __awaiter(void 0, void 0, void 0, function* () {
     core.info('Reporting the results of the checks to the PR');
-    core.debug(`Message: ${JSON.stringify(message)}`);
+    core.info(`Message: ${JSON.stringify(message)}`);
     const pullRequestId = github.context.issue.number;
     if (!pullRequestId) {
         throw new Error('Cannot find the PR id.');
     }
-    if (message.conclusion) {
-        yield (0, actions_replace_comment_1.deleteComment)(Object.assign(Object.assign({}, (yield commentGeneralOptions())), { body: message.title, startsWith: true }));
+    if (message.conclusion === 'success') {
+        core.info('Deleting comment');
+        yield (0, actions_replace_comment_1.deleteComment)(Object.assign(Object.assign({}, (yield commentGeneralOptions())), { body: `Metadata summary`, startsWith: true }));
         return;
     }
-    yield (0, actions_replace_comment_1.default)(Object.assign(Object.assign({}, (yield commentGeneralOptions())), { body: `${message.comment}` }));
+    core.info('Replacing the comment');
+    yield (0, actions_replace_comment_1.default)(Object.assign(Object.assign({}, (yield commentGeneralOptions())), { body: `Metadata summary\n## ${message.title}\n\n${message.summary.join('\n')}` }));
 });
 exports.reportPR = reportPR;
 
