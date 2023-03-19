@@ -32,3 +32,8 @@ jobs:
           maintainer_email: bots@acme.org
           maintainer: 'Bob the great'
 ```
+
+## Permissions
+
+- `checks:write` - To create check runs
+-

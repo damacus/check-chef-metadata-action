@@ -41,4 +41,4 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           maintainer_email: help@sous-chefs.org
-          file_path: test/fixtures/metadata.rb
+          file_path: test/fixtures/metadata-action.rb

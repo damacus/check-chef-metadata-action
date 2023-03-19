@@ -4,6 +4,8 @@ import replaceComment, {deleteComment} from '@aki77/actions-replace-comment'
 import {Issue} from './issueInterface'
 import {Message} from './messageInterface'
 
+// Report the results of the checks to the PR
+
 const commentGeneralOptions = async (): Promise<Issue> => {
   const pullRequestId = github.context.issue.number
   if (!pullRequestId) {

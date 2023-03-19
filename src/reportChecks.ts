@@ -2,6 +2,8 @@ import * as core from '@actions/core'
 import * as github from '@actions/github'
 import {Message} from './messageInterface'
 
+// Reports the results of the check through the Checks API
+
 export const reportChecks = async (message: Message): Promise<void> => {
   try {
     const result = await github
