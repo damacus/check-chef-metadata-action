@@ -21,17 +21,18 @@ const commentGeneralOptions = async (): Promise<Issue> => {
 }
 
 export const reportPR = async (message: Message): Promise<void> => {
+  core.info('Reporting the results of the checks to the PR')
+  core.debug(`Message: ${JSON.stringify(message)}`)
+
   const pullRequestId = github.context.issue.number
   if (!pullRequestId) {
     throw new Error('Cannot find the PR id.')
   }
 
-  const title = message.title
-
   if (message.conclusion) {
     await deleteComment({
       ...(await commentGeneralOptions()),
-      body: title,
+      body: message.title,
       startsWith: true
     })
     return

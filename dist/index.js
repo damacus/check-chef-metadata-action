@@ -376,13 +376,14 @@ const commentGeneralOptions = () => __awaiter(void 0, void 0, void 0, function* 
     };
 });
 const reportPR = (message) => __awaiter(void 0, void 0, void 0, function* () {
+    core.info('Reporting the results of the checks to the PR');
+    core.debug(`Message: ${JSON.stringify(message)}`);
     const pullRequestId = github.context.issue.number;
     if (!pullRequestId) {
         throw new Error('Cannot find the PR id.');
     }
-    const title = message.title;
     if (message.conclusion) {
-        yield (0, actions_replace_comment_1.deleteComment)(Object.assign(Object.assign({}, (yield commentGeneralOptions())), { body: title, startsWith: true }));
+        yield (0, actions_replace_comment_1.deleteComment)(Object.assign(Object.assign({}, (yield commentGeneralOptions())), { body: message.title, startsWith: true }));
         return;
     }
     yield (0, actions_replace_comment_1.default)(Object.assign(Object.assign({}, (yield commentGeneralOptions())), { body: `${message.comment}` }));
