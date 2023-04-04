@@ -27,3 +27,11 @@ describe('Incorrect metadata', () => {
     expect(data.get('maintainer')).toEqual('Bob')
   })
 })
+
+describe('metadata with comments', () => {
+  const data = metadata('./test/fixtures/aws.metadata.rb')
+  it('Has a name property', () => {
+    expect(data.has('name')).toEqual(true)
+    expect(data.get('name')).toEqual('aws')
+  })
+})

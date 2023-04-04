@@ -24,7 +24,11 @@ export const metadata = (file_path: fs.PathLike): Map<string, string> => {
     .toString()
     .split('\n')
     .filter((el: string): boolean => {
-      return el !== ''
+      return (
+        !/^%[wW]\b/.test(el.trim()) && // %w or %W
+        el.trim() !== '' && // not empty
+        !el.trim().startsWith('#') // not a comment
+      )
     })
 
   for (const element of arr) {
