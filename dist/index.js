@@ -210,8 +210,8 @@ const fs_1 = __importDefault(__nccwpck_require__(7147));
  * @returns {Map}
  */
 const metadata = (file_path) => {
-    var _a, _b, _c, _d, _e, _f;
-    const data = fs_1.default.readFileSync(file_path, 'utf8');
+    var _a, _b, _c, _d, _e, _f, _g, _h;
+    let fileContent;
     const metadata_structure = new Map();
     const allowed_keys = [
         'name',
@@ -224,21 +224,40 @@ const metadata = (file_path) => {
         'chef_version',
         'version'
     ];
-    const arr = data
+    try {
+        fileContent = fs_1.default.readFileSync(file_path, 'utf8');
+    }
+    catch (error) {
+        throw new Error(`Could not read metadata file: ${error}. Did you forget to checkout the file?`);
+    }
+    const arr = fileContent
         .toString()
         .split('\n')
         .filter((el) => {
-        return el !== '';
+        return (!/^%\b/.test(el.trim()) &&
+            el.trim() !== '' &&
+            !el.trim().startsWith('#'));
     });
     for (const element of arr) {
         const regex = /(?<key>\w+)\s+('|")(?<value>.+)('|")/;
         const item = element.match(regex);
-        if (!((_a = item === null || item === void 0 ? void 0 : item.groups) === null || _a === void 0 ? void 0 : _a.key) || !((_b = item === null || item === void 0 ? void 0 : item.groups) === null || _b === void 0 ? void 0 : _b.value)) {
-            throw new Error('No valid metadata found');
-        }
-        const key = (_d = (_c = item === null || item === void 0 ? void 0 : item.groups) === null || _c === void 0 ? void 0 : _c.key) !== null && _d !== void 0 ? _d : '';
-        const value = (_f = (_e = item === null || item === void 0 ? void 0 : item.groups) === null || _e === void 0 ? void 0 : _e.value) !== null && _f !== void 0 ? _f : '';
+        const key = (_b = (_a = item === null || item === void 0 ? void 0 : item.groups) === null || _a === void 0 ? void 0 : _a.key) !== null && _b !== void 0 ? _b : '';
+        const value = (_d = (_c = item === null || item === void 0 ? void 0 : item.groups) === null || _c === void 0 ? void 0 : _c.value) !== null && _d !== void 0 ? _d : '';
         if (allowed_keys.includes(key)) {
+            metadata_structure.set(key, value);
+        }
+    }
+    for (const element of arr) {
+        // Define a regular expression to match key-value pairs in the `element` string
+        const regex = /(?<key>\w+)\s+('|")(?<value>.+)('|")/;
+        // Use the regular expression to extract the key and value from the `element` string
+        const item = element.match(regex);
+        // Get the key and value from the `item` object using optional chaining and nullish coalescing operators
+        const key = (_f = (_e = item === null || item === void 0 ? void 0 : item.groups) === null || _e === void 0 ? void 0 : _e.key) !== null && _f !== void 0 ? _f : '';
+        const value = (_h = (_g = item === null || item === void 0 ? void 0 : item.groups) === null || _g === void 0 ? void 0 : _g.value) !== null && _h !== void 0 ? _h : '';
+        // Check if the `key` is included in the `allowed_keys` array
+        if (allowed_keys.includes(key)) {
+            // If the `key` is allowed, add it to the `metadata_structure` Map object
             metadata_structure.set(key, value);
         }
     }

@@ -6,7 +6,7 @@ import fs from 'fs'
  * @returns {Map}
  */
 export const metadata = (file_path: fs.PathLike): Map<string, string> => {
-  const data = fs.readFileSync(file_path, 'utf8')
+  let fileContent: string
   const metadata_structure = new Map<string, string>()
   const allowed_keys = [
     'name',
@@ -20,29 +20,48 @@ export const metadata = (file_path: fs.PathLike): Map<string, string> => {
     'version'
   ]
 
-  const arr = data
+  try {
+    fileContent = fs.readFileSync(file_path, 'utf8')
+  } catch (error) {
+    throw new Error(
+      `Could not read metadata file: ${error}. Did you forget to checkout the file?`
+    )
+  }
+
+  const arr = fileContent
     .toString()
     .split('\n')
     .filter((el: string): boolean => {
       return (
-        !/^%[wW]\b/.test(el.trim()) && // %w or %W
-        el.trim() !== '' && // not empty
-        !el.trim().startsWith('#') // not a comment
+        !/^%\b/.test(el.trim()) &&
+        el.trim() !== '' &&
+        !el.trim().startsWith('#')
       )
     })
 
   for (const element of arr) {
     const regex = /(?<key>\w+)\s+('|")(?<value>.+)('|")/
     const item = element.match(regex)
-
-    if (!item?.groups?.key || !item?.groups?.value) {
-      throw new Error('No valid metadata found')
-    }
-
     const key: string = item?.groups?.key ?? ''
     const value: string = item?.groups?.value ?? ''
 
     if (allowed_keys.includes(key)) {
+      metadata_structure.set(key, value)
+    }
+  }
+
+  for (const element of arr) {
+    // Define a regular expression to match key-value pairs in the `element` string
+    const regex = /(?<key>\w+)\s+('|")(?<value>.+)('|")/
+    // Use the regular expression to extract the key and value from the `element` string
+    const item = element.match(regex)
+    // Get the key and value from the `item` object using optional chaining and nullish coalescing operators
+    const key: string = item?.groups?.key ?? ''
+    const value: string = item?.groups?.value ?? ''
+
+    // Check if the `key` is included in the `allowed_keys` array
+    if (allowed_keys.includes(key)) {
+      // If the `key` is allowed, add it to the `metadata_structure` Map object
       metadata_structure.set(key, value)
     }
   }

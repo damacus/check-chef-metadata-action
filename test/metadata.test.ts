@@ -35,3 +35,11 @@ describe('metadata with comments', () => {
     expect(data.get('name')).toEqual('aws')
   })
 })
+
+describe('No metadata file', () => {
+  expect(() => {
+    metadata('./test/fixtures/metadata.none.rb')
+  }).toThrowError(
+    "Could not read metadata file: Error: ENOENT: no such file or directory, open './test/fixtures/metadata.none.rb'."
+  )
+})
