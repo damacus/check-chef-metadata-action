@@ -4,7 +4,7 @@ import {checkMetadata} from './checkMetadata'
 import {reportChecks} from './reportChecks'
 import {reportPR} from './reportPR'
 
-async function run(): Promise<void> {
+export async function run(): Promise<void> {
   try {
     const file_path = core.getInput('file_path', {required: false})
     const isFork = github.context.payload.pull_request?.head?.repo?.fork
