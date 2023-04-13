@@ -170,18 +170,15 @@ function run() {
         try {
             const file_path = core.getInput('file_path', { required: false });
             const isFork = (_c = (_b = (_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.head) === null || _b === void 0 ? void 0 : _b.repo) === null || _c === void 0 ? void 0 : _c.fork;
-            if (isFork) {
+            if (isFork)
                 core.warning('Unable to report checks of comment on forks.');
-            }
             const report_checks = isFork || core.getInput('report_checks', { required: false });
             const comment_on_pr = isFork || core.getInput('comment_on_pr', { required: false });
             const result = yield (0, checkMetadata_1.checkMetadata)(file_path);
-            if (report_checks) {
-                yield (0, reportChecks_1.reportChecks)(result);
-            }
-            if (comment_on_pr) {
-                yield (0, reportPR_1.reportPR)(result);
-            }
+            yield Promise.all([
+                report_checks ? (0, reportChecks_1.reportChecks)(result) : Promise.resolve(),
+                comment_on_pr ? (0, reportPR_1.reportPR)(result) : Promise.resolve()
+            ]);
             // If the check failed, set the action as failed
             // If we don't do this the action will be marked as successful
             if (result.conclusion === 'failure') {
