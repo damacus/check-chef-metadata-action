@@ -160,15 +160,21 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
+const github = __importStar(__nccwpck_require__(5438));
 const checkMetadata_1 = __nccwpck_require__(6294);
 const reportChecks_1 = __nccwpck_require__(9795);
 const reportPR_1 = __nccwpck_require__(7762);
 function run() {
+    var _a, _b, _c;
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const file_path = core.getInput('file_path', { required: false });
-            const report_checks = core.getInput('report_checks', { required: false });
-            const comment_on_pr = core.getInput('comment_on_pr', { required: false });
+            const isFork = (_c = (_b = (_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.head) === null || _b === void 0 ? void 0 : _b.repo) === null || _c === void 0 ? void 0 : _c.fork;
+            if (isFork) {
+                core.warning('Unable to report checks of comment on forks.');
+            }
+            const report_checks = isFork || core.getInput('report_checks', { required: false });
+            const comment_on_pr = isFork || core.getInput('comment_on_pr', { required: false });
             const result = yield (0, checkMetadata_1.checkMetadata)(file_path);
             if (report_checks) {
                 yield (0, reportChecks_1.reportChecks)(result);
