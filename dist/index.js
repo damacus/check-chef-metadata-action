@@ -172,9 +172,13 @@ function run() {
             const file_path = core.getInput('file_path', { required: false });
             const isFork = (_c = (_b = (_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.head) === null || _b === void 0 ? void 0 : _b.repo) === null || _c === void 0 ? void 0 : _c.fork;
             if (isFork)
-                core.warning('Unable to report checks of comment on forks.');
-            const report_checks = isFork || core.getInput('report_checks', { required: false });
-            const comment_on_pr = isFork || core.getInput('comment_on_pr', { required: false });
+                core.warning('Unable to report checks or comment on forks.');
+            const check = toBoolean(core.getInput('report_checks', { required: false }));
+            const comment = toBoolean(core.getInput('comment_on_pr', { required: false }));
+            const report_checks = isFork ? false : check;
+            core.info(`report_checks: ${report_checks}`);
+            const comment_on_pr = isFork ? false : comment;
+            core.info(`comment_on_pr: ${comment_on_pr}`);
             const result = yield (0, checkMetadata_1.checkMetadata)(file_path);
             yield Promise.all([
                 report_checks ? (0, reportChecks_1.reportChecks)(result) : Promise.resolve(),
@@ -194,6 +198,9 @@ function run() {
 }
 exports.run = run;
 run();
+function toBoolean(value) {
+    return value.toLowerCase() === 'true';
+}
 
 
 /***/ }),
@@ -389,9 +396,6 @@ const actions_replace_comment_1 = __importStar(__nccwpck_require__(94));
 // Report the results of the checks to the PR
 const commentGeneralOptions = () => __awaiter(void 0, void 0, void 0, function* () {
     const pullRequestId = github.context.issue.number;
-    if (!pullRequestId) {
-        throw new Error('Cannot find the PR id.');
-    }
     return {
         token: core.getInput('github-token', { required: true }),
         owner: github.context.repo.owner,
@@ -403,9 +407,8 @@ const reportPR = (message) => __awaiter(void 0, void 0, void 0, function* () {
     core.info('Reporting the results of the checks to the PR');
     core.info(`Message: ${JSON.stringify(message)}`);
     const pullRequestId = github.context.issue.number;
-    if (!pullRequestId) {
+    if (!pullRequestId)
         throw new Error('Cannot find the PR id.');
-    }
     if (message.conclusion === 'success') {
         core.info('Deleting comment');
         yield (0, actions_replace_comment_1.deleteComment)(Object.assign(Object.assign({}, (yield commentGeneralOptions())), { body: `Metadata summary`, startsWith: true }));

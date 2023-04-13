@@ -7,9 +7,6 @@ import {Message} from './messageInterface'
 // Report the results of the checks to the PR
 const commentGeneralOptions = async (): Promise<Issue> => {
   const pullRequestId = github.context.issue.number
-  if (!pullRequestId) {
-    throw new Error('Cannot find the PR id.')
-  }
 
   return {
     token: core.getInput('github-token', {required: true}),
@@ -24,9 +21,8 @@ export const reportPR = async (message: Message): Promise<void> => {
   core.info(`Message: ${JSON.stringify(message)}`)
 
   const pullRequestId = github.context.issue.number
-  if (!pullRequestId) {
-    throw new Error('Cannot find the PR id.')
-  }
+
+  if (!pullRequestId) throw new Error('Cannot find the PR id.')
 
   if (message.conclusion === 'success') {
     core.info('Deleting comment')
@@ -39,6 +35,7 @@ export const reportPR = async (message: Message): Promise<void> => {
   }
 
   core.info('Replacing the comment')
+
   await replaceComment({
     ...(await commentGeneralOptions()),
     body: `Metadata summary\n## ${message.title}\n\n${message.summary.join(

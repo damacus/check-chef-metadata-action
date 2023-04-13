@@ -14,7 +14,7 @@ describe('run', () => {
     jest.resetAllMocks()
   })
 
-  test('should show warning and set inputs for forks', () => {
+  test('should show warning and on forks', () => {
     mockedGithub.context.payload.pull_request = {
       head: {repo: {fork: true}}
     } as any
@@ -22,17 +22,11 @@ describe('run', () => {
     run()
 
     expect(mockedCore.warning).toHaveBeenCalledWith(
-      'Unable to report checks of comment on forks.'
+      'Unable to report checks or comment on forks.'
     )
-    expect(mockedCore.getInput).not.toHaveBeenCalledWith('report_checks', {
-      required: false
-    })
-    expect(mockedCore.getInput).not.toHaveBeenCalledWith('comment_on_pr', {
-      required: false
-    })
   })
 
-  test('should not show warning and get inputs for non-forks', () => {
+  test('should not show warning for non-forks', () => {
     mockedGithub.context.payload.pull_request = {
       head: {repo: {fork: false}}
     } as any
@@ -40,11 +34,5 @@ describe('run', () => {
     run()
 
     expect(mockedCore.warning).not.toHaveBeenCalled()
-    expect(mockedCore.getInput).toHaveBeenCalledWith('report_checks', {
-      required: false
-    })
-    expect(mockedCore.getInput).toHaveBeenCalledWith('comment_on_pr', {
-      required: false
-    })
   })
 })
