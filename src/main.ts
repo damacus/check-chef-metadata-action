@@ -8,16 +8,20 @@ export async function run(): Promise<void> {
   try {
     const file_path = core.getInput('file_path', {required: false})
     const isFork = github.context.payload.pull_request?.head?.repo?.fork
+    const isMain = github.context.ref === 'refs/heads/main'
 
     if (isFork) core.warning('Unable to report checks or comment on forks.')
+    if (isMain)
+      core.warning('Unable to report checks or comment on main branch.')
 
     const check = toBoolean(core.getInput('report_checks', {required: false}))
-    const comment = toBoolean(core.getInput('comment_on_pr', {required: false}))
+    const report_checks = !isFork && !isMain && check
 
-    const report_checks = isFork ? false : check
     core.info(`report_checks: ${report_checks}`)
 
-    const comment_on_pr = isFork ? false : comment
+    const comment = toBoolean(core.getInput('comment_on_pr', {required: false}))
+    const comment_on_pr = !isFork && !isMain && comment
+
     core.info(`comment_on_pr: ${comment_on_pr}`)
 
     const result = await checkMetadata(file_path)
