@@ -171,13 +171,16 @@ function run() {
         try {
             const file_path = core.getInput('file_path', { required: false });
             const isFork = (_c = (_b = (_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.head) === null || _b === void 0 ? void 0 : _b.repo) === null || _c === void 0 ? void 0 : _c.fork;
+            const isMain = github.context.ref === 'refs/heads/main';
             if (isFork)
                 core.warning('Unable to report checks or comment on forks.');
+            if (isMain)
+                core.warning('Unable to report checks or comment on main branch.');
             const check = toBoolean(core.getInput('report_checks', { required: false }));
-            const comment = toBoolean(core.getInput('comment_on_pr', { required: false }));
-            const report_checks = isFork ? false : check;
+            const report_checks = !isFork && !isMain && check;
             core.info(`report_checks: ${report_checks}`);
-            const comment_on_pr = isFork ? false : comment;
+            const comment = toBoolean(core.getInput('comment_on_pr', { required: false }));
+            const comment_on_pr = !isFork && !isMain && comment;
             core.info(`comment_on_pr: ${comment_on_pr}`);
             const result = yield (0, checkMetadata_1.checkMetadata)(file_path);
             yield Promise.all([
