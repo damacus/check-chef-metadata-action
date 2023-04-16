@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       checks: write # required for the status check
-      pull-requests: write # required for the PR comment
+      pull-requests: write # required for the PR comment ### AND SOMETHING ELSE TODO: find what the hell this does
       statuses: write # required for the status check
     steps:
       - uses: actions/checkout@v3
@@ -23,6 +23,8 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           file_path: test/fixtures/metadata.incorrect.rb
+          report_checks: true
+          comment_on_pr: true
 
   test-success:
     needs: test-failure

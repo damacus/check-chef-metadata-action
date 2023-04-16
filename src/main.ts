@@ -9,13 +9,16 @@ export async function run(): Promise<void> {
     const file_path = core.getInput('file_path', {required: false})
     const isFork = github.context.payload.pull_request?.head?.repo?.fork
 
-    if (isFork) core.warning('Unable to report checks of comment on forks.')
+    if (isFork) core.warning('Unable to report checks or comment on forks.')
 
-    const report_checks =
-      isFork || core.getInput('report_checks', {required: false})
+    const check = toBoolean(core.getInput('report_checks', {required: false}))
+    const comment = toBoolean(core.getInput('comment_on_pr', {required: false}))
 
-    const comment_on_pr =
-      isFork || core.getInput('comment_on_pr', {required: false})
+    const report_checks = isFork ? false : check
+    core.info(`report_checks: ${report_checks}`)
+
+    const comment_on_pr = isFork ? false : comment
+    core.info(`comment_on_pr: ${comment_on_pr}`)
 
     const result = await checkMetadata(file_path)
 
@@ -36,3 +39,7 @@ export async function run(): Promise<void> {
 }
 
 run()
+
+function toBoolean(value: string): boolean {
+  return value.toLowerCase() === 'true'
+}

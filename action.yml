@@ -32,7 +32,6 @@ inputs:
     description: 'Comment on the PR with the result'
     required: false
     default: 'true'
-
 runs:
   using: 'node16'
   main: 'dist/index.js'
