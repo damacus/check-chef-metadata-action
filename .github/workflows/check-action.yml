@@ -25,6 +25,8 @@ jobs:
           file_path: test/fixtures/metadata.incorrect.rb
           report_checks: true
           comment_on_pr: true
+        env:
+          ACTIONS_STEP_DEBUG: true
 
   test-success:
     needs: test-failure
@@ -39,3 +41,5 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           file_path: test/fixtures/metadata-action.rb
+        env:
+          ACTIONS_STEP_DEBUG: true

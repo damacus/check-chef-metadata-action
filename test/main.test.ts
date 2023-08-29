@@ -22,7 +22,7 @@ describe('run', () => {
     run()
 
     expect(mockedCore.warning).toHaveBeenCalledWith(
-      'Unable to report checks or comment on forks.'
+      'Unable to report checks or comment on forks or the main branch.'
     )
   })
 

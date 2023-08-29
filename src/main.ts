@@ -5,25 +5,34 @@ import {reportChecks} from './reportChecks'
 import {reportPR} from './reportPR'
 
 export async function run(): Promise<void> {
+  //  Exit early if the action is running on a fork or the main branch
   try {
-    const file_path = core.getInput('file_path', {required: false})
     const isFork = github.context.payload.pull_request?.head?.repo?.fork
     const isMain = github.context.ref === 'refs/heads/main'
 
-    if (isFork) core.warning('Unable to report checks or comment on forks.')
-    if (isMain)
-      core.warning('Unable to report checks or comment on main branch.')
+    if (isFork || !isMain) {
+      core.error(
+        'Unable to report checks or comment on forks or the main branch.'
+      )
+      core.notice(`isMain: ${isMain}`)
+      core.notice(`isFork: ${isFork}`)
+    }
+  } catch (error: unknown) {
+    const err = (error as Error).message
+    core.setFailed(err)
+  }
 
+  try {
+    const file_path = core.getInput('file_path', {required: false})
     const check = toBoolean(core.getInput('report_checks', {required: false}))
-    const report_checks = !isFork && !isMain && check
+    const report_checks = check
 
-    core.info(`report_checks: ${report_checks}`)
+    core.notice(`report_checks: ${report_checks}`)
 
-    const comment = toBoolean(core.getInput('comment_on_pr', {required: false}))
-    const comment_on_pr = !isFork && !isMain && comment
-
-    core.info(`comment_on_pr: ${comment_on_pr}`)
-
+    const comment_on_pr = toBoolean(
+      core.getInput('comment_on_pr', {required: false})
+    )
+    core.notice(`comment_on_pr: ${comment_on_pr}`)
     const result = await checkMetadata(file_path)
 
     await Promise.all([
