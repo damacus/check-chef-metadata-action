@@ -1,7 +1,7 @@
 import * as core from '@actions/core'
 import * as fs from 'fs'
 import * as github from '@actions/github'
-import {Message} from './messageInterface'
+import {Message, Conclusion} from './messageInterface'
 import {metadata} from './metadata'
 
 export async function checkMetadata(file: fs.PathLike): Promise<Message> {
@@ -31,7 +31,7 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
   const message = {
     name: 'Check Metadata',
     message: 'Metadata matches',
-    conclusion: 'success',
+    conclusion: 'success' as Conclusion,
     summary: ['Metadata validated'],
     title: 'Metadata validated'
   }
