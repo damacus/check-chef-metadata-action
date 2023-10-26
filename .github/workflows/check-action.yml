@@ -17,7 +17,7 @@ jobs:
       pull-requests: write # required for the PR comment ### AND SOMETHING ELSE TODO: find what the hell this does
       statuses: write # required for the status check
     steps:
-      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
       - uses: ./
         continue-on-error: true
         with:
@@ -34,7 +34,7 @@ jobs:
       pull-requests: write
       statuses: write
     steps:
-      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
       - uses: ./
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
