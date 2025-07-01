@@ -44,6 +44,40 @@ const core = __importStar(__nccwpck_require__(2186));
 const fs = __importStar(__nccwpck_require__(7147));
 const github = __importStar(__nccwpck_require__(5438));
 const metadata_1 = __nccwpck_require__(5708);
+/**
+ * Validates email format using a basic regex pattern
+ */
+function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+/**
+ * Validates SPDX license identifier format
+ * This is a basic validation - for production, consider using the official SPDX license list
+ */
+function isValidSPDXLicense(license) {
+    // Basic SPDX license format validation
+    // Should be alphanumeric with hyphens, dots, and plus signs
+    const spdxRegex = /^[A-Za-z0-9][A-Za-z0-9.-]*[A-Za-z0-9]$|^[A-Za-z0-9]$/;
+    return spdxRegex.test(license) && license.length > 0;
+}
+/**
+ * Common SPDX license identifiers for additional validation
+ */
+const COMMON_SPDX_LICENSES = [
+    'Apache-2.0',
+    'MIT',
+    'GPL-2.0',
+    'GPL-3.0',
+    'BSD-2-Clause',
+    'BSD-3-Clause',
+    'ISC',
+    'MPL-2.0',
+    'LGPL-2.1',
+    'LGPL-3.0',
+    'CC0-1.0',
+    'Unlicense'
+];
 function checkMetadata(file) {
     return __awaiter(this, void 0, void 0, function* () {
         /**
@@ -65,6 +99,13 @@ function checkMetadata(file) {
         const maintainer = core.getInput('maintainer');
         const maintainer_email = core.getInput('maintainer_email');
         const license = core.getInput('license');
+        // Validate inputs
+        if (maintainer_email && !isValidEmail(maintainer_email)) {
+            throw new Error(`Invalid email format for maintainer_email: ${maintainer_email}`);
+        }
+        if (license && !isValidSPDXLicense(license)) {
+            core.warning(`License '${license}' may not be a valid SPDX identifier. Common licenses: ${COMMON_SPDX_LICENSES.join(', ')}`);
+        }
         const source_url = `https://github.com/${github.context.repo.owner}/${github.context.repo.repo}`;
         const issues_url = `${source_url}/issues`;
         const message = {
