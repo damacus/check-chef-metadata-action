@@ -1,5 +1,5 @@
 {
-  "name": "typescript-action",
+  "name": "check-chef-metadata-action",
   "version": "0.0.1",
   "private": false,
   "description": "Check Chef metadata",
@@ -15,7 +15,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/actions/typescript-action.git"
+    "url": "git+https://github.com/damacus/check-chef-metadata-action.git"
   },
   "keywords": [
     "actions",
