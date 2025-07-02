@@ -44,6 +44,40 @@ const core = __importStar(__nccwpck_require__(7484));
 const fs = __importStar(__nccwpck_require__(9896));
 const github = __importStar(__nccwpck_require__(3228));
 const metadata_1 = __nccwpck_require__(51);
+/**
+ * Validates email format using a basic regex pattern
+ */
+function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+/**
+ * Validates SPDX license identifier format
+ * This is a basic validation - for production, consider using the official SPDX license list
+ */
+function isValidSPDXLicense(license) {
+    // Basic SPDX license format validation
+    // Should be alphanumeric with hyphens, dots, and plus signs
+    const spdxRegex = /^[A-Za-z0-9][A-Za-z0-9.-]*[A-Za-z0-9]$|^[A-Za-z0-9]$/;
+    return spdxRegex.test(license) && license.length > 0;
+}
+/**
+ * Common SPDX license identifiers for additional validation
+ */
+const COMMON_SPDX_LICENSES = [
+    'Apache-2.0',
+    'MIT',
+    'GPL-2.0',
+    'GPL-3.0',
+    'BSD-2-Clause',
+    'BSD-3-Clause',
+    'ISC',
+    'MPL-2.0',
+    'LGPL-2.1',
+    'LGPL-3.0',
+    'CC0-1.0',
+    'Unlicense'
+];
 function checkMetadata(file) {
     return __awaiter(this, void 0, void 0, function* () {
         /**
