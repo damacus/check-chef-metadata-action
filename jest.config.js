@@ -5,5 +5,12 @@ module.exports = {
   transform: {
     '^.+\\.ts$': 'ts-jest'
   },
+  testEnvironment: 'node',
+  // Setup automatic mocking for GitHub Actions modules
+  setupFiles: ['<rootDir>/test/setup-jest.js'],
+  // Don't transform node_modules except for specific packages
+  transformIgnorePatterns: [
+    'node_modules/(?!(@actions|@octokit|@aki77)/.)'
+  ],
   verbose: true
 }
