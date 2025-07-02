@@ -40,24 +40,13 @@ export const metadata = (file_path: fs.PathLike): Map<string, string> => {
     })
 
   for (const element of arr) {
-    const regex = /(?<key>\w+)\s+('|")(?<value>.+)('|")/
-    const item = element.match(regex)
-    const key: string = item?.groups?.key ?? ''
-    const value: string = item?.groups?.value ?? ''
-
-    if (allowed_keys.includes(key)) {
-      metadata_structure.set(key, value)
-    }
-  }
-
-  for (const element of arr) {
     // Define a regular expression to match key-value pairs in the `element` string
-    const regex = /(?<key>\w+)\s+('|")(?<value>.+)('|")/
+    const regex = /(\w+)\s+('|")(.*?)('|")/
     // Use the regular expression to extract the key and value from the `element` string
     const item = element.match(regex)
-    // Get the key and value from the `item` object using optional chaining and nullish coalescing operators
-    const key: string = item?.groups?.key ?? ''
-    const value: string = item?.groups?.value ?? ''
+    // Get the key and value from the `item` array using array indexing and nullish coalescing operators
+    const key: string = item ? item[1] : ''
+    const value: string = item ? item[3] : ''
 
     // Check if the `key` is included in the `allowed_keys` array
     if (allowed_keys.includes(key)) {
