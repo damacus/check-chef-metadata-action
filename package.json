@@ -26,7 +26,7 @@
   "license": "MIT",
   "dependencies": {
     "@actions/core": "^1.11.1",
-    "@actions/github": "^6.0.1",
+    "@actions/github": "^8.0.0",
     "@aki77/actions-replace-comment": "^0.6.2",
     "markdown-table": "^3.0.4"
   },
