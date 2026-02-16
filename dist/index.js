@@ -127,7 +127,8 @@ function checkMetadata(file) {
                     field,
                     expected,
                     actual: actual || 'MISSING',
-                    line
+                    line,
+                    path: file.toString()
                 });
                 const errorMsg = `${field} is not set to ${expected} (currently set to ${actual || 'MISSING'})`;
                 message.summary.push(errorMsg);
@@ -158,7 +159,8 @@ function checkMetadata(file) {
                     field: 'source_url',
                     expected: 'HTTP 200',
                     actual: 'UNREACHABLE',
-                    line
+                    line,
+                    path: file.toString()
                 });
                 core.error(errorMsg, {
                     file: file.toString(),
@@ -179,7 +181,8 @@ function checkMetadata(file) {
                     field: 'issues_url',
                     expected: 'HTTP 200',
                     actual: 'UNREACHABLE',
-                    line
+                    line,
+                    path: file.toString()
                 });
                 core.error(errorMsg, {
                     file: file.toString(),
@@ -205,7 +208,8 @@ function checkMetadata(file) {
                     field,
                     expected: 'Field to exist',
                     actual: 'MISSING',
-                    line: undefined
+                    line: undefined,
+                    path: file.toString()
                 });
                 core.error(errorMsg, { file: file.toString(), title: `Missing ${field}` });
             }
@@ -222,7 +226,8 @@ function checkMetadata(file) {
                 field: 'version',
                 expected: 'SemVer string',
                 actual: version,
-                line
+                line,
+                path: file.toString()
             });
             core.error(errorMsg, {
                 file: file.toString(),
@@ -241,7 +246,8 @@ function checkMetadata(file) {
                 field: 'chef_version',
                 expected: 'Version constraint',
                 actual: chefVersion,
-                line
+                line,
+                path: file.toString()
             });
             core.error(errorMsg, {
                 file: file.toString(),
@@ -262,7 +268,8 @@ function checkMetadata(file) {
                         field: 'supports',
                         expected: 'Valid platform/constraint',
                         actual: supports[i],
-                        line: supportsLines[i]
+                        line: supportsLines[i],
+                        path: file.toString()
                     });
                     core.error(errorMsg, {
                         file: file.toString(),
@@ -285,7 +292,8 @@ function checkMetadata(file) {
                         field: 'depends',
                         expected: 'Valid cookbook/constraint',
                         actual: depends[i],
-                        line: dependsLines[i]
+                        line: dependsLines[i],
+                        path: file.toString()
                     });
                     core.error(errorMsg, {
                         file: file.toString(),
@@ -661,7 +669,7 @@ const github = __importStar(__nccwpck_require__(3228));
 const markdown_table_1 = __nccwpck_require__(3116);
 // Reports the results of the check through the Checks API
 const reportChecks = (message) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
+    var _a, _b;
     try {
         let summary = message.summary.join('\n');
         if (message.errors && message.errors.length > 0) {
@@ -676,18 +684,27 @@ const reportChecks = (message) => __awaiter(void 0, void 0, void 0, function* ()
             ];
             summary += `\n\n${(0, markdown_table_1.markdownTable)(tableData)}`;
         }
+        const annotations = (_a = message.errors) === null || _a === void 0 ? void 0 : _a.map(err => ({
+            path: err.path || 'metadata.rb',
+            start_line: err.line || 1,
+            end_line: err.line || 1,
+            annotation_level: 'failure',
+            message: `${err.field}: expected ${err.expected}, got ${err.actual}`,
+            title: `Invalid ${err.field}`
+        }));
         const result = yield github
             .getOctokit(core.getInput('github-token', { required: true }))
             .rest.checks.create({
             owner: github.context.repo.owner,
             repo: github.context.repo.repo,
             name: message.name,
-            head_sha: (_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.head.sha,
+            head_sha: (_b = github.context.payload.pull_request) === null || _b === void 0 ? void 0 : _b.head.sha,
             status: 'completed',
             conclusion: message.conclusion,
             output: {
                 title: message.title,
-                summary
+                summary,
+                annotations: annotations && annotations.length > 0 ? annotations : undefined
             }
         });
         core.info(JSON.stringify(result));
@@ -748,6 +765,9 @@ const markdown_table_1 = __nccwpck_require__(3116);
 // Report the results of the checks to the PR
 const commentGeneralOptions = () => __awaiter(void 0, void 0, void 0, function* () {
     const pullRequestId = github.context.issue.number;
+    core.info(`PR ID: ${pullRequestId}`);
+    core.info(`Owner: ${github.context.repo.owner}`);
+    core.info(`Repo: ${github.context.repo.repo}`);
     return {
         token: core.getInput('github-token', { required: true }),
         owner: github.context.repo.owner,
@@ -763,8 +783,10 @@ const reportPR = (messages) => __awaiter(void 0, void 0, void 0, function* () {
     const messageList = Array.isArray(messages) ? messages : [messages];
     core.info('Reporting the results of the checks to the PR');
     const pullRequestId = github.context.issue.number;
-    if (!pullRequestId)
-        throw new Error('Cannot find the PR id.');
+    if (!pullRequestId) {
+        core.info('No PR ID found, skipping PR comment');
+        return;
+    }
     const failures = messageList.filter(m => m.conclusion === 'failure');
     if (failures.length === 0) {
         core.info('Deleting comment as all checks passed');
@@ -789,7 +811,15 @@ const reportPR = (messages) => __awaiter(void 0, void 0, void 0, function* () {
         }
         body += '---\n';
     }
-    yield (0, actions_replace_comment_1.default)(Object.assign(Object.assign({}, (yield commentGeneralOptions())), { body }));
+    try {
+        const options = yield commentGeneralOptions();
+        core.info(`replaceComment options: ${JSON.stringify(options)}`);
+        const result = yield (0, actions_replace_comment_1.default)(Object.assign(Object.assign({}, options), { body }));
+        core.info(`replaceComment result: ${JSON.stringify(result)}`);
+    }
+    catch (error) {
+        core.error(`Error in replaceComment: ${error.message}`);
+    }
 });
 exports.reportPR = reportPR;
 

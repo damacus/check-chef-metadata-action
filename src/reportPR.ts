@@ -9,6 +9,10 @@ import {Message} from './messageInterface'
 const commentGeneralOptions = async (): Promise<Issue> => {
   const pullRequestId = github.context.issue.number
 
+  core.info(`PR ID: ${pullRequestId}`)
+  core.info(`Owner: ${github.context.repo.owner}`)
+  core.info(`Repo: ${github.context.repo.repo}`)
+
   return {
     token: core.getInput('github-token', {required: true}),
     owner: github.context.repo.owner,
@@ -29,7 +33,10 @@ export const reportPR = async (
   core.info('Reporting the results of the checks to the PR')
 
   const pullRequestId = github.context.issue.number
-  if (!pullRequestId) throw new Error('Cannot find the PR id.')
+  if (!pullRequestId) {
+    core.info('No PR ID found, skipping PR comment')
+    return
+  }
 
   const failures = messageList.filter(m => m.conclusion === 'failure')
 
@@ -65,8 +72,15 @@ export const reportPR = async (
     body += '---\n'
   }
 
-  await replaceComment({
-    ...(await commentGeneralOptions()),
-    body
-  })
+  try {
+    const options = await commentGeneralOptions()
+    core.info(`replaceComment options: ${JSON.stringify(options)}`)
+    const result = await replaceComment({
+      ...options,
+      body
+    })
+    core.info(`replaceComment result: ${JSON.stringify(result)}`)
+  } catch (error) {
+    core.error(`Error in replaceComment: ${(error as Error).message}`)
+  }
 }

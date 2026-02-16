@@ -3,6 +3,7 @@ export interface ValidationError {
   expected: string
   actual: string
   line?: number
+  path?: string
 }
 
 export interface Message {

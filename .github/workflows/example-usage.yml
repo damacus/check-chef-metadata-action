@@ -8,7 +8,8 @@ on:
 
 jobs:
   # Example 1: Basic usage with defaults
-  # Points to a valid Sous Chefs cookbook fixture
+  # Note: This usually expects metadata.rb in the root.
+  # For this repo, we point it to a valid fixture.
   check-metadata-default:
     runs-on: ubuntu-latest
     permissions:
@@ -26,7 +27,7 @@ jobs:
           file_path: 'test/fixtures/metadata-action.rb'
 
   # Example 2: Custom configuration
-  # Points to a fixture and provides matching expectations
+  # This one is intended to fail to show the reporting.
   check-metadata-custom:
     runs-on: ubuntu-latest
     permissions:
@@ -41,9 +42,9 @@ jobs:
         uses: ./
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          maintainer: 'Sous Chefs'
-          maintainer_email: 'help@sous-chefs.org'
-          license: 'Apache-2.0'
+          maintainer: 'Custom Maintainer'
+          maintainer_email: 'custom@example.com'
+          license: 'MIT'
           file_path: 'test/fixtures/metadata.rb'
           report_checks: true
           comment_on_pr: true

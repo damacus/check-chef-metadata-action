@@ -110,7 +110,8 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
         field,
         expected,
         actual: actual || 'MISSING',
-        line
+        line,
+        path: file.toString()
       })
 
       const errorMsg = `${field} is not set to ${expected} (currently set to ${
@@ -151,7 +152,8 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
         field: 'source_url',
         expected: 'HTTP 200',
         actual: 'UNREACHABLE',
-        line
+        line,
+        path: file.toString()
       })
       core.error(errorMsg, {
         file: file.toString(),
@@ -173,7 +175,8 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
         field: 'issues_url',
         expected: 'HTTP 200',
         actual: 'UNREACHABLE',
-        line
+        line,
+        path: file.toString()
       })
       core.error(errorMsg, {
         file: file.toString(),
@@ -202,7 +205,8 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
         field,
         expected: 'Field to exist',
         actual: 'MISSING',
-        line: undefined
+        line: undefined,
+        path: file.toString()
       })
       core.error(errorMsg, {file: file.toString(), title: `Missing ${field}`})
     }
@@ -221,7 +225,8 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
       field: 'version',
       expected: 'SemVer string',
       actual: version,
-      line
+      line,
+      path: file.toString()
     })
     core.error(errorMsg, {
       file: file.toString(),
@@ -241,7 +246,8 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
       field: 'chef_version',
       expected: 'Version constraint',
       actual: chefVersion,
-      line
+      line,
+      path: file.toString()
     })
     core.error(errorMsg, {
       file: file.toString(),
@@ -263,7 +269,8 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
           field: 'supports',
           expected: 'Valid platform/constraint',
           actual: supports[i],
-          line: supportsLines[i]
+          line: supportsLines[i],
+          path: file.toString()
         })
         core.error(errorMsg, {
           file: file.toString(),
@@ -287,7 +294,8 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
           field: 'depends',
           expected: 'Valid cookbook/constraint',
           actual: depends[i],
-          line: dependsLines[i]
+          line: dependsLines[i],
+          path: file.toString()
         })
         core.error(errorMsg, {
           file: file.toString(),
