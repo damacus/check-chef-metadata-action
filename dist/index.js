@@ -765,9 +765,6 @@ const markdown_table_1 = __nccwpck_require__(3116);
 // Report the results of the checks to the PR
 const commentGeneralOptions = () => __awaiter(void 0, void 0, void 0, function* () {
     const pullRequestId = github.context.issue.number;
-    core.info(`PR ID: ${pullRequestId}`);
-    core.info(`Owner: ${github.context.repo.owner}`);
-    core.info(`Repo: ${github.context.repo.repo}`);
     return {
         token: core.getInput('github-token', { required: true }),
         owner: github.context.repo.owner,
@@ -787,14 +784,17 @@ const reportPR = (messages) => __awaiter(void 0, void 0, void 0, function* () {
         core.info('No PR ID found, skipping PR comment');
         return;
     }
+    // Use job name to avoid race conditions between parallel jobs in the same PR
+    const jobName = github.context.job;
+    const commentIdentifier = `Metadata summary [${jobName}]`;
     const failures = messageList.filter(m => m.conclusion === 'failure');
     if (failures.length === 0) {
-        core.info('Deleting comment as all checks passed');
-        yield (0, actions_replace_comment_1.deleteComment)(Object.assign(Object.assign({}, (yield commentGeneralOptions())), { body: `Metadata summary`, startsWith: true }));
+        core.info(`Deleting comment for ${jobName} as all checks passed`);
+        yield (0, actions_replace_comment_1.deleteComment)(Object.assign(Object.assign({}, (yield commentGeneralOptions())), { body: commentIdentifier, startsWith: true }));
         return;
     }
-    core.info('Replacing the comment with failures');
-    let body = `Metadata summary\n# Metadata Validation Results\n\nFound ${failures.length} cookbook(s) with validation errors.\n\n`;
+    core.info(`Replacing the comment for ${jobName} with failures`);
+    let body = `${commentIdentifier}\n# Metadata Validation Results for ${jobName}\n\nFound ${failures.length} cookbook(s) with validation errors.\n\n`;
     for (const failure of failures) {
         body += `## ${failure.name}\n${failure.summary.join('\n')}\n`;
         if (failure.errors && failure.errors.length > 0) {
@@ -813,12 +813,11 @@ const reportPR = (messages) => __awaiter(void 0, void 0, void 0, function* () {
     }
     try {
         const options = yield commentGeneralOptions();
-        core.info(`replaceComment options: ${JSON.stringify(options)}`);
-        const result = yield (0, actions_replace_comment_1.default)(Object.assign(Object.assign({}, options), { body }));
-        core.info(`replaceComment result: ${JSON.stringify(result)}`);
+        yield (0, actions_replace_comment_1.default)(Object.assign(Object.assign({}, options), { body }));
+        core.info(`replaceComment successful for ${jobName}`);
     }
     catch (error) {
-        core.error(`Error in replaceComment: ${error.message}`);
+        core.error(`Error in replaceComment for ${jobName}: ${error.message}`);
     }
 });
 exports.reportPR = reportPR;

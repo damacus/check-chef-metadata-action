@@ -9,10 +9,6 @@ import {Message} from './messageInterface'
 const commentGeneralOptions = async (): Promise<Issue> => {
   const pullRequestId = github.context.issue.number
 
-  core.info(`PR ID: ${pullRequestId}`)
-  core.info(`Owner: ${github.context.repo.owner}`)
-  core.info(`Repo: ${github.context.repo.repo}`)
-
   return {
     token: core.getInput('github-token', {required: true}),
     owner: github.context.repo.owner,
@@ -38,21 +34,25 @@ export const reportPR = async (
     return
   }
 
+  // Use job name to avoid race conditions between parallel jobs in the same PR
+  const jobName = github.context.job
+  const commentIdentifier = `Metadata summary [${jobName}]`
+
   const failures = messageList.filter(m => m.conclusion === 'failure')
 
   if (failures.length === 0) {
-    core.info('Deleting comment as all checks passed')
+    core.info(`Deleting comment for ${jobName} as all checks passed`)
     await deleteComment({
       ...(await commentGeneralOptions()),
-      body: `Metadata summary`,
+      body: commentIdentifier,
       startsWith: true
     })
     return
   }
 
-  core.info('Replacing the comment with failures')
+  core.info(`Replacing the comment for ${jobName} with failures`)
 
-  let body = `Metadata summary\n# Metadata Validation Results\n\nFound ${failures.length} cookbook(s) with validation errors.\n\n`
+  let body = `${commentIdentifier}\n# Metadata Validation Results for ${jobName}\n\nFound ${failures.length} cookbook(s) with validation errors.\n\n`
 
   for (const failure of failures) {
     body += `## ${failure.name}\n${failure.summary.join('\n')}\n`
@@ -74,13 +74,14 @@ export const reportPR = async (
 
   try {
     const options = await commentGeneralOptions()
-    core.info(`replaceComment options: ${JSON.stringify(options)}`)
-    const result = await replaceComment({
+    await replaceComment({
       ...options,
       body
     })
-    core.info(`replaceComment result: ${JSON.stringify(result)}`)
+    core.info(`replaceComment successful for ${jobName}`)
   } catch (error) {
-    core.error(`Error in replaceComment: ${(error as Error).message}`)
+    core.error(
+      `Error in replaceComment for ${jobName}: ${(error as Error).message}`
+    )
   }
 }
