@@ -52,16 +52,9 @@ export async function run(): Promise<void> {
 
       const result = await checkMetadata(file)
 
-      // Use relative path in check name if multiple files are found
-      if (files.length > 1) {
-        result.name = `${result.name} - ${relativePath}`
-        result.title = `Validation for ${relativePath}`
-      }
-
-      // Report check run for this individual cookbook
-      if (report_checks) {
-        await reportChecks(result)
-      }
+      // Enhance result name/title with relative path
+      result.name = relativePath
+      result.title = `Validation for ${relativePath}`
 
       results.push(result)
 
@@ -70,16 +63,17 @@ export async function run(): Promise<void> {
       }
     }
 
-    // Report aggregated results to PR
-    if (comment_on_pr) {
-      await reportPR(results)
-    }
+    // Consolidated reporting
+    await Promise.all([
+      report_checks ? reportChecks(results) : Promise.resolve(),
+      comment_on_pr ? reportPR(results) : Promise.resolve()
+    ])
 
     // Set Action Outputs
     const cookbookOutputs = results.map(r => ({
       name: r.rawMetadata?.name,
       version: r.rawMetadata?.version,
-      path: r.name.includes(' - ') ? r.name.split(' - ')[1] : 'metadata.rb'
+      path: r.name
     }))
 
     core.setOutput('cookbooks', JSON.stringify(cookbookOutputs))

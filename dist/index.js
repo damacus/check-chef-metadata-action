@@ -130,13 +130,13 @@ function checkMetadata(file) {
                     line,
                     path: file.toString()
                 });
-                const errorMsg = `${field} is not set to ${expected} (currently set to ${actual || 'MISSING'})`;
+                const errorMsg = `${field}: expected '${expected}', got '${actual || 'MISSING'}'`;
                 message.summary.push(errorMsg);
-                // Emit annotation
+                // Emit annotation (Rubocop style)
                 core.error(errorMsg, {
                     file: file.toString(),
                     startLine: line,
-                    title: `Invalid ${field}`
+                    title: `Cookbook Metadata: ${field}`
                 });
             }
         };
@@ -153,7 +153,7 @@ function checkMetadata(file) {
             if (!isAccessible) {
                 message.conclusion = 'failure';
                 const line = lines.get('source_url');
-                const errorMsg = `source_url '${actualSourceUrl}' is not accessible`;
+                const errorMsg = `source_url: '${actualSourceUrl}' is not accessible`;
                 message.summary.push(errorMsg);
                 (_a = message.errors) === null || _a === void 0 ? void 0 : _a.push({
                     field: 'source_url',
@@ -165,7 +165,7 @@ function checkMetadata(file) {
                 core.error(errorMsg, {
                     file: file.toString(),
                     startLine: line,
-                    title: 'Unreachable Source URL'
+                    title: 'Cookbook Metadata: Reachability'
                 });
             }
         }
@@ -175,7 +175,7 @@ function checkMetadata(file) {
             if (!isAccessible) {
                 message.conclusion = 'failure';
                 const line = lines.get('issues_url');
-                const errorMsg = `issues_url '${actualIssuesUrl}' is not accessible`;
+                const errorMsg = `issues_url: '${actualIssuesUrl}' is not accessible`;
                 message.summary.push(errorMsg);
                 (_b = message.errors) === null || _b === void 0 ? void 0 : _b.push({
                     field: 'issues_url',
@@ -187,7 +187,7 @@ function checkMetadata(file) {
                 core.error(errorMsg, {
                     file: file.toString(),
                     startLine: line,
-                    title: 'Unreachable Issues URL'
+                    title: 'Cookbook Metadata: Reachability'
                 });
             }
         }
@@ -202,7 +202,7 @@ function checkMetadata(file) {
             const value = data.get(field);
             if (!value || (Array.isArray(value) && value.length === 0)) {
                 message.conclusion = 'failure';
-                const errorMsg = `${field} field is missing from metadata.rb`;
+                const errorMsg = `${field}: field is missing from metadata.rb`;
                 message.summary.push(errorMsg);
                 (_c = message.errors) === null || _c === void 0 ? void 0 : _c.push({
                     field,
@@ -211,7 +211,10 @@ function checkMetadata(file) {
                     line: undefined,
                     path: file.toString()
                 });
-                core.error(errorMsg, { file: file.toString(), title: `Missing ${field}` });
+                core.error(errorMsg, {
+                    file: file.toString(),
+                    title: 'Cookbook Metadata: Mandatory Field'
+                });
             }
         }
         // 4. Format Validations (if field is present)
@@ -220,7 +223,7 @@ function checkMetadata(file) {
         if (version && !(0, metadata_1.isValidSemVer)(version)) {
             message.conclusion = 'failure';
             const line = lines.get('version');
-            const errorMsg = `version '${version}' is not a valid Semantic Version`;
+            const errorMsg = `version: '${version}' is not a valid Semantic Version`;
             message.summary.push(errorMsg);
             (_d = message.errors) === null || _d === void 0 ? void 0 : _d.push({
                 field: 'version',
@@ -232,7 +235,7 @@ function checkMetadata(file) {
             core.error(errorMsg, {
                 file: file.toString(),
                 startLine: line,
-                title: 'Invalid Version'
+                title: 'Cookbook Metadata: Format'
             });
         }
         // Chef Version
@@ -240,7 +243,7 @@ function checkMetadata(file) {
         if (chefVersion && !(0, metadata_1.isValidVersionConstraint)(chefVersion)) {
             message.conclusion = 'failure';
             const line = lines.get('chef_version');
-            const errorMsg = `chef_version '${chefVersion}' is not a valid version constraint`;
+            const errorMsg = `chef_version: '${chefVersion}' is not a valid version constraint`;
             message.summary.push(errorMsg);
             (_e = message.errors) === null || _e === void 0 ? void 0 : _e.push({
                 field: 'chef_version',
@@ -252,7 +255,7 @@ function checkMetadata(file) {
             core.error(errorMsg, {
                 file: file.toString(),
                 startLine: line,
-                title: 'Invalid Chef Version'
+                title: 'Cookbook Metadata: Format'
             });
         }
         // Supports
@@ -262,7 +265,7 @@ function checkMetadata(file) {
             for (let i = 0; i < supports.length; i++) {
                 if (!(0, metadata_1.isValidSupport)(supports[i])) {
                     message.conclusion = 'failure';
-                    const errorMsg = `supports entry ${supports[i]} is malformed`;
+                    const errorMsg = `supports: entry ${supports[i]} is malformed`;
                     message.summary.push(errorMsg);
                     (_f = message.errors) === null || _f === void 0 ? void 0 : _f.push({
                         field: 'supports',
@@ -274,7 +277,7 @@ function checkMetadata(file) {
                     core.error(errorMsg, {
                         file: file.toString(),
                         startLine: supportsLines[i],
-                        title: 'Invalid Support'
+                        title: 'Cookbook Metadata: Format'
                     });
                 }
             }
@@ -286,7 +289,7 @@ function checkMetadata(file) {
             for (let i = 0; i < depends.length; i++) {
                 if (!(0, metadata_1.isValidDepends)(depends[i])) {
                     message.conclusion = 'failure';
-                    const errorMsg = `depends entry ${depends[i]} is malformed`;
+                    const errorMsg = `depends: entry ${depends[i]} is malformed`;
                     message.summary.push(errorMsg);
                     (_g = message.errors) === null || _g === void 0 ? void 0 : _g.push({
                         field: 'depends',
@@ -298,7 +301,7 @@ function checkMetadata(file) {
                     core.error(errorMsg, {
                         file: file.toString(),
                         startLine: dependsLines[i],
-                        title: 'Invalid Dependency'
+                        title: 'Cookbook Metadata: Format'
                     });
                 }
             }
@@ -391,31 +394,26 @@ function run() {
                 const relativePath = path.relative(process.cwd(), file);
                 core.info(`Checking metadata file: ${relativePath}`);
                 const result = yield (0, checkMetadata_1.checkMetadata)(file);
-                // Use relative path in check name if multiple files are found
-                if (files.length > 1) {
-                    result.name = `${result.name} - ${relativePath}`;
-                    result.title = `Validation for ${relativePath}`;
-                }
-                // Report check run for this individual cookbook
-                if (report_checks) {
-                    yield (0, reportChecks_1.reportChecks)(result);
-                }
+                // Enhance result name/title with relative path
+                result.name = relativePath;
+                result.title = `Validation for ${relativePath}`;
                 results.push(result);
                 if (result.conclusion === 'failure') {
                     overallSuccess = false;
                 }
             }
-            // Report aggregated results to PR
-            if (comment_on_pr) {
-                yield (0, reportPR_1.reportPR)(results);
-            }
+            // Consolidated reporting
+            yield Promise.all([
+                report_checks ? (0, reportChecks_1.reportChecks)(results) : Promise.resolve(),
+                comment_on_pr ? (0, reportPR_1.reportPR)(results) : Promise.resolve()
+            ]);
             // Set Action Outputs
             const cookbookOutputs = results.map(r => {
                 var _a, _b;
                 return ({
                     name: (_a = r.rawMetadata) === null || _a === void 0 ? void 0 : _a.name,
                     version: (_b = r.rawMetadata) === null || _b === void 0 ? void 0 : _b.version,
-                    path: r.name.includes(' - ') ? r.name.split(' - ')[1] : 'metadata.rb'
+                    path: r.name
                 });
             });
             core.setOutput('cookbooks', JSON.stringify(cookbookOutputs));
@@ -667,24 +665,31 @@ exports.reportChecks = void 0;
 const core = __importStar(__nccwpck_require__(7484));
 const github = __importStar(__nccwpck_require__(3228));
 const markdown_table_1 = __nccwpck_require__(3116);
-// Reports the results of the check through the Checks API
-const reportChecks = (message) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
+// Reports the results of multiple checks through a single consolidated Checks API run
+const reportChecks = (messages) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const messageList = Array.isArray(messages) ? messages : [messages];
     try {
-        let summary = message.summary.join('\n');
-        if (message.errors && message.errors.length > 0) {
+        const failures = messageList.filter(m => m.conclusion === 'failure');
+        const overallConclusion = failures.length > 0 ? 'failure' : 'success';
+        let summary = failures.length > 0
+            ? `Found ${failures.length} cookbook(s) with validation errors.`
+            : 'All cookbooks validated successfully.';
+        const allErrors = messageList.flatMap(m => m.errors || []);
+        if (allErrors.length > 0) {
             const tableData = [
-                ['Field', 'Expected', 'Actual', 'Line'],
-                ...message.errors.map(err => [
+                ['Cookbook', 'Field', 'Expected', 'Actual', 'Line'],
+                ...messageList.flatMap(m => (m.errors || []).map(err => [
+                    m.name.includes(' - ') ? m.name.split(' - ')[1] : m.name,
                     err.field,
                     err.expected,
                     err.actual,
                     err.line ? err.line.toString() : 'N/A'
-                ])
+                ]))
             ];
             summary += `\n\n${(0, markdown_table_1.markdownTable)(tableData)}`;
         }
-        const annotations = (_a = message.errors) === null || _a === void 0 ? void 0 : _a.map(err => ({
+        const annotations = allErrors.map(err => ({
             path: err.path || 'metadata.rb',
             start_line: err.line || 1,
             end_line: err.line || 1,
@@ -697,21 +702,23 @@ const reportChecks = (message) => __awaiter(void 0, void 0, void 0, function* ()
             .rest.checks.create({
             owner: github.context.repo.owner,
             repo: github.context.repo.repo,
-            name: message.name,
-            head_sha: (_b = github.context.payload.pull_request) === null || _b === void 0 ? void 0 : _b.head.sha,
+            name: 'Metadata Validation',
+            head_sha: (_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.head.sha,
             status: 'completed',
-            conclusion: message.conclusion,
+            conclusion: overallConclusion,
             output: {
-                title: message.title,
+                title: overallConclusion === 'success'
+                    ? 'Metadata validated'
+                    : 'Metadata validation failed',
                 summary,
-                annotations: annotations && annotations.length > 0 ? annotations : undefined
+                annotations: annotations.length > 0 ? annotations.slice(0, 50) : undefined // GitHub limit is 50 per call
             }
         });
-        core.info(JSON.stringify(result));
+        core.info(`Created check run: ${result.data.id}`);
     }
     catch (error) {
         const err = error.message;
-        core.setFailed(err);
+        core.error(`Failed to create check run: ${err}`);
     }
 });
 exports.reportChecks = reportChecks;

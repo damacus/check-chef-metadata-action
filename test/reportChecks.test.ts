@@ -3,46 +3,11 @@ import * as github from '@actions/github'
 import {Message} from '../src/messageInterface'
 import {reportChecks} from '../src/reportChecks'
 
-// Mock the getOctokit function from the @actions/github package
-jest.mock('@actions/github', () => {
-  const {getOctokit} = jest.requireActual('@actions/github')
-  return {
-    getOctokit: jest.fn((token: string) => getOctokit(token)),
-    context: {
-      repo: {
-        owner: 'owner',
-        repo: 'repo'
-      },
-      payload: {
-        pull_request: {
-          head: {
-            sha: 'pull-request-head-sha'
-          }
-        }
-      }
-    }
-  }
-})
-
-// Mock the core module's functions
-jest.mock('@actions/core', () => ({
-  getInput: jest.fn(),
-  info: jest.fn(),
-  setFailed: jest.fn()
-}))
-
-// Make sure the GITHUB_TOKEN environment variable is not set
-beforeEach(() => {
-  jest.clearAllMocks()
-  Object.keys(process.env).forEach(function (key) {
-    if (key !== 'GITHUB_TOKEN' && key.startsWith('GITHUB_')) {
-      delete process.env[key]
-    }
-  })
-  process.env['GITHUB_TOKEN'] = 'my-github-token'
-})
-
 describe('reportChecks', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
   it('creates a check with the correct parameters', async () => {
     const message: Message = {
       name: 'test-check',
@@ -55,6 +20,7 @@ describe('reportChecks', () => {
     await reportChecks(message)
 
     expect(core.getInput).toHaveBeenCalledWith('github-token', {required: true})
+    expect(github.getOctokit).toHaveBeenCalled()
   })
 
   it('handles errors', async () => {
@@ -66,10 +32,15 @@ describe('reportChecks', () => {
       message: 'This is a test check.'
     }
 
+    // Force error in getOctokit
+    ;(github.getOctokit as jest.Mock).mockImplementationOnce(() => {
+      throw new Error('Octokit error')
+    })
+
     await reportChecks(message)
 
-    expect(core.getInput).toHaveBeenCalledWith('github-token', {required: true})
-    expect(github.getOctokit).toHaveBeenCalled()
-    expect(core.info).not.toHaveBeenCalled()
+    expect(core.error).toHaveBeenCalledWith(
+      expect.stringContaining('Failed to create check run: Octokit error')
+    )
   })
 })

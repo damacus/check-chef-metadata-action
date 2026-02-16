@@ -3,26 +3,41 @@ import * as github from '@actions/github'
 import {markdownTable} from 'markdown-table'
 import {Message} from './messageInterface'
 
-// Reports the results of the check through the Checks API
+// Reports the results of multiple checks through a single consolidated Checks API run
 
-export const reportChecks = async (message: Message): Promise<void> => {
+export const reportChecks = async (
+  messages: Message[] | Message
+): Promise<void> => {
+  const messageList = Array.isArray(messages) ? messages : [messages]
+
   try {
-    let summary = message.summary.join('\n')
+    const failures = messageList.filter(m => m.conclusion === 'failure')
+    const overallConclusion = failures.length > 0 ? 'failure' : 'success'
 
-    if (message.errors && message.errors.length > 0) {
+    let summary =
+      failures.length > 0
+        ? `Found ${failures.length} cookbook(s) with validation errors.`
+        : 'All cookbooks validated successfully.'
+
+    const allErrors = messageList.flatMap(m => m.errors || [])
+
+    if (allErrors.length > 0) {
       const tableData = [
-        ['Field', 'Expected', 'Actual', 'Line'],
-        ...message.errors.map(err => [
-          err.field,
-          err.expected,
-          err.actual,
-          err.line ? err.line.toString() : 'N/A'
-        ])
+        ['Cookbook', 'Field', 'Expected', 'Actual', 'Line'],
+        ...messageList.flatMap(m =>
+          (m.errors || []).map(err => [
+            m.name.includes(' - ') ? m.name.split(' - ')[1] : m.name,
+            err.field,
+            err.expected,
+            err.actual,
+            err.line ? err.line.toString() : 'N/A'
+          ])
+        )
       ]
       summary += `\n\n${markdownTable(tableData)}`
     }
 
-    const annotations = message.errors?.map(err => ({
+    const annotations = allErrors.map(err => ({
       path: err.path || 'metadata.rb',
       start_line: err.line || 1,
       end_line: err.line || 1,
@@ -36,20 +51,23 @@ export const reportChecks = async (message: Message): Promise<void> => {
       .rest.checks.create({
         owner: github.context.repo.owner,
         repo: github.context.repo.repo,
-        name: message.name,
+        name: 'Metadata Validation',
         head_sha: github.context.payload.pull_request?.head.sha,
         status: 'completed',
-        conclusion: message.conclusion,
+        conclusion: overallConclusion,
         output: {
-          title: message.title,
+          title:
+            overallConclusion === 'success'
+              ? 'Metadata validated'
+              : 'Metadata validation failed',
           summary,
           annotations:
-            annotations && annotations.length > 0 ? annotations : undefined
+            annotations.length > 0 ? annotations.slice(0, 50) : undefined // GitHub limit is 50 per call
         }
       })
-    core.info(JSON.stringify(result))
+    core.info(`Created check run: ${result.data.id}`)
   } catch (error: unknown) {
     const err = (error as Error).message
-    core.setFailed(err)
+    core.error(`Failed to create check run: ${err}`)
   }
 }

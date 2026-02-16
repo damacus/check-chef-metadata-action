@@ -114,16 +114,16 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
         path: file.toString()
       })
 
-      const errorMsg = `${field} is not set to ${expected} (currently set to ${
+      const errorMsg = `${field}: expected '${expected}', got '${
         actual || 'MISSING'
-      })`
+      }'`
       message.summary.push(errorMsg)
 
-      // Emit annotation
+      // Emit annotation (Rubocop style)
       core.error(errorMsg, {
         file: file.toString(),
         startLine: line,
-        title: `Invalid ${field}`
+        title: `Cookbook Metadata: ${field}`
       })
     }
   }
@@ -146,7 +146,7 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
     if (!isAccessible) {
       message.conclusion = 'failure'
       const line = lines.get('source_url') as number | undefined
-      const errorMsg = `source_url '${actualSourceUrl}' is not accessible`
+      const errorMsg = `source_url: '${actualSourceUrl}' is not accessible`
       message.summary.push(errorMsg)
       message.errors?.push({
         field: 'source_url',
@@ -158,7 +158,7 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
       core.error(errorMsg, {
         file: file.toString(),
         startLine: line,
-        title: 'Unreachable Source URL'
+        title: 'Cookbook Metadata: Reachability'
       })
     }
   }
@@ -169,7 +169,7 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
     if (!isAccessible) {
       message.conclusion = 'failure'
       const line = lines.get('issues_url') as number | undefined
-      const errorMsg = `issues_url '${actualIssuesUrl}' is not accessible`
+      const errorMsg = `issues_url: '${actualIssuesUrl}' is not accessible`
       message.summary.push(errorMsg)
       message.errors?.push({
         field: 'issues_url',
@@ -181,7 +181,7 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
       core.error(errorMsg, {
         file: file.toString(),
         startLine: line,
-        title: 'Unreachable Issues URL'
+        title: 'Cookbook Metadata: Reachability'
       })
     }
   }
@@ -199,7 +199,7 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
     const value = data.get(field)
     if (!value || (Array.isArray(value) && value.length === 0)) {
       message.conclusion = 'failure'
-      const errorMsg = `${field} field is missing from metadata.rb`
+      const errorMsg = `${field}: field is missing from metadata.rb`
       message.summary.push(errorMsg)
       message.errors?.push({
         field,
@@ -208,7 +208,10 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
         line: undefined,
         path: file.toString()
       })
-      core.error(errorMsg, {file: file.toString(), title: `Missing ${field}`})
+      core.error(errorMsg, {
+        file: file.toString(),
+        title: 'Cookbook Metadata: Mandatory Field'
+      })
     }
   }
 
@@ -219,7 +222,7 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
   if (version && !isValidSemVer(version)) {
     message.conclusion = 'failure'
     const line = lines.get('version') as number | undefined
-    const errorMsg = `version '${version}' is not a valid Semantic Version`
+    const errorMsg = `version: '${version}' is not a valid Semantic Version`
     message.summary.push(errorMsg)
     message.errors?.push({
       field: 'version',
@@ -231,7 +234,7 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
     core.error(errorMsg, {
       file: file.toString(),
       startLine: line,
-      title: 'Invalid Version'
+      title: 'Cookbook Metadata: Format'
     })
   }
 
@@ -240,7 +243,7 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
   if (chefVersion && !isValidVersionConstraint(chefVersion)) {
     message.conclusion = 'failure'
     const line = lines.get('chef_version') as number | undefined
-    const errorMsg = `chef_version '${chefVersion}' is not a valid version constraint`
+    const errorMsg = `chef_version: '${chefVersion}' is not a valid version constraint`
     message.summary.push(errorMsg)
     message.errors?.push({
       field: 'chef_version',
@@ -252,7 +255,7 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
     core.error(errorMsg, {
       file: file.toString(),
       startLine: line,
-      title: 'Invalid Chef Version'
+      title: 'Cookbook Metadata: Format'
     })
   }
 
@@ -263,7 +266,7 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
     for (let i = 0; i < supports.length; i++) {
       if (!isValidSupport(supports[i])) {
         message.conclusion = 'failure'
-        const errorMsg = `supports entry ${supports[i]} is malformed`
+        const errorMsg = `supports: entry ${supports[i]} is malformed`
         message.summary.push(errorMsg)
         message.errors?.push({
           field: 'supports',
@@ -275,7 +278,7 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
         core.error(errorMsg, {
           file: file.toString(),
           startLine: supportsLines[i],
-          title: 'Invalid Support'
+          title: 'Cookbook Metadata: Format'
         })
       }
     }
@@ -288,7 +291,7 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
     for (let i = 0; i < depends.length; i++) {
       if (!isValidDepends(depends[i])) {
         message.conclusion = 'failure'
-        const errorMsg = `depends entry ${depends[i]} is malformed`
+        const errorMsg = `depends: entry ${depends[i]} is malformed`
         message.summary.push(errorMsg)
         message.errors?.push({
           field: 'depends',
@@ -300,7 +303,7 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
         core.error(errorMsg, {
           file: file.toString(),
           startLine: dependsLines[i],
-          title: 'Invalid Dependency'
+          title: 'Cookbook Metadata: Format'
         })
       }
     }
