@@ -16,7 +16,7 @@ export const reportChecks = async (
 
     let summary =
       failures.length > 0
-        ? `Found ${failures.length} cookbook(s) with validation errors.`
+        ? `Found ${failures.length} cookbook(s) with validation errors.\n\n`
         : 'All cookbooks validated successfully.'
 
     const allErrors = messageList.flatMap(m => m.errors || [])
@@ -26,7 +26,7 @@ export const reportChecks = async (
         ['Cookbook', 'Field', 'Expected', 'Actual', 'Line'],
         ...messageList.flatMap(m =>
           (m.errors || []).map(err => [
-            m.name, // m.name already contains the relative path
+            m.name.includes(' - ') ? m.name.split(' - ')[1] : m.name,
             err.field,
             err.expected,
             err.actual,
@@ -34,7 +34,7 @@ export const reportChecks = async (
           ])
         )
       ]
-      summary += `\n\n${markdownTable(tableData)}`
+      summary += `${markdownTable(tableData)}`
     }
 
     const annotations = allErrors.map(err => ({
