@@ -1,4 +1,4 @@
-import {metadata, isValidSemVer, isValidVersionConstraint} from '../src/metadata'
+import {metadata, isValidSemVer, isValidVersionConstraint, isValidSupport} from '../src/metadata'
 
 describe('Java cookbook metadata', () => {
   const data = metadata('./test/fixtures/metadata.rb')
@@ -10,6 +10,13 @@ describe('Java cookbook metadata', () => {
 
   it('Does not have a depends property', () => {
     expect(data.has('depends')).toEqual(false)
+  })
+
+  it('Has supports entries', () => {
+    expect(data.has('supports')).toEqual(true)
+    const s = data.get('supports') as string[]
+    expect(Array.isArray(s)).toBe(true)
+    expect(s).toContain("'debian'")
   })
 })
 
@@ -78,5 +85,19 @@ describe('isValidVersionConstraint', () => {
     expect(isValidVersionConstraint('>> 15.3')).toBe(false)
     expect(isValidVersionConstraint('abc')).toBe(false)
     expect(isValidVersionConstraint('')).toBe(false)
+  })
+})
+
+describe('isValidSupport', () => {
+  it('identifies valid supports entries', () => {
+    expect(isValidSupport("'ubuntu'")).toBe(true)
+    expect(isValidSupport("'ubuntu', '>= 18.04'")).toBe(true)
+    expect(isValidSupport('"ubuntu", ">= 18.04"')).toBe(true)
+    expect(isValidSupport("'redhat', '>= 7.0'")).toBe(true)
+  })
+
+  it('identifies invalid supports entries', () => {
+    expect(isValidSupport('')).toBe(false)
+    expect(isValidSupport("'ubuntu', 'invalid'")).toBe(false)
   })
 })
