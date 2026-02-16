@@ -1,4 +1,4 @@
-import {metadata} from '../src/metadata'
+import {metadata, isValidSemVer} from '../src/metadata'
 
 describe('Java cookbook metadata', () => {
   const data = metadata('./test/fixtures/metadata.rb')
@@ -42,4 +42,22 @@ describe('No metadata file', () => {
   }).toThrowError(
     "Could not read metadata file: Error: ENOENT: no such file or directory, open './test/fixtures/metadata.none.rb'."
   )
+})
+
+describe('isValidSemVer', () => {
+  it('identifies valid SemVer strings', () => {
+    expect(isValidSemVer('1.2.3')).toBe(true)
+    expect(isValidSemVer('0.1.0')).toBe(true)
+    expect(isValidSemVer('10.20.30')).toBe(true)
+    expect(isValidSemVer('1.2.3-alpha.1')).toBe(true)
+    expect(isValidSemVer('1.2.3+build.1')).toBe(true)
+  })
+
+  it('identifies invalid SemVer strings', () => {
+    expect(isValidSemVer('1.2')).toBe(false)
+    expect(isValidSemVer('v1.2.3')).toBe(false)
+    expect(isValidSemVer('1.2.3.4')).toBe(false)
+    expect(isValidSemVer('abc')).toBe(false)
+    expect(isValidSemVer('')).toBe(false)
+  })
 })
