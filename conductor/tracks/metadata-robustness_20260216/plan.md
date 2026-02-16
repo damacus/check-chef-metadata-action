@@ -10,18 +10,18 @@
 - [x] Task: Add validation for the `supports` field [dc6908c]
     - [x] Write unit tests for `supports` field parsing (platform + version) in `test/metadata.test.ts`
     - [x] Implement `supports` validation logic in `src/metadata.ts`, ensuring it handles multiple entries
-- [ ] Task: Conductor - User Manual Verification 'Validation Logic Expansion' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Validation Logic Expansion' (Protocol in workflow.md)
 
 ## Phase 2: Reporting Robustness & Error Aggregation
-- [ ] Task: Implement error aggregation in the core validator
-    - [ ] Write tests to verify that multiple metadata violations return a collection of errors
-    - [ ] Update `checkMetadata` logic to continue validation after the first error and aggregate all results
-- [ ] Task: Refine Line-Level Annotation Precision
-    - [ ] Write tests for precise line detection of repeated fields (like `supports`)
-    - [ ] Update reporting logic to ensure annotations point to the exact source lines for all aggregated errors
-- [ ] Task: Enhance PR Comment Summary Table
-    - [ ] Write tests for the refined markdown table generator
-    - [ ] Update `src/reportPR.ts` to use the more descriptive and actionable table format
+- [x] Task: Implement error aggregation in the core validator [46005aa]
+    - [x] Write tests to verify that multiple metadata violations return a collection of errors
+    - [x] Update `checkMetadata` logic to continue validation after the first error and aggregate all results
+- [x] Task: Refine Line-Level Annotation Precision [46005aa]
+    - [x] Write tests for precise line detection of repeated fields (like `supports`)
+    - [x] Update reporting logic to ensure annotations point to the exact source lines for all aggregated errors
+- [x] Task: Enhance PR Comment Summary Table [46005aa]
+    - [x] Write tests for the refined markdown table generator
+    - [x] Update `src/reportPR.ts` to use the more descriptive and actionable table format
 - [ ] Task: Conductor - User Manual Verification 'Reporting Robustness & Error Aggregation' (Protocol in workflow.md)
 
 ## Phase 3: Integration & Finalization
