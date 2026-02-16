@@ -22,6 +22,15 @@ export const reportChecks = async (message: Message): Promise<void> => {
       summary += `\n\n${markdownTable(tableData)}`
     }
 
+    const annotations = message.errors?.map(err => ({
+      path: err.path || 'metadata.rb',
+      start_line: err.line || 1,
+      end_line: err.line || 1,
+      annotation_level: 'failure' as const,
+      message: `${err.field}: expected ${err.expected}, got ${err.actual}`,
+      title: `Invalid ${err.field}`
+    }))
+
     const result = await github
       .getOctokit(core.getInput('github-token', {required: true}))
       .rest.checks.create({
@@ -33,7 +42,9 @@ export const reportChecks = async (message: Message): Promise<void> => {
         conclusion: message.conclusion,
         output: {
           title: message.title,
-          summary
+          summary,
+          annotations:
+            annotations && annotations.length > 0 ? annotations : undefined
         }
       })
     core.info(JSON.stringify(result))

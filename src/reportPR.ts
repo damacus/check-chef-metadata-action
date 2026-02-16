@@ -29,23 +29,30 @@ export const reportPR = async (
   core.info('Reporting the results of the checks to the PR')
 
   const pullRequestId = github.context.issue.number
-  if (!pullRequestId) throw new Error('Cannot find the PR id.')
+  if (!pullRequestId) {
+    core.info('No PR ID found, skipping PR comment')
+    return
+  }
+
+  // Use job name to avoid race conditions between parallel jobs in the same PR
+  const jobName = github.context.job
+  const commentIdentifier = `Metadata summary [${jobName}]`
 
   const failures = messageList.filter(m => m.conclusion === 'failure')
 
   if (failures.length === 0) {
-    core.info('Deleting comment as all checks passed')
+    core.info(`Deleting comment for ${jobName} as all checks passed`)
     await deleteComment({
       ...(await commentGeneralOptions()),
-      body: `Metadata summary`,
+      body: commentIdentifier,
       startsWith: true
     })
     return
   }
 
-  core.info('Replacing the comment with failures')
+  core.info(`Replacing the comment for ${jobName} with failures`)
 
-  let body = `Metadata summary\n# Metadata Validation Results\n\nFound ${failures.length} cookbook(s) with validation errors.\n\n`
+  let body = `${commentIdentifier}\n# Metadata Validation Results for ${jobName}\n\nFound ${failures.length} cookbook(s) with validation errors.\n\n`
 
   for (const failure of failures) {
     body += `## ${failure.name}\n${failure.summary.join('\n')}\n`
@@ -65,8 +72,16 @@ export const reportPR = async (
     body += '---\n'
   }
 
-  await replaceComment({
-    ...(await commentGeneralOptions()),
-    body
-  })
+  try {
+    const options = await commentGeneralOptions()
+    await replaceComment({
+      ...options,
+      body
+    })
+    core.info(`replaceComment successful for ${jobName}`)
+  } catch (error) {
+    core.error(
+      `Error in replaceComment for ${jobName}: ${(error as Error).message}`
+    )
+  }
 }

@@ -8,20 +8,43 @@ on:
 
 jobs:
   # Example 1: Basic usage with defaults
+  # Note: This usually expects metadata.rb in the root.
+  # For this repo, we point it to a valid fixture.
   check-metadata-default:
-    uses: ./.github/workflows/check-metadata-reusable.yml
-    secrets:
-      github-token: ${{ secrets.GITHUB_TOKEN }}
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      pull-requests: write
+      statuses: write
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+      - name: Check Metadata
+        uses: ./
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          file_path: 'test/fixtures/metadata-action.rb'
 
   # Example 2: Custom configuration
+  # This one is intended to fail to show the reporting.
   check-metadata-custom:
-    uses: ./.github/workflows/check-metadata-reusable.yml
-    with:
-      maintainer: 'Custom Maintainer'
-      maintainer_email: 'custom@example.com'
-      license: 'MIT'
-      file_path: 'test/fixtures/metadata.rb'
-      report_checks: true
-      comment_on_pr: true
-    secrets:
-      github-token: ${{ secrets.GITHUB_TOKEN }}
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      pull-requests: write
+      statuses: write
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+      - name: Check Metadata
+        uses: ./
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          maintainer: 'Custom Maintainer'
+          maintainer_email: 'custom@example.com'
+          license: 'MIT'
+          file_path: 'test/fixtures/metadata.rb'
+          report_checks: true
+          comment_on_pr: true
