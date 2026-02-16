@@ -1,9 +1,9 @@
 # Implementation Plan: Metadata Enhancement & Robust Reporting
 
 ## Phase 1: Validation Logic Expansion
-- [ ] Task: Add SemVer validation for the `version` field
-    - [ ] Write unit tests for valid and invalid Semantic Versioning strings in `test/metadata.test.ts`
-    - [ ] Implement SemVer validation logic in `src/metadata.ts` using a robust regex or library
+- [x] Task: Add SemVer validation for the `version` field [ff29db7]
+    - [x] Write unit tests for valid and invalid Semantic Versioning strings in `test/metadata.test.ts`
+    - [x] Implement SemVer validation logic in `src/metadata.ts` using a robust regex or library
 - [ ] Task: Add version constraint validation for the `chef_version` field
     - [ ] Write unit tests for various `chef_version` constraint formats in `test/metadata.test.ts`
     - [ ] Implement constraint validation logic in `src/metadata.ts`
