@@ -7,9 +7,9 @@
 - [x] Task: Add version constraint validation for the `chef_version` field [4932c3b]
     - [x] Write unit tests for various `chef_version` constraint formats in `test/metadata.test.ts`
     - [x] Implement constraint validation logic in `src/metadata.ts`
-- [ ] Task: Add validation for the `supports` field
-    - [ ] Write unit tests for `supports` field parsing (platform + version) in `test/metadata.test.ts`
-    - [ ] Implement `supports` validation logic in `src/metadata.ts`, ensuring it handles multiple entries
+- [x] Task: Add validation for the `supports` field [dc6908c]
+    - [x] Write unit tests for `supports` field parsing (platform + version) in `test/metadata.test.ts`
+    - [x] Implement `supports` validation logic in `src/metadata.ts`, ensuring it handles multiple entries
 - [ ] Task: Conductor - User Manual Verification 'Validation Logic Expansion' (Protocol in workflow.md)
 
 ## Phase 2: Reporting Robustness & Error Aggregation
