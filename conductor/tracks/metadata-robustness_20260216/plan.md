@@ -4,9 +4,9 @@
 - [x] Task: Add SemVer validation for the `version` field [ff29db7]
     - [x] Write unit tests for valid and invalid Semantic Versioning strings in `test/metadata.test.ts`
     - [x] Implement SemVer validation logic in `src/metadata.ts` using a robust regex or library
-- [ ] Task: Add version constraint validation for the `chef_version` field
-    - [ ] Write unit tests for various `chef_version` constraint formats in `test/metadata.test.ts`
-    - [ ] Implement constraint validation logic in `src/metadata.ts`
+- [x] Task: Add version constraint validation for the `chef_version` field [4932c3b]
+    - [x] Write unit tests for various `chef_version` constraint formats in `test/metadata.test.ts`
+    - [x] Implement constraint validation logic in `src/metadata.ts`
 - [ ] Task: Add validation for the `supports` field
     - [ ] Write unit tests for `supports` field parsing (platform + version) in `test/metadata.test.ts`
     - [ ] Implement `supports` validation logic in `src/metadata.ts`, ensuring it handles multiple entries
