@@ -79,6 +79,7 @@ const COMMON_SPDX_LICENSES = [
     'Unlicense'
 ];
 function checkMetadata(file) {
+    var _a, _b, _c, _d, _e, _f;
     return __awaiter(this, void 0, void 0, function* () {
         /**
          * Read metadata file
@@ -95,7 +96,7 @@ function checkMetadata(file) {
         catch (err) {
             core.error(`${file}: access error!`);
         }
-        const data = (0, metadata_1.metadata)(file);
+        const { data, lines } = (0, metadata_1.metadata)(file);
         const maintainer = core.getInput('maintainer');
         const maintainer_email = core.getInput('maintainer_email');
         const license = core.getInput('license');
@@ -113,46 +114,138 @@ function checkMetadata(file) {
             message: 'Metadata matches',
             conclusion: 'success',
             summary: ['Metadata validated'],
-            title: 'Metadata validated'
+            title: 'Metadata validated',
+            errors: []
         };
-        if (data.get('maintainer_email') !== maintainer_email) {
+        const checkField = (field, expected, actual) => {
+            var _a;
+            if (actual !== expected) {
+                message.conclusion = 'failure';
+                const line = lines.get(field);
+                (_a = message.errors) === null || _a === void 0 ? void 0 : _a.push({
+                    field,
+                    expected,
+                    actual: actual || 'MISSING',
+                    line
+                });
+                const errorMsg = `${field} is not set to ${expected} (currently set to ${actual || 'MISSING'})`;
+                message.summary.push(errorMsg);
+                // Emit annotation
+                core.error(errorMsg, {
+                    file: file.toString(),
+                    startLine: line,
+                    title: `Invalid ${field}`
+                });
+            }
+        };
+        // 1. Existing Field Checks
+        checkField('maintainer_email', maintainer_email, data.get('maintainer_email'));
+        checkField('maintainer', maintainer, data.get('maintainer'));
+        checkField('license', license, data.get('license'));
+        checkField('source_url', source_url, data.get('source_url'));
+        checkField('issues_url', issues_url, data.get('issues_url'));
+        // 2. Mandatory Field Validation (New)
+        // Version
+        const version = data.get('version');
+        const versionLine = lines.get('version');
+        if (!version) {
             message.conclusion = 'failure';
-            message.summary = message.summary.filter(s => s !== 'Metadata validated');
-            message.summary.push(`Maintainer email is not set to ${maintainer_email} (currently set to ${data.get('maintainer_email')})`);
+            const errorMsg = 'version field is missing from metadata.rb';
+            message.summary.push(errorMsg);
+            (_a = message.errors) === null || _a === void 0 ? void 0 : _a.push({
+                field: 'version',
+                expected: 'SemVer string',
+                actual: 'MISSING',
+                line: undefined
+            });
+            core.error(errorMsg, { file: file.toString(), title: 'Missing Version' });
         }
-        if (data.get('maintainer') !== maintainer) {
+        else if (!(0, metadata_1.isValidSemVer)(version)) {
             message.conclusion = 'failure';
-            message.summary = message.summary.filter(s => s !== 'Metadata validated');
-            message.summary.push(`Maintainer is not set to ${maintainer} (currently set to ${data.get('maintainer')})`);
+            const errorMsg = `version '${version}' is not a valid Semantic Version`;
+            message.summary.push(errorMsg);
+            (_b = message.errors) === null || _b === void 0 ? void 0 : _b.push({
+                field: 'version',
+                expected: 'SemVer string',
+                actual: version,
+                line: versionLine
+            });
+            core.error(errorMsg, {
+                file: file.toString(),
+                startLine: versionLine,
+                title: 'Invalid Version'
+            });
         }
-        if (data.get('license') !== license) {
+        // Chef Version
+        const chefVersion = data.get('chef_version');
+        const chefVersionLine = lines.get('chef_version');
+        if (!chefVersion) {
             message.conclusion = 'failure';
-            message.summary = message.summary.filter(s => s !== 'Metadata validated');
-            message.summary.push(`License is not set to ${license} (currently set to ${data.get('license')})`);
+            const errorMsg = 'chef_version field is missing from metadata.rb';
+            message.summary.push(errorMsg);
+            (_c = message.errors) === null || _c === void 0 ? void 0 : _c.push({
+                field: 'chef_version',
+                expected: 'Version constraint',
+                actual: 'MISSING',
+                line: undefined
+            });
+            core.error(errorMsg, { file: file.toString(), title: 'Missing Chef Version' });
         }
-        if (data.get('source_url') !== source_url) {
+        else if (!(0, metadata_1.isValidVersionConstraint)(chefVersion)) {
             message.conclusion = 'failure';
-            message.summary = message.summary.filter(s => s !== 'Metadata validated');
-            message.summary.push(`Source URL is not set to ${source_url} (currently set to ${data.get('source_url')})`);
+            const errorMsg = `chef_version '${chefVersion}' is not a valid version constraint`;
+            message.summary.push(errorMsg);
+            (_d = message.errors) === null || _d === void 0 ? void 0 : _d.push({
+                field: 'chef_version',
+                expected: 'Version constraint',
+                actual: chefVersion,
+                line: chefVersionLine
+            });
+            core.error(errorMsg, {
+                file: file.toString(),
+                startLine: chefVersionLine,
+                title: 'Invalid Chef Version'
+            });
         }
-        if (data.get('issues_url') !== issues_url) {
+        // Supports
+        const supports = data.get('supports');
+        const supportsLines = lines.get('supports');
+        if (!supports || supports.length === 0) {
             message.conclusion = 'failure';
-            message.summary = message.summary.filter(s => s !== 'Metadata validated');
-            message.summary.push(`Issues URL is not set to ${issues_url} (currently set to ${data.get('issues_url')})`);
+            const errorMsg = 'At least one supports field is required in metadata.rb';
+            message.summary.push(errorMsg);
+            (_e = message.errors) === null || _e === void 0 ? void 0 : _e.push({
+                field: 'supports',
+                expected: 'At least one entry',
+                actual: 'MISSING',
+                line: undefined
+            });
+            core.error(errorMsg, { file: file.toString(), title: 'Missing Supports' });
         }
-        if (message.conclusion === 'failure') {
-            message.message = "Metadata doesn't match";
-            message.title = 'Metadata validation failed';
-        }
-        // If the conclusion of the message is 'failure', throw an error
-        try {
-            if (message.conclusion === 'failure') {
-                throw new Error(message.summary.join(','));
+        else {
+            for (let i = 0; i < supports.length; i++) {
+                if (!(0, metadata_1.isValidSupport)(supports[i])) {
+                    message.conclusion = 'failure';
+                    const errorMsg = `supports entry ${supports[i]} is malformed`;
+                    message.summary.push(errorMsg);
+                    (_f = message.errors) === null || _f === void 0 ? void 0 : _f.push({
+                        field: 'supports',
+                        expected: 'Valid platform/constraint',
+                        actual: supports[i],
+                        line: supportsLines[i]
+                    });
+                    core.error(errorMsg, {
+                        file: file.toString(),
+                        startLine: supportsLines[i],
+                        title: 'Invalid Support'
+                    });
+                }
             }
         }
-        catch (error) {
-            const err = error.message;
-            core.error(err);
+        if (message.conclusion === 'failure') {
+            message.summary = message.summary.filter(s => s !== 'Metadata validated');
+            message.message = "Metadata doesn't match";
+            message.title = 'Metadata validation failed';
         }
         return message;
     });
@@ -258,16 +351,19 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.metadata = void 0;
+exports.isValidSupport = exports.isValidVersionConstraint = exports.isValidSemVer = exports.metadata = void 0;
 const fs_1 = __importDefault(__nccwpck_require__(9896));
 /**
  * Load Cookbook metdata file
- * Returns the metadata without depends or supports lines
- * @returns {Map}
+ * Returns the metadata and line numbers
+ * @returns {MetadataResult}
  */
 const metadata = (file_path) => {
     let fileContent;
-    const metadata_structure = new Map();
+    const data = new Map();
+    const lines = new Map();
+    const supports = [];
+    const supportsLines = [];
     const allowed_keys = [
         'name',
         'maintainer',
@@ -285,31 +381,77 @@ const metadata = (file_path) => {
     catch (error) {
         throw new Error(`Could not read metadata file: ${error}. Did you forget to checkout the file?`);
     }
-    const arr = fileContent
-        .toString()
-        .split('\n')
-        .filter((el) => {
-        return (!/^%\b/.test(el.trim()) &&
-            el.trim() !== '' &&
-            !el.trim().startsWith('#'));
-    });
-    for (const element of arr) {
-        // Define a regular expression to match key-value pairs in the `element` string
-        const regex = /(\w+)\s+('|")(.*?)('|")/;
-        // Use the regular expression to extract the key and value from the `element` string
-        const item = element.match(regex);
-        // Get the key and value from the `item` array using array indexing and nullish coalescing operators
-        const key = item ? item[1] : '';
-        const value = item ? item[3] : '';
-        // Check if the `key` is included in the `allowed_keys` array
-        if (allowed_keys.includes(key)) {
-            // If the `key` is allowed, add it to the `metadata_structure` Map object
-            metadata_structure.set(key, value);
+    const rawLines = fileContent.toString().split('\n');
+    for (let i = 0; i < rawLines.length; i++) {
+        const element = rawLines[i];
+        const trimmedElement = element.trim();
+        // Skip comments and empty lines
+        if (/^%\b/.test(trimmedElement) ||
+            trimmedElement === '' ||
+            trimmedElement.startsWith('#')) {
+            continue;
+        }
+        const parts = trimmedElement.split(/\s+/);
+        if (parts.length < 2)
+            continue;
+        const key = parts[0];
+        const lineNumber = i + 1;
+        if (key === 'supports') {
+            const value = trimmedElement.substring(key.length).trim();
+            supports.push(value);
+            supportsLines.push(lineNumber);
+        }
+        else if (allowed_keys.includes(key)) {
+            const regex = /(\w+)\s+('|")(.*?)('|")/;
+            const item = element.match(regex);
+            const value = item ? item[3] : '';
+            data.set(key, value);
+            lines.set(key, lineNumber);
         }
     }
-    return metadata_structure;
+    data.set('supports', supports);
+    lines.set('supports', supportsLines);
+    return { data, lines };
 };
 exports.metadata = metadata;
+/**
+ * Validates if a string is a valid Semantic Version
+ * @param version The version string to validate
+ * @returns boolean
+ */
+const isValidSemVer = (version) => {
+    const semverRegex = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/;
+    return semverRegex.test(version);
+};
+exports.isValidSemVer = isValidSemVer;
+/**
+ * Validates if a string is a valid Chef version constraint
+ * @param constraint The constraint string to validate
+ * @returns boolean
+ */
+const isValidVersionConstraint = (constraint) => {
+    const constraintRegex = /^(?:>=|>|<=|<|~>|=)?\s*\d+(?:\.\d+)*(?:-[a-zA-Z0-9.]+)?$/;
+    return constraintRegex.test(constraint) && constraint.length > 0;
+};
+exports.isValidVersionConstraint = isValidVersionConstraint;
+/**
+ * Validates if a string is a valid Chef supports entry
+ * @param support The support string to validate
+ * @returns boolean
+ */
+const isValidSupport = (support) => {
+    const supportRegex = /^(?:'|")([a-z0-9_-]+)(?:'|")(?:\s*,\s*(?:'|")([^'"]+)(?:'|"))?$/;
+    const match = support.match(supportRegex);
+    if (!match)
+        return false;
+    const platform = match[1];
+    const constraint = match[2];
+    if (constraint && !(0, exports.isValidVersionConstraint)(constraint)) {
+        return false;
+    }
+    return !!platform;
+};
+exports.isValidSupport = isValidSupport;
 
 
 /***/ }),
@@ -427,6 +569,7 @@ exports.reportPR = void 0;
 const core = __importStar(__nccwpck_require__(7484));
 const github = __importStar(__nccwpck_require__(3228));
 const actions_replace_comment_1 = __importStar(__nccwpck_require__(700));
+const markdown_table_1 = __nccwpck_require__(3116);
 // Report the results of the checks to the PR
 const commentGeneralOptions = () => __awaiter(void 0, void 0, void 0, function* () {
     const pullRequestId = github.context.issue.number;
@@ -437,6 +580,12 @@ const commentGeneralOptions = () => __awaiter(void 0, void 0, void 0, function* 
         issue_number: pullRequestId
     };
 });
+/**
+ * Reports the results of the checks to the PR as a comment.
+ * If the checks passed, any existing metadata comment is deleted.
+ * If the checks failed, a new comment is created or an existing one is updated with a summary table.
+ * @param message The validation result message object.
+ */
 const reportPR = (message) => __awaiter(void 0, void 0, void 0, function* () {
     core.info('Reporting the results of the checks to the PR');
     core.info(`Message: ${JSON.stringify(message)}`);
@@ -449,7 +598,20 @@ const reportPR = (message) => __awaiter(void 0, void 0, void 0, function* () {
         return;
     }
     core.info('Replacing the comment');
-    yield (0, actions_replace_comment_1.default)(Object.assign(Object.assign({}, (yield commentGeneralOptions())), { body: `Metadata summary\n## ${message.title}\n\n${message.summary.join('\n')}` }));
+    let body = `Metadata summary\n## ${message.title}\n\n${message.summary.join('\n')}`;
+    if (message.errors && message.errors.length > 0) {
+        const tableData = [
+            ['Field', 'Expected', 'Actual', 'Line'],
+            ...message.errors.map(err => [
+                err.field,
+                err.expected,
+                err.actual,
+                err.line ? err.line.toString() : 'N/A'
+            ])
+        ];
+        body += `\n\n${(0, markdown_table_1.markdownTable)(tableData)}`;
+    }
+    yield (0, actions_replace_comment_1.default)(Object.assign(Object.assign({}, (yield commentGeneralOptions())), { body }));
 });
 exports.reportPR = reportPR;
 
@@ -36478,6 +36640,411 @@ const dist_src_Octokit = Octokit.plugin(requestLog, legacyRestEndpointMethods, p
   }
 );
 
+
+
+/***/ }),
+
+/***/ 3116:
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __nccwpck_require__) => {
+
+"use strict";
+__nccwpck_require__.r(__webpack_exports__);
+/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+/* harmony export */   markdownTable: () => (/* binding */ markdownTable)
+/* harmony export */ });
+// To do: next major: remove.
+/**
+ * @typedef {Options} MarkdownTableOptions
+ *   Configuration.
+ */
+
+/**
+ * @typedef Options
+ *   Configuration.
+ * @property {boolean | null | undefined} [alignDelimiters=true]
+ *   Whether to align the delimiters (default: `true`);
+ *   they are aligned by default:
+ *
+ *   ```markdown
+ *   | Alpha | B     |
+ *   | ----- | ----- |
+ *   | C     | Delta |
+ *   ```
+ *
+ *   Pass `false` to make them staggered:
+ *
+ *   ```markdown
+ *   | Alpha | B |
+ *   | - | - |
+ *   | C | Delta |
+ *   ```
+ * @property {ReadonlyArray<string | null | undefined> | string | null | undefined} [align]
+ *   How to align columns (default: `''`);
+ *   one style for all columns or styles for their respective columns;
+ *   each style is either `'l'` (left), `'r'` (right), or `'c'` (center);
+ *   other values are treated as `''`, which doesn’t place the colon in the
+ *   alignment row but does align left;
+ *   *only the lowercased first character is used, so `Right` is fine.*
+ * @property {boolean | null | undefined} [delimiterEnd=true]
+ *   Whether to end each row with the delimiter (default: `true`).
+ *
+ *   > 👉 **Note**: please don’t use this: it could create fragile structures
+ *   > that aren’t understandable to some markdown parsers.
+ *
+ *   When `true`, there are ending delimiters:
+ *
+ *   ```markdown
+ *   | Alpha | B     |
+ *   | ----- | ----- |
+ *   | C     | Delta |
+ *   ```
+ *
+ *   When `false`, there are no ending delimiters:
+ *
+ *   ```markdown
+ *   | Alpha | B
+ *   | ----- | -----
+ *   | C     | Delta
+ *   ```
+ * @property {boolean | null | undefined} [delimiterStart=true]
+ *   Whether to begin each row with the delimiter (default: `true`).
+ *
+ *   > 👉 **Note**: please don’t use this: it could create fragile structures
+ *   > that aren’t understandable to some markdown parsers.
+ *
+ *   When `true`, there are starting delimiters:
+ *
+ *   ```markdown
+ *   | Alpha | B     |
+ *   | ----- | ----- |
+ *   | C     | Delta |
+ *   ```
+ *
+ *   When `false`, there are no starting delimiters:
+ *
+ *   ```markdown
+ *   Alpha | B     |
+ *   ----- | ----- |
+ *   C     | Delta |
+ *   ```
+ * @property {boolean | null | undefined} [padding=true]
+ *   Whether to add a space of padding between delimiters and cells
+ *   (default: `true`).
+ *
+ *   When `true`, there is padding:
+ *
+ *   ```markdown
+ *   | Alpha | B     |
+ *   | ----- | ----- |
+ *   | C     | Delta |
+ *   ```
+ *
+ *   When `false`, there is no padding:
+ *
+ *   ```markdown
+ *   |Alpha|B    |
+ *   |-----|-----|
+ *   |C    |Delta|
+ *   ```
+ * @property {((value: string) => number) | null | undefined} [stringLength]
+ *   Function to detect the length of table cell content (optional);
+ *   this is used when aligning the delimiters (`|`) between table cells;
+ *   full-width characters and emoji mess up delimiter alignment when viewing
+ *   the markdown source;
+ *   to fix this, you can pass this function,
+ *   which receives the cell content and returns its “visible” size;
+ *   note that what is and isn’t visible depends on where the text is displayed.
+ *
+ *   Without such a function, the following:
+ *
+ *   ```js
+ *   markdownTable([
+ *     ['Alpha', 'Bravo'],
+ *     ['中文', 'Charlie'],
+ *     ['👩‍❤️‍👩', 'Delta']
+ *   ])
+ *   ```
+ *
+ *   Yields:
+ *
+ *   ```markdown
+ *   | Alpha | Bravo |
+ *   | - | - |
+ *   | 中文 | Charlie |
+ *   | 👩‍❤️‍👩 | Delta |
+ *   ```
+ *
+ *   With [`string-width`](https://github.com/sindresorhus/string-width):
+ *
+ *   ```js
+ *   import stringWidth from 'string-width'
+ *
+ *   markdownTable(
+ *     [
+ *       ['Alpha', 'Bravo'],
+ *       ['中文', 'Charlie'],
+ *       ['👩‍❤️‍👩', 'Delta']
+ *     ],
+ *     {stringLength: stringWidth}
+ *   )
+ *   ```
+ *
+ *   Yields:
+ *
+ *   ```markdown
+ *   | Alpha | Bravo   |
+ *   | ----- | ------- |
+ *   | 中文  | Charlie |
+ *   | 👩‍❤️‍👩    | Delta   |
+ *   ```
+ */
+
+/**
+ * @param {string} value
+ *   Cell value.
+ * @returns {number}
+ *   Cell size.
+ */
+function defaultStringLength(value) {
+  return value.length
+}
+
+/**
+ * Generate a markdown
+ * ([GFM](https://docs.github.com/en/github/writing-on-github/working-with-advanced-formatting/organizing-information-with-tables))
+ * table.
+ *
+ * @param {ReadonlyArray<ReadonlyArray<string | null | undefined>>} table
+ *   Table data (matrix of strings).
+ * @param {Readonly<Options> | null | undefined} [options]
+ *   Configuration (optional).
+ * @returns {string}
+ *   Result.
+ */
+function markdownTable(table, options) {
+  const settings = options || {}
+  // To do: next major: change to spread.
+  const align = (settings.align || []).concat()
+  const stringLength = settings.stringLength || defaultStringLength
+  /** @type {Array<number>} Character codes as symbols for alignment per column. */
+  const alignments = []
+  /** @type {Array<Array<string>>} Cells per row. */
+  const cellMatrix = []
+  /** @type {Array<Array<number>>} Sizes of each cell per row. */
+  const sizeMatrix = []
+  /** @type {Array<number>} */
+  const longestCellByColumn = []
+  let mostCellsPerRow = 0
+  let rowIndex = -1
+
+  // This is a superfluous loop if we don’t align delimiters, but otherwise we’d
+  // do superfluous work when aligning, so optimize for aligning.
+  while (++rowIndex < table.length) {
+    /** @type {Array<string>} */
+    const row = []
+    /** @type {Array<number>} */
+    const sizes = []
+    let columnIndex = -1
+
+    if (table[rowIndex].length > mostCellsPerRow) {
+      mostCellsPerRow = table[rowIndex].length
+    }
+
+    while (++columnIndex < table[rowIndex].length) {
+      const cell = serialize(table[rowIndex][columnIndex])
+
+      if (settings.alignDelimiters !== false) {
+        const size = stringLength(cell)
+        sizes[columnIndex] = size
+
+        if (
+          longestCellByColumn[columnIndex] === undefined ||
+          size > longestCellByColumn[columnIndex]
+        ) {
+          longestCellByColumn[columnIndex] = size
+        }
+      }
+
+      row.push(cell)
+    }
+
+    cellMatrix[rowIndex] = row
+    sizeMatrix[rowIndex] = sizes
+  }
+
+  // Figure out which alignments to use.
+  let columnIndex = -1
+
+  if (typeof align === 'object' && 'length' in align) {
+    while (++columnIndex < mostCellsPerRow) {
+      alignments[columnIndex] = toAlignment(align[columnIndex])
+    }
+  } else {
+    const code = toAlignment(align)
+
+    while (++columnIndex < mostCellsPerRow) {
+      alignments[columnIndex] = code
+    }
+  }
+
+  // Inject the alignment row.
+  columnIndex = -1
+  /** @type {Array<string>} */
+  const row = []
+  /** @type {Array<number>} */
+  const sizes = []
+
+  while (++columnIndex < mostCellsPerRow) {
+    const code = alignments[columnIndex]
+    let before = ''
+    let after = ''
+
+    if (code === 99 /* `c` */) {
+      before = ':'
+      after = ':'
+    } else if (code === 108 /* `l` */) {
+      before = ':'
+    } else if (code === 114 /* `r` */) {
+      after = ':'
+    }
+
+    // There *must* be at least one hyphen-minus in each alignment cell.
+    let size =
+      settings.alignDelimiters === false
+        ? 1
+        : Math.max(
+            1,
+            longestCellByColumn[columnIndex] - before.length - after.length
+          )
+
+    const cell = before + '-'.repeat(size) + after
+
+    if (settings.alignDelimiters !== false) {
+      size = before.length + size + after.length
+
+      if (size > longestCellByColumn[columnIndex]) {
+        longestCellByColumn[columnIndex] = size
+      }
+
+      sizes[columnIndex] = size
+    }
+
+    row[columnIndex] = cell
+  }
+
+  // Inject the alignment row.
+  cellMatrix.splice(1, 0, row)
+  sizeMatrix.splice(1, 0, sizes)
+
+  rowIndex = -1
+  /** @type {Array<string>} */
+  const lines = []
+
+  while (++rowIndex < cellMatrix.length) {
+    const row = cellMatrix[rowIndex]
+    const sizes = sizeMatrix[rowIndex]
+    columnIndex = -1
+    /** @type {Array<string>} */
+    const line = []
+
+    while (++columnIndex < mostCellsPerRow) {
+      const cell = row[columnIndex] || ''
+      let before = ''
+      let after = ''
+
+      if (settings.alignDelimiters !== false) {
+        const size =
+          longestCellByColumn[columnIndex] - (sizes[columnIndex] || 0)
+        const code = alignments[columnIndex]
+
+        if (code === 114 /* `r` */) {
+          before = ' '.repeat(size)
+        } else if (code === 99 /* `c` */) {
+          if (size % 2) {
+            before = ' '.repeat(size / 2 + 0.5)
+            after = ' '.repeat(size / 2 - 0.5)
+          } else {
+            before = ' '.repeat(size / 2)
+            after = before
+          }
+        } else {
+          after = ' '.repeat(size)
+        }
+      }
+
+      if (settings.delimiterStart !== false && !columnIndex) {
+        line.push('|')
+      }
+
+      if (
+        settings.padding !== false &&
+        // Don’t add the opening space if we’re not aligning and the cell is
+        // empty: there will be a closing space.
+        !(settings.alignDelimiters === false && cell === '') &&
+        (settings.delimiterStart !== false || columnIndex)
+      ) {
+        line.push(' ')
+      }
+
+      if (settings.alignDelimiters !== false) {
+        line.push(before)
+      }
+
+      line.push(cell)
+
+      if (settings.alignDelimiters !== false) {
+        line.push(after)
+      }
+
+      if (settings.padding !== false) {
+        line.push(' ')
+      }
+
+      if (
+        settings.delimiterEnd !== false ||
+        columnIndex !== mostCellsPerRow - 1
+      ) {
+        line.push('|')
+      }
+    }
+
+    lines.push(
+      settings.delimiterEnd === false
+        ? line.join('').replace(/ +$/, '')
+        : line.join('')
+    )
+  }
+
+  return lines.join('\n')
+}
+
+/**
+ * @param {string | null | undefined} [value]
+ *   Value to serialize.
+ * @returns {string}
+ *   Result.
+ */
+function serialize(value) {
+  return value === null || value === undefined ? '' : String(value)
+}
+
+/**
+ * @param {string | null | undefined} value
+ *   Value.
+ * @returns {number}
+ *   Alignment.
+ */
+function toAlignment(value) {
+  const code = typeof value === 'string' ? value.codePointAt(0) : 0
+
+  return code === 67 /* `C` */ || code === 99 /* `c` */
+    ? 99 /* `c` */
+    : code === 76 /* `L` */ || code === 108 /* `l` */
+      ? 108 /* `l` */
+      : code === 82 /* `R` */ || code === 114 /* `r` */
+        ? 114 /* `r` */
+        : 0
+}
 
 
 /***/ })

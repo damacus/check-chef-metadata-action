@@ -1,7 +1,7 @@
 import * as core from '@actions/core'
 import * as fs from 'fs'
 import * as github from '@actions/github'
-import {Message, Conclusion, ValidationError} from './messageInterface'
+import {Message, Conclusion} from './messageInterface'
 import {
   metadata,
   isValidSemVer,
