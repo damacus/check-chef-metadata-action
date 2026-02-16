@@ -355,7 +355,7 @@ exports.isValidSupport = exports.isValidVersionConstraint = exports.isValidSemVe
 const fs_1 = __importDefault(__nccwpck_require__(9896));
 /**
  * Load Cookbook metdata file
- * Returns the metadata and line numbers
+ * Returns the metadata including supports lines and their line numbers
  * @returns {MetadataResult}
  */
 const metadata = (file_path) => {
@@ -402,9 +402,13 @@ const metadata = (file_path) => {
             supportsLines.push(lineNumber);
         }
         else if (allowed_keys.includes(key)) {
+            // Define a regular expression to match key-value pairs in the `element` string
             const regex = /(\w+)\s+('|")(.*?)('|")/;
+            // Use the regular expression to extract the key and value from the `element` string
             const item = element.match(regex);
+            // Get the key and value from the `item` array using array indexing and nullish coalescing operators
             const value = item ? item[3] : '';
+            // If the `key` is allowed, add it to the `data` Map object
             data.set(key, value);
             lines.set(key, lineNumber);
         }

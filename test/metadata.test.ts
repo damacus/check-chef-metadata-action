@@ -1,7 +1,12 @@
-import {metadata, isValidSemVer, isValidVersionConstraint, isValidSupport} from '../src/metadata'
+import {
+  metadata,
+  isValidSemVer,
+  isValidVersionConstraint,
+  isValidSupport
+} from '../src/metadata'
 
 describe('Java cookbook metadata', () => {
-  const data = metadata('./test/fixtures/metadata.rb')
+  const {data, lines} = metadata('./test/fixtures/metadata.rb')
 
   it('Has a name property', () => {
     expect(data.has('name')).toEqual(true)
@@ -18,17 +23,24 @@ describe('Java cookbook metadata', () => {
     expect(Array.isArray(s)).toBe(true)
     expect(s).toContain("'debian'")
   })
+
+  it('Has correct line numbers', () => {
+    expect(lines.get('name')).toEqual(1)
+    expect(lines.get('version')).toEqual(9)
+    const sLines = lines.get('supports') as number[]
+    expect(sLines).toContain(11)
+  })
 })
 
 describe('Empty metadata file', () => {
-  const data = metadata('./test/fixtures/metadata.empty.rb')
+  const {data} = metadata('./test/fixtures/metadata.empty.rb')
   it('Does not have a depends property', () => {
     expect(data.has('depends')).toEqual(false)
   })
 })
 
 describe('Incorrect metadata', () => {
-  const data = metadata('./test/fixtures/metadata.incorrect.rb')
+  const {data} = metadata('./test/fixtures/metadata.incorrect.rb')
   it('Has an incorrect maintainer', () => {
     expect(data.has('maintainer')).toEqual(true)
     expect(data.get('maintainer')).toEqual('Bob')
@@ -36,7 +48,7 @@ describe('Incorrect metadata', () => {
 })
 
 describe('metadata with comments', () => {
-  const data = metadata('./test/fixtures/aws.metadata.rb')
+  const {data} = metadata('./test/fixtures/aws.metadata.rb')
   it('Has a name property', () => {
     expect(data.has('name')).toEqual(true)
     expect(data.get('name')).toEqual('aws')
