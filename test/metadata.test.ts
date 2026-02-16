@@ -2,7 +2,8 @@ import {
   metadata,
   isValidSemVer,
   isValidVersionConstraint,
-  isValidSupport
+  isValidSupport,
+  isValidDepends
 } from '../src/metadata'
 
 describe('Java cookbook metadata', () => {
@@ -13,8 +14,10 @@ describe('Java cookbook metadata', () => {
     expect(data.get('name')).toEqual('java')
   })
 
-  it('Does not have a depends property', () => {
-    expect(data.has('depends')).toEqual(false)
+  it('Has a depends property', () => {
+    expect(data.has('depends')).toEqual(true)
+    const d = data.get('depends') as string[]
+    expect(d).toContain("'line'")
   })
 
   it('Has supports entries', () => {
@@ -34,8 +37,9 @@ describe('Java cookbook metadata', () => {
 
 describe('Empty metadata file', () => {
   const {data} = metadata('./test/fixtures/metadata.empty.rb')
-  it('Does not have a depends property', () => {
-    expect(data.has('depends')).toEqual(false)
+  it('Has a depends property (empty)', () => {
+    expect(data.has('depends')).toEqual(true)
+    expect(data.get('depends')).toEqual([])
   })
 })
 
@@ -56,11 +60,31 @@ describe('metadata with comments', () => {
 })
 
 describe('No metadata file', () => {
-  expect(() => {
-    metadata('./test/fixtures/metadata.none.rb')
-  }).toThrowError(
-    "Could not read metadata file: Error: ENOENT: no such file or directory, open './test/fixtures/metadata.none.rb'."
-  )
+  it('Throws error when file not found', () => {
+    expect(() => {
+      metadata('./test/fixtures/metadata.none.rb')
+    }).toThrowError(
+      "Could not read metadata file: Error: ENOENT: no such file or directory, open './test/fixtures/metadata.none.rb'."
+    )
+  })
+})
+
+describe('metadata with symbols', () => {
+  const {data} = metadata('./test/fixtures/metadata_symbols.rb')
+
+  it('Has a name property from symbol', () => {
+    expect(data.get('name')).toEqual('java')
+  })
+
+  it('Has a license property from symbol', () => {
+    expect(data.get('license')).toEqual('apache2')
+  })
+
+  it('Has supports entries from symbols', () => {
+    const s = data.get('supports') as string[]
+    expect(s).toContain(':ubuntu')
+    expect(s).toContain(":centos, '>= 7.0'")
+  })
 })
 
 describe('isValidSemVer', () => {
@@ -106,10 +130,25 @@ describe('isValidSupport', () => {
     expect(isValidSupport("'ubuntu', '>= 18.04'")).toBe(true)
     expect(isValidSupport('"ubuntu", ">= 18.04"')).toBe(true)
     expect(isValidSupport("'redhat', '>= 7.0'")).toBe(true)
+    expect(isValidSupport(':ubuntu')).toBe(true)
+    expect(isValidSupport(":centos, '>= 7.0'")).toBe(true)
   })
 
   it('identifies invalid supports entries', () => {
     expect(isValidSupport('')).toBe(false)
     expect(isValidSupport("'ubuntu', 'invalid'")).toBe(false)
+  })
+})
+
+describe('isValidDepends', () => {
+  it('identifies valid depends entries', () => {
+    expect(isValidDepends("'apt'")).toBe(true)
+    expect(isValidDepends("'apt', '>= 1.0.0'")).toBe(true)
+    expect(isValidDepends('"apt", ">= 1.0.0"')).toBe(true)
+  })
+
+  it('identifies invalid depends entries', () => {
+    expect(isValidDepends('')).toBe(false)
+    expect(isValidDepends("'apt', 'invalid'")).toBe(false)
   })
 })

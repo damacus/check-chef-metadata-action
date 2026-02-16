@@ -1,0 +1,27 @@
+---
+name: Example - Check Metadata Usage
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  # Example 1: Basic usage with defaults
+  check-metadata-default:
+    uses: ./.github/workflows/check-metadata-reusable.yml
+    secrets:
+      github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  # Example 2: Custom configuration
+  check-metadata-custom:
+    uses: ./.github/workflows/check-metadata-reusable.yml
+    with:
+      maintainer: 'Custom Maintainer'
+      maintainer_email: 'custom@example.com'
+      license: 'MIT'
+      file_path: 'test/fixtures/metadata.rb'
+      report_checks: true
+      comment_on_pr: true
+    secrets:
+      github-token: ${{ secrets.GITHUB_TOKEN }}

@@ -6,7 +6,9 @@ import {
   metadata,
   isValidSemVer,
   isValidVersionConstraint,
-  isValidSupport
+  isValidSupport,
+  isValidDepends,
+  isUrlAccessible
 } from './metadata'
 
 /**
@@ -124,7 +126,7 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
     }
   }
 
-  // 1. Existing Field Checks
+  // 1. Existing Field Content Checks
   checkField(
     'maintainer_email',
     maintainer_email,
@@ -135,85 +137,122 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
   checkField('source_url', source_url, data.get('source_url') as string)
   checkField('issues_url', issues_url, data.get('issues_url') as string)
 
-  // 2. Mandatory Field Validation (New)
+  // 2. URL Accessibility Checks
+  const actualSourceUrl = data.get('source_url') as string
+  if (actualSourceUrl) {
+    const isAccessible = await isUrlAccessible(actualSourceUrl)
+    if (!isAccessible) {
+      message.conclusion = 'failure'
+      const line = lines.get('source_url') as number | undefined
+      const errorMsg = `source_url '${actualSourceUrl}' is not accessible`
+      message.summary.push(errorMsg)
+      message.errors?.push({
+        field: 'source_url',
+        expected: 'HTTP 200',
+        actual: 'UNREACHABLE',
+        line
+      })
+      core.error(errorMsg, {
+        file: file.toString(),
+        startLine: line,
+        title: 'Unreachable Source URL'
+      })
+    }
+  }
+
+  const actualIssuesUrl = data.get('issues_url') as string
+  if (actualIssuesUrl) {
+    const isAccessible = await isUrlAccessible(actualIssuesUrl)
+    if (!isAccessible) {
+      message.conclusion = 'failure'
+      const line = lines.get('issues_url') as number | undefined
+      const errorMsg = `issues_url '${actualIssuesUrl}' is not accessible`
+      message.summary.push(errorMsg)
+      message.errors?.push({
+        field: 'issues_url',
+        expected: 'HTTP 200',
+        actual: 'UNREACHABLE',
+        line
+      })
+      core.error(errorMsg, {
+        file: file.toString(),
+        startLine: line,
+        title: 'Unreachable Issues URL'
+      })
+    }
+  }
+
+  // 3. Mandatory Field Existence
+  const mandatoryFieldsInput =
+    core.getInput('mandatory_fields', {required: false}) ||
+    'version,chef_version,supports'
+  const mandatoryFields = mandatoryFieldsInput
+    .split(',')
+    .map(f => f.trim())
+    .filter(f => f !== '')
+
+  for (const field of mandatoryFields) {
+    const value = data.get(field)
+    if (!value || (Array.isArray(value) && value.length === 0)) {
+      message.conclusion = 'failure'
+      const errorMsg = `${field} field is missing from metadata.rb`
+      message.summary.push(errorMsg)
+      message.errors?.push({
+        field,
+        expected: 'Field to exist',
+        actual: 'MISSING',
+        line: undefined
+      })
+      core.error(errorMsg, {file: file.toString(), title: `Missing ${field}`})
+    }
+  }
+
+  // 4. Format Validations (if field is present)
 
   // Version
   const version = data.get('version') as string
-  const versionLine = lines.get('version') as number | undefined
-  if (!version) {
+  if (version && !isValidSemVer(version)) {
     message.conclusion = 'failure'
-    const errorMsg = 'version field is missing from metadata.rb'
-    message.summary.push(errorMsg)
-    message.errors?.push({
-      field: 'version',
-      expected: 'SemVer string',
-      actual: 'MISSING',
-      line: undefined
-    })
-    core.error(errorMsg, {file: file.toString(), title: 'Missing Version'})
-  } else if (!isValidSemVer(version)) {
-    message.conclusion = 'failure'
+    const line = lines.get('version') as number | undefined
     const errorMsg = `version '${version}' is not a valid Semantic Version`
     message.summary.push(errorMsg)
     message.errors?.push({
       field: 'version',
       expected: 'SemVer string',
       actual: version,
-      line: versionLine
+      line
     })
     core.error(errorMsg, {
       file: file.toString(),
-      startLine: versionLine,
+      startLine: line,
       title: 'Invalid Version'
     })
   }
 
   // Chef Version
   const chefVersion = data.get('chef_version') as string
-  const chefVersionLine = lines.get('chef_version') as number | undefined
-  if (!chefVersion) {
+  if (chefVersion && !isValidVersionConstraint(chefVersion)) {
     message.conclusion = 'failure'
-    const errorMsg = 'chef_version field is missing from metadata.rb'
-    message.summary.push(errorMsg)
-    message.errors?.push({
-      field: 'chef_version',
-      expected: 'Version constraint',
-      actual: 'MISSING',
-      line: undefined
-    })
-    core.error(errorMsg, {file: file.toString(), title: 'Missing Chef Version'})
-  } else if (!isValidVersionConstraint(chefVersion)) {
-    message.conclusion = 'failure'
+    const line = lines.get('chef_version') as number | undefined
     const errorMsg = `chef_version '${chefVersion}' is not a valid version constraint`
     message.summary.push(errorMsg)
     message.errors?.push({
       field: 'chef_version',
       expected: 'Version constraint',
       actual: chefVersion,
-      line: chefVersionLine
+      line
     })
     core.error(errorMsg, {
       file: file.toString(),
-      startLine: chefVersionLine,
+      startLine: line,
       title: 'Invalid Chef Version'
     })
   }
 
   // Supports
   const supports = data.get('supports') as string[]
-  const supportsLines = lines.get('supports') as number[]
-  if (!supports || supports.length === 0) {
-    message.conclusion = 'failure'
-    const errorMsg = 'At least one supports field is required in metadata.rb'
-    message.summary.push(errorMsg)
-    message.errors?.push({
-      field: 'supports',
-      expected: 'At least one entry',
-      actual: 'MISSING',
-      line: undefined
-    })
-    core.error(errorMsg, {file: file.toString(), title: 'Missing Supports'})
-  } else {
+  if (supports) {
+    const supportsLines = lines.get('supports') as number[]
     for (let i = 0; i < supports.length; i++) {
       if (!isValidSupport(supports[i])) {
         message.conclusion = 'failure'
@@ -229,6 +268,30 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
           file: file.toString(),
           startLine: supportsLines[i],
           title: 'Invalid Support'
+        })
+      }
+    }
+  }
+
+  // Depends
+  const depends = data.get('depends') as string[]
+  if (depends) {
+    const dependsLines = lines.get('depends') as number[]
+    for (let i = 0; i < depends.length; i++) {
+      if (!isValidDepends(depends[i])) {
+        message.conclusion = 'failure'
+        const errorMsg = `depends entry ${depends[i]} is malformed`
+        message.summary.push(errorMsg)
+        message.errors?.push({
+          field: 'depends',
+          expected: 'Valid cookbook/constraint',
+          actual: depends[i],
+          line: dependsLines[i]
+        })
+        core.error(errorMsg, {
+          file: file.toString(),
+          startLine: dependsLines[i],
+          title: 'Invalid Dependency'
         })
       }
     }

@@ -31,14 +31,18 @@ jest.mock('@actions/github', () => {
 jest.mock('@actions/core', () => {
   return {
     getInput: jest.fn().mockImplementation(name => {
-      const inputs = {
+      const key = `INPUT_${name.toUpperCase().replace(/ /g, '_')}`
+      const val = process.env[key]
+      if (val) return val
+
+      const defaults = {
         'github-token': 'mock-token',
         'chef-cookbook-path': './test/fixtures',
-        'maintainer': process.env.INPUT_MAINTAINER || 'Sous Chefs',
-        'maintainer_email': process.env.INPUT_MAINTAINER_EMAIL || 'help@sous-chefs.org',
-        'license': process.env.INPUT_LICENSE || 'Apache-2.0'
+        'maintainer': 'Sous Chefs',
+        'maintainer_email': 'help@sous-chefs.org',
+        'license': 'Apache-2.0'
       }
-      return inputs[name] || ''
+      return defaults[name] || ''
     }),
     setFailed: jest.fn(),
     info: jest.fn(),
