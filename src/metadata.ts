@@ -1,14 +1,22 @@
 import fs from 'fs'
 
+export interface MetadataResult {
+  data: Map<string, string | string[]>
+  lines: Map<string, number | number[]>
+}
+
 /**
  * Load Cookbook metdata file
- * Returns the metadata including supports lines
- * @returns {Map<string, string | string[]>}
+ * Returns the metadata including supports lines and their line numbers
+ * @returns {MetadataResult}
  */
-export const metadata = (file_path: fs.PathLike): Map<string, string | string[]> => {
+export const metadata = (file_path: fs.PathLike): MetadataResult => {
   let fileContent: string
-  const metadata_structure = new Map<string, string | string[]>()
+  const data = new Map<string, string | string[]>()
+  const lines = new Map<string, number | number[]>()
   const supports: string[] = []
+  const supportsLines: number[] = []
+
   const allowed_keys = [
     'name',
     'maintainer',
@@ -29,25 +37,31 @@ export const metadata = (file_path: fs.PathLike): Map<string, string | string[]>
     )
   }
 
-  const arr = fileContent
-    .toString()
-    .split('\n')
-    .filter((el: string): boolean => {
-      return (
-        !/^%\b/.test(el.trim()) && el.trim() !== '' && !el.trim().startsWith('#')
-      )
-    })
+  const rawLines = fileContent.toString().split('\n')
 
-  for (const element of arr) {
+  for (let i = 0; i < rawLines.length; i++) {
+    const element = rawLines[i]
     const trimmedElement = element.trim()
+
+    // Skip comments and empty lines
+    if (
+      /^%\b/.test(trimmedElement) ||
+      trimmedElement === '' ||
+      trimmedElement.startsWith('#')
+    ) {
+      continue
+    }
+
     const parts = trimmedElement.split(/\s+/)
     if (parts.length < 2) continue
 
     const key = parts[0]
+    const lineNumber = i + 1
 
     if (key === 'supports') {
       const value = trimmedElement.substring(key.length).trim()
       supports.push(value)
+      supportsLines.push(lineNumber)
     } else if (allowed_keys.includes(key)) {
       // Define a regular expression to match key-value pairs in the `element` string
       const regex = /(\w+)\s+('|")(.*?)('|")/
@@ -56,13 +70,16 @@ export const metadata = (file_path: fs.PathLike): Map<string, string | string[]>
       // Get the key and value from the `item` array using array indexing and nullish coalescing operators
       const value: string = item ? item[3] : ''
 
-      // If the `key` is allowed, add it to the `metadata_structure` Map object
-      metadata_structure.set(key, value)
+      // If the `key` is allowed, add it to the `data` Map object
+      data.set(key, value)
+      lines.set(key, lineNumber)
     }
   }
 
-  metadata_structure.set('supports', supports)
-  return metadata_structure
+  data.set('supports', supports)
+  lines.set('supports', supportsLines)
+
+  return {data, lines}
 }
 
 /**
