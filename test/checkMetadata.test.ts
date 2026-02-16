@@ -25,7 +25,7 @@ describe('Correct metadata', () => {
     const message = await checkMetadata('./test/fixtures/metadata.rb')
     expect(message).toEqual({
       conclusion: 'success',
-      name: 'Check Metadata',
+      name: './test/fixtures/metadata.rb',
       message: 'Metadata matches',
       summary: ['Metadata validated'],
       title: 'Metadata validated',

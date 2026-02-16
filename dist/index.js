@@ -45,6 +45,12 @@ const fs = __importStar(__nccwpck_require__(9896));
 const github = __importStar(__nccwpck_require__(3228));
 const metadata_1 = __nccwpck_require__(51);
 /**
+ * Capitalizes the first letter of a string
+ */
+function capitalize(s) {
+    return s.charAt(0).toUpperCase() + s.slice(1);
+}
+/**
  * Validates email format using a basic regex pattern
  */
 function isValidEmail(email) {
@@ -110,7 +116,7 @@ function checkMetadata(file) {
         const source_url = `https://github.com/${github.context.repo.owner}/${github.context.repo.repo}`;
         const issues_url = `${source_url}/issues`;
         const message = {
-            name: 'Check Metadata',
+            name: file.toString(), // Set name to file path for better grouping
             message: 'Metadata matches',
             conclusion: 'success',
             summary: ['Metadata validated'],
@@ -130,13 +136,14 @@ function checkMetadata(file) {
                     line,
                     path: file.toString()
                 });
-                const errorMsg = `${field}: expected '${expected}', got '${actual || 'MISSING'}'`;
-                message.summary.push(errorMsg);
+                const displayActual = actual || 'MISSING';
+                const summaryMsg = `${field}: expected '${expected}', got '${displayActual}'`;
+                message.summary.push(summaryMsg);
                 // Emit annotation (Rubocop style)
-                core.error(errorMsg, {
+                core.error(`Invalid ${field}. Expected '${expected}', got '${displayActual}'.`, {
                     file: file.toString(),
                     startLine: line,
-                    title: `Cookbook Metadata: ${field}`
+                    title: `Metadata/${capitalize(field)}`
                 });
             }
         };
@@ -153,8 +160,8 @@ function checkMetadata(file) {
             if (!isAccessible) {
                 message.conclusion = 'failure';
                 const line = lines.get('source_url');
-                const errorMsg = `source_url: '${actualSourceUrl}' is not accessible`;
-                message.summary.push(errorMsg);
+                const summaryMsg = `source_url: '${actualSourceUrl}' is not accessible`;
+                message.summary.push(summaryMsg);
                 (_a = message.errors) === null || _a === void 0 ? void 0 : _a.push({
                     field: 'source_url',
                     expected: 'HTTP 200',
@@ -162,10 +169,10 @@ function checkMetadata(file) {
                     line,
                     path: file.toString()
                 });
-                core.error(errorMsg, {
+                core.error(`The source_url '${actualSourceUrl}' could not be reached (HTTP 200 expected).`, {
                     file: file.toString(),
                     startLine: line,
-                    title: 'Cookbook Metadata: Reachability'
+                    title: 'Metadata/Reachability'
                 });
             }
         }
@@ -175,8 +182,8 @@ function checkMetadata(file) {
             if (!isAccessible) {
                 message.conclusion = 'failure';
                 const line = lines.get('issues_url');
-                const errorMsg = `issues_url: '${actualIssuesUrl}' is not accessible`;
-                message.summary.push(errorMsg);
+                const summaryMsg = `issues_url: '${actualIssuesUrl}' is not accessible`;
+                message.summary.push(summaryMsg);
                 (_b = message.errors) === null || _b === void 0 ? void 0 : _b.push({
                     field: 'issues_url',
                     expected: 'HTTP 200',
@@ -184,10 +191,10 @@ function checkMetadata(file) {
                     line,
                     path: file.toString()
                 });
-                core.error(errorMsg, {
+                core.error(`The issues_url '${actualIssuesUrl}' could not be reached (HTTP 200 expected).`, {
                     file: file.toString(),
                     startLine: line,
-                    title: 'Cookbook Metadata: Reachability'
+                    title: 'Metadata/Reachability'
                 });
             }
         }
@@ -202,8 +209,8 @@ function checkMetadata(file) {
             const value = data.get(field);
             if (!value || (Array.isArray(value) && value.length === 0)) {
                 message.conclusion = 'failure';
-                const errorMsg = `${field}: field is missing from metadata.rb`;
-                message.summary.push(errorMsg);
+                const summaryMsg = `${field}: field is missing from metadata.rb`;
+                message.summary.push(summaryMsg);
                 (_c = message.errors) === null || _c === void 0 ? void 0 : _c.push({
                     field,
                     expected: 'Field to exist',
@@ -211,9 +218,9 @@ function checkMetadata(file) {
                     line: undefined,
                     path: file.toString()
                 });
-                core.error(errorMsg, {
+                core.error(`The mandatory field '${field}' is missing from metadata.rb.`, {
                     file: file.toString(),
-                    title: 'Cookbook Metadata: Mandatory Field'
+                    title: `Metadata/MissingField`
                 });
             }
         }
@@ -223,8 +230,8 @@ function checkMetadata(file) {
         if (version && !(0, metadata_1.isValidSemVer)(version)) {
             message.conclusion = 'failure';
             const line = lines.get('version');
-            const errorMsg = `version: '${version}' is not a valid Semantic Version`;
-            message.summary.push(errorMsg);
+            const summaryMsg = `version: '${version}' is not a valid Semantic Version`;
+            message.summary.push(summaryMsg);
             (_d = message.errors) === null || _d === void 0 ? void 0 : _d.push({
                 field: 'version',
                 expected: 'SemVer string',
@@ -232,10 +239,10 @@ function checkMetadata(file) {
                 line,
                 path: file.toString()
             });
-            core.error(errorMsg, {
+            core.error(`The version '${version}' is not a valid Semantic Version (e.g., 1.2.3).`, {
                 file: file.toString(),
                 startLine: line,
-                title: 'Cookbook Metadata: Format'
+                title: 'Metadata/VersionFormat'
             });
         }
         // Chef Version
@@ -243,8 +250,8 @@ function checkMetadata(file) {
         if (chefVersion && !(0, metadata_1.isValidVersionConstraint)(chefVersion)) {
             message.conclusion = 'failure';
             const line = lines.get('chef_version');
-            const errorMsg = `chef_version: '${chefVersion}' is not a valid version constraint`;
-            message.summary.push(errorMsg);
+            const summaryMsg = `chef_version: '${chefVersion}' is not a valid version constraint`;
+            message.summary.push(summaryMsg);
             (_e = message.errors) === null || _e === void 0 ? void 0 : _e.push({
                 field: 'chef_version',
                 expected: 'Version constraint',
@@ -252,10 +259,10 @@ function checkMetadata(file) {
                 line,
                 path: file.toString()
             });
-            core.error(errorMsg, {
+            core.error(`The chef_version '${chefVersion}' is not a valid version constraint (e.g., '>= 16.0').`, {
                 file: file.toString(),
                 startLine: line,
-                title: 'Cookbook Metadata: Format'
+                title: 'Metadata/ChefVersionFormat'
             });
         }
         // Supports
@@ -265,8 +272,8 @@ function checkMetadata(file) {
             for (let i = 0; i < supports.length; i++) {
                 if (!(0, metadata_1.isValidSupport)(supports[i])) {
                     message.conclusion = 'failure';
-                    const errorMsg = `supports: entry ${supports[i]} is malformed`;
-                    message.summary.push(errorMsg);
+                    const summaryMsg = `supports: entry ${supports[i]} is malformed`;
+                    message.summary.push(summaryMsg);
                     (_f = message.errors) === null || _f === void 0 ? void 0 : _f.push({
                         field: 'supports',
                         expected: 'Valid platform/constraint',
@@ -274,10 +281,10 @@ function checkMetadata(file) {
                         line: supportsLines[i],
                         path: file.toString()
                     });
-                    core.error(errorMsg, {
+                    core.error(`The supports entry '${supports[i]}' is malformed.`, {
                         file: file.toString(),
                         startLine: supportsLines[i],
-                        title: 'Cookbook Metadata: Format'
+                        title: 'Metadata/SupportsFormat'
                     });
                 }
             }
@@ -289,8 +296,8 @@ function checkMetadata(file) {
             for (let i = 0; i < depends.length; i++) {
                 if (!(0, metadata_1.isValidDepends)(depends[i])) {
                     message.conclusion = 'failure';
-                    const errorMsg = `depends: entry ${depends[i]} is malformed`;
-                    message.summary.push(errorMsg);
+                    const summaryMsg = `depends: entry ${depends[i]} is malformed`;
+                    message.summary.push(summaryMsg);
                     (_g = message.errors) === null || _g === void 0 ? void 0 : _g.push({
                         field: 'depends',
                         expected: 'Valid cookbook/constraint',
@@ -298,10 +305,10 @@ function checkMetadata(file) {
                         line: dependsLines[i],
                         path: file.toString()
                     });
-                    core.error(errorMsg, {
+                    core.error(`The depends entry '${depends[i]}' is malformed.`, {
                         file: file.toString(),
                         startLine: dependsLines[i],
-                        title: 'Cookbook Metadata: Format'
+                        title: 'Metadata/DependsFormat'
                     });
                 }
             }
@@ -393,9 +400,9 @@ function run() {
             for (const file of files) {
                 const relativePath = path.relative(process.cwd(), file);
                 core.info(`Checking metadata file: ${relativePath}`);
-                const result = yield (0, checkMetadata_1.checkMetadata)(file);
-                // Enhance result name/title with relative path
-                result.name = relativePath;
+                // IMPORTANT: Pass relativePath to ensure annotations use correct file paths
+                const result = yield (0, checkMetadata_1.checkMetadata)(relativePath);
+                // result.name already contains relativePath from checkMetadata
                 result.title = `Validation for ${relativePath}`;
                 results.push(result);
                 if (result.conclusion === 'failure') {

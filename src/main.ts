@@ -50,10 +50,10 @@ export async function run(): Promise<void> {
       const relativePath = path.relative(process.cwd(), file)
       core.info(`Checking metadata file: ${relativePath}`)
 
-      const result = await checkMetadata(file)
+      // IMPORTANT: Pass relativePath to ensure annotations use correct file paths
+      const result = await checkMetadata(relativePath)
 
-      // Enhance result name/title with relative path
-      result.name = relativePath
+      // result.name already contains relativePath from checkMetadata
       result.title = `Validation for ${relativePath}`
 
       results.push(result)
