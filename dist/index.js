@@ -689,21 +689,21 @@ const reportChecks = (messages) => __awaiter(void 0, void 0, void 0, function* (
         const failures = messageList.filter(m => m.conclusion === 'failure');
         const overallConclusion = failures.length > 0 ? 'failure' : 'success';
         let summary = failures.length > 0
-            ? `Found ${failures.length} cookbook(s) with validation errors.`
+            ? `Found ${failures.length} cookbook(s) with validation errors.\n\n`
             : 'All cookbooks validated successfully.';
         const allErrors = messageList.flatMap(m => m.errors || []);
         if (allErrors.length > 0) {
             const tableData = [
                 ['Cookbook', 'Field', 'Expected', 'Actual', 'Line'],
                 ...messageList.flatMap(m => (m.errors || []).map(err => [
-                    m.name, // m.name already contains the relative path
+                    m.name.includes(' - ') ? m.name.split(' - ')[1] : m.name,
                     err.field,
                     err.expected,
                     err.actual,
                     err.line ? err.line.toString() : 'N/A'
                 ]))
             ];
-            summary += `\n\n${(0, markdown_table_1.markdownTable)(tableData)}`;
+            summary += `${(0, markdown_table_1.markdownTable)(tableData)}`;
         }
         const annotations = allErrors.map(err => ({
             path: err.path || 'metadata.rb',
@@ -819,22 +819,19 @@ const reportPR = (messages) => __awaiter(void 0, void 0, void 0, function* () {
         return;
     }
     core.info(`Replacing the comment for ${jobName} with failures`);
-    let body = `${commentIdentifier}\n# Metadata Validation Results for ${jobName}\n\nFound ${failures.length} cookbook(s) with validation errors.\n\n`;
-    for (const failure of failures) {
-        body += `## ${failure.name}\n${failure.summary.join('\n')}\n`;
-        if (failure.errors && failure.errors.length > 0) {
-            const tableData = [
-                ['Field', 'Expected', 'Actual', 'Line'],
-                ...failure.errors.map(err => [
-                    err.field,
-                    err.expected,
-                    err.actual,
-                    err.line ? err.line.toString() : 'N/A'
-                ])
-            ];
-            body += `\n${(0, markdown_table_1.markdownTable)(tableData)}\n\n`;
-        }
-        body += '---\n';
+    let body = `${commentIdentifier}\n# Metadata Validation Results\n\n`;
+    if (failures.length > 0) {
+        const tableData = [
+            ['Cookbook', 'Field', 'Expected', 'Actual', 'Line'],
+            ...failures.flatMap(m => (m.errors || []).map(err => [
+                m.name.includes(' - ') ? m.name.split(' - ')[1] : m.name,
+                err.field,
+                err.expected,
+                err.actual,
+                err.line ? err.line.toString() : 'N/A'
+            ]))
+        ];
+        body += `${(0, markdown_table_1.markdownTable)(tableData)}\n\n`;
     }
     try {
         const options = yield commentGeneralOptions();

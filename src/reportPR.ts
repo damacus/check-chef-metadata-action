@@ -52,24 +52,22 @@ export const reportPR = async (
 
   core.info(`Replacing the comment for ${jobName} with failures`)
 
-  let body = `${commentIdentifier}\n# Metadata Validation Results for ${jobName}\n\nFound ${failures.length} cookbook(s) with validation errors.\n\n`
+  let body = `${commentIdentifier}\n# Metadata Validation Results\n\n`
 
-  for (const failure of failures) {
-    body += `## ${failure.name}\n${failure.summary.join('\n')}\n`
-
-    if (failure.errors && failure.errors.length > 0) {
-      const tableData = [
-        ['Field', 'Expected', 'Actual', 'Line'],
-        ...failure.errors.map(err => [
+  if (failures.length > 0) {
+    const tableData = [
+      ['Cookbook', 'Field', 'Expected', 'Actual', 'Line'],
+      ...failures.flatMap(m =>
+        (m.errors || []).map(err => [
+          m.name.includes(' - ') ? m.name.split(' - ')[1] : m.name,
           err.field,
           err.expected,
           err.actual,
           err.line ? err.line.toString() : 'N/A'
         ])
-      ]
-      body += `\n${markdownTable(tableData)}\n\n`
-    }
-    body += '---\n'
+      )
+    ]
+    body += `${markdownTable(tableData)}\n\n`
   }
 
   try {
