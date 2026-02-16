@@ -6,11 +6,17 @@ import {reportChecks} from '../src/reportChecks'
 describe('reportChecks', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+
+    // Ensure pull_request context is set for tests
+    github.context.payload.pull_request = {
+      head: {sha: 'test-sha'},
+      number: 123
+    } as any
   })
 
   it('creates a check with the correct parameters', async () => {
     const message: Message = {
-      name: 'test-check',
+      name: 'test-cookbook',
       conclusion: 'success',
       title: 'Test Check',
       summary: ['This is a test check.'],
@@ -25,7 +31,7 @@ describe('reportChecks', () => {
 
   it('handles errors', async () => {
     const message: Message = {
-      name: 'test-check',
+      name: 'test-cookbook',
       conclusion: 'success',
       title: 'Test Check',
       summary: ['This is a test check.'],

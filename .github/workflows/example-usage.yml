@@ -45,6 +45,6 @@ jobs:
           maintainer: 'Custom Maintainer'
           maintainer_email: 'custom@example.com'
           license: 'MIT'
-          file_path: 'test/fixtures/metadata.rb'
+          file_path: 'test/fixtures/metadata.incorrect.rb'
           report_checks: true
           comment_on_pr: true
