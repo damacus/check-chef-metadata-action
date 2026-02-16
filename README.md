@@ -13,6 +13,9 @@ We check for the following items:
 | license          | 'Apache-2.0'                                                                  |
 | source_url       | `https://github.com/${github.context.repo.owner}/${github.context.repo.repo}` |
 | issues_url       | `${source_url}/issues`                                                        |
+| version          | (Mandatory) Must be valid SemVer                                              |
+| chef_version     | (Mandatory) Must be valid version constraint                                  |
+| supports         | (Mandatory) Must have at least one valid platform entry                       |
 
 Source URL and Issues URL are not configurable.
 

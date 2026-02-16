@@ -17,6 +17,12 @@ const commentGeneralOptions = async (): Promise<Issue> => {
   }
 }
 
+/**
+ * Reports the results of the checks to the PR as a comment.
+ * If the checks passed, any existing metadata comment is deleted.
+ * If the checks failed, a new comment is created or an existing one is updated with a summary table.
+ * @param message The validation result message object.
+ */
 export const reportPR = async (message: Message): Promise<void> => {
   core.info('Reporting the results of the checks to the PR')
   core.info(`Message: ${JSON.stringify(message)}`)
