@@ -2,15 +2,11 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended",
-    "github>damacus/renovate-config"
+    "github>damacus/renovate-config:autoMergeGitHubActions"
   ],
   "packageRules": [
     {
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
-      "automerge": true
-    },
-    {
-      "matchManagers": ["github-actions"],
       "automerge": true
     }
   ]
