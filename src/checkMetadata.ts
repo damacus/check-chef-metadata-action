@@ -95,7 +95,7 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
   const issues_url = `${source_url}/issues`
 
   const message: Message = {
-    name: file.toString(), // Set name to file path for better grouping
+    name: file.toString(),
     message: 'Metadata matches',
     conclusion: 'success' as Conclusion,
     summary: ['Metadata validated'],
@@ -126,14 +126,11 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
       message.summary.push(summaryMsg)
 
       // Emit annotation (Rubocop style)
-      core.error(
-        `Invalid ${field}. Expected '${expected}', got '${displayActual}'.`,
-        {
-          file: file.toString(),
-          startLine: line,
-          title: `Metadata/${capitalize(field)}`
-        }
-      )
+      core.error(`${field}: expected '${expected}', got '${displayActual}'`, {
+        file: file.toString(),
+        startLine: line,
+        title: `Metadata/${capitalize(field)}`
+      })
     }
   }
 
@@ -164,14 +161,11 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
         line,
         path: file.toString()
       })
-      core.error(
-        `The source_url '${actualSourceUrl}' could not be reached (HTTP 200 expected).`,
-        {
-          file: file.toString(),
-          startLine: line,
-          title: 'Metadata/Reachability'
-        }
-      )
+      core.error(`source_url: '${actualSourceUrl}' is not accessible`, {
+        file: file.toString(),
+        startLine: line,
+        title: 'Metadata/Reachability'
+      })
     }
   }
 
@@ -190,14 +184,11 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
         line,
         path: file.toString()
       })
-      core.error(
-        `The issues_url '${actualIssuesUrl}' could not be reached (HTTP 200 expected).`,
-        {
-          file: file.toString(),
-          startLine: line,
-          title: 'Metadata/Reachability'
-        }
-      )
+      core.error(`issues_url: '${actualIssuesUrl}' is not accessible`, {
+        file: file.toString(),
+        startLine: line,
+        title: 'Metadata/Reachability'
+      })
     }
   }
 
@@ -223,13 +214,10 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
         line: undefined,
         path: file.toString()
       })
-      core.error(
-        `The mandatory field '${field}' is missing from metadata.rb.`,
-        {
-          file: file.toString(),
-          title: `Metadata/MissingField`
-        }
-      )
+      core.error(`${field}: field is missing from metadata.rb`, {
+        file: file.toString(),
+        title: 'Metadata/MissingField'
+      })
     }
   }
 
@@ -249,14 +237,11 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
       line,
       path: file.toString()
     })
-    core.error(
-      `The version '${version}' is not a valid Semantic Version (e.g., 1.2.3).`,
-      {
-        file: file.toString(),
-        startLine: line,
-        title: 'Metadata/VersionFormat'
-      }
-    )
+    core.error(`version: '${version}' is not a valid Semantic Version`, {
+      file: file.toString(),
+      startLine: line,
+      title: 'Metadata/VersionFormat'
+    })
   }
 
   // Chef Version
@@ -274,7 +259,7 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
       path: file.toString()
     })
     core.error(
-      `The chef_version '${chefVersion}' is not a valid version constraint (e.g., '>= 16.0').`,
+      `chef_version: '${chefVersion}' is not a valid version constraint`,
       {
         file: file.toString(),
         startLine: line,
@@ -290,8 +275,8 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
     for (let i = 0; i < supports.length; i++) {
       if (!isValidSupport(supports[i])) {
         message.conclusion = 'failure'
-        const summaryMsg = `supports: entry ${supports[i]} is malformed`
-        message.summary.push(summaryMsg)
+        const errorMsg = `supports: entry ${supports[i]} is malformed`
+        message.summary.push(errorMsg)
         message.errors?.push({
           field: 'supports',
           expected: 'Valid platform/constraint',
@@ -299,7 +284,7 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
           line: supportsLines[i],
           path: file.toString()
         })
-        core.error(`The supports entry '${supports[i]}' is malformed.`, {
+        core.error(`supports: entry ${supports[i]} is malformed`, {
           file: file.toString(),
           startLine: supportsLines[i],
           title: 'Metadata/SupportsFormat'
@@ -315,8 +300,8 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
     for (let i = 0; i < depends.length; i++) {
       if (!isValidDepends(depends[i])) {
         message.conclusion = 'failure'
-        const summaryMsg = `depends: entry ${depends[i]} is malformed`
-        message.summary.push(summaryMsg)
+        const errorMsg = `depends: entry ${depends[i]} is malformed`
+        message.summary.push(errorMsg)
         message.errors?.push({
           field: 'depends',
           expected: 'Valid cookbook/constraint',
@@ -324,7 +309,7 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
           line: dependsLines[i],
           path: file.toString()
         })
-        core.error(`The depends entry '${depends[i]}' is malformed.`, {
+        core.error(`depends: entry ${depends[i]} is malformed`, {
           file: file.toString(),
           startLine: dependsLines[i],
           title: 'Metadata/DependsFormat'

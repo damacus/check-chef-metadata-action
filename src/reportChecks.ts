@@ -26,7 +26,7 @@ export const reportChecks = async (
         ['Cookbook', 'Field', 'Expected', 'Actual', 'Line'],
         ...messageList.flatMap(m =>
           (m.errors || []).map(err => [
-            m.name.includes(' - ') ? m.name.split(' - ')[1] : m.name,
+            m.name, // m.name already contains the relative path
             err.field,
             err.expected,
             err.actual,
@@ -42,9 +42,13 @@ export const reportChecks = async (
       start_line: err.line || 1,
       end_line: err.line || 1,
       annotation_level: 'failure' as const,
-      message: `${err.field}: expected ${err.expected}, got ${err.actual}`,
-      title: `Invalid ${err.field}`
+      message: `${err.field}: expected '${err.expected}', got '${err.actual}'`,
+      title: `Metadata/${err.field.charAt(0).toUpperCase() + err.field.slice(1)}`
     }))
+
+    // Use head SHA for PRs to ensure annotations show up correctly
+    const head_sha =
+      github.context.payload.pull_request?.head.sha || github.context.sha
 
     const result = await github
       .getOctokit(core.getInput('github-token', {required: true}))
@@ -52,7 +56,7 @@ export const reportChecks = async (
         owner: github.context.repo.owner,
         repo: github.context.repo.repo,
         name: 'Metadata Validation',
-        head_sha: github.context.payload.pull_request?.head.sha,
+        head_sha,
         status: 'completed',
         conclusion: overallConclusion,
         output: {
@@ -62,7 +66,7 @@ export const reportChecks = async (
               : 'Metadata validation failed',
           summary,
           annotations:
-            annotations.length > 0 ? annotations.slice(0, 50) : undefined // GitHub limit is 50 per call
+            annotations.length > 0 ? annotations.slice(0, 50) : undefined
         }
       })
     core.info(`Created check run: ${result.data.id}`)

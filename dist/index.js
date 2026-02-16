@@ -116,7 +116,7 @@ function checkMetadata(file) {
         const source_url = `https://github.com/${github.context.repo.owner}/${github.context.repo.repo}`;
         const issues_url = `${source_url}/issues`;
         const message = {
-            name: file.toString(), // Set name to file path for better grouping
+            name: file.toString(),
             message: 'Metadata matches',
             conclusion: 'success',
             summary: ['Metadata validated'],
@@ -140,7 +140,7 @@ function checkMetadata(file) {
                 const summaryMsg = `${field}: expected '${expected}', got '${displayActual}'`;
                 message.summary.push(summaryMsg);
                 // Emit annotation (Rubocop style)
-                core.error(`Invalid ${field}. Expected '${expected}', got '${displayActual}'.`, {
+                core.error(`${field}: expected '${expected}', got '${displayActual}'`, {
                     file: file.toString(),
                     startLine: line,
                     title: `Metadata/${capitalize(field)}`
@@ -169,7 +169,7 @@ function checkMetadata(file) {
                     line,
                     path: file.toString()
                 });
-                core.error(`The source_url '${actualSourceUrl}' could not be reached (HTTP 200 expected).`, {
+                core.error(`source_url: '${actualSourceUrl}' is not accessible`, {
                     file: file.toString(),
                     startLine: line,
                     title: 'Metadata/Reachability'
@@ -191,7 +191,7 @@ function checkMetadata(file) {
                     line,
                     path: file.toString()
                 });
-                core.error(`The issues_url '${actualIssuesUrl}' could not be reached (HTTP 200 expected).`, {
+                core.error(`issues_url: '${actualIssuesUrl}' is not accessible`, {
                     file: file.toString(),
                     startLine: line,
                     title: 'Metadata/Reachability'
@@ -218,9 +218,9 @@ function checkMetadata(file) {
                     line: undefined,
                     path: file.toString()
                 });
-                core.error(`The mandatory field '${field}' is missing from metadata.rb.`, {
+                core.error(`${field}: field is missing from metadata.rb`, {
                     file: file.toString(),
-                    title: `Metadata/MissingField`
+                    title: 'Metadata/MissingField'
                 });
             }
         }
@@ -239,7 +239,7 @@ function checkMetadata(file) {
                 line,
                 path: file.toString()
             });
-            core.error(`The version '${version}' is not a valid Semantic Version (e.g., 1.2.3).`, {
+            core.error(`version: '${version}' is not a valid Semantic Version`, {
                 file: file.toString(),
                 startLine: line,
                 title: 'Metadata/VersionFormat'
@@ -259,7 +259,7 @@ function checkMetadata(file) {
                 line,
                 path: file.toString()
             });
-            core.error(`The chef_version '${chefVersion}' is not a valid version constraint (e.g., '>= 16.0').`, {
+            core.error(`chef_version: '${chefVersion}' is not a valid version constraint`, {
                 file: file.toString(),
                 startLine: line,
                 title: 'Metadata/ChefVersionFormat'
@@ -272,8 +272,8 @@ function checkMetadata(file) {
             for (let i = 0; i < supports.length; i++) {
                 if (!(0, metadata_1.isValidSupport)(supports[i])) {
                     message.conclusion = 'failure';
-                    const summaryMsg = `supports: entry ${supports[i]} is malformed`;
-                    message.summary.push(summaryMsg);
+                    const errorMsg = `supports: entry ${supports[i]} is malformed`;
+                    message.summary.push(errorMsg);
                     (_f = message.errors) === null || _f === void 0 ? void 0 : _f.push({
                         field: 'supports',
                         expected: 'Valid platform/constraint',
@@ -281,7 +281,7 @@ function checkMetadata(file) {
                         line: supportsLines[i],
                         path: file.toString()
                     });
-                    core.error(`The supports entry '${supports[i]}' is malformed.`, {
+                    core.error(`supports: entry ${supports[i]} is malformed`, {
                         file: file.toString(),
                         startLine: supportsLines[i],
                         title: 'Metadata/SupportsFormat'
@@ -296,8 +296,8 @@ function checkMetadata(file) {
             for (let i = 0; i < depends.length; i++) {
                 if (!(0, metadata_1.isValidDepends)(depends[i])) {
                     message.conclusion = 'failure';
-                    const summaryMsg = `depends: entry ${depends[i]} is malformed`;
-                    message.summary.push(summaryMsg);
+                    const errorMsg = `depends: entry ${depends[i]} is malformed`;
+                    message.summary.push(errorMsg);
                     (_g = message.errors) === null || _g === void 0 ? void 0 : _g.push({
                         field: 'depends',
                         expected: 'Valid cookbook/constraint',
@@ -305,7 +305,7 @@ function checkMetadata(file) {
                         line: dependsLines[i],
                         path: file.toString()
                     });
-                    core.error(`The depends entry '${depends[i]}' is malformed.`, {
+                    core.error(`depends: entry ${depends[i]} is malformed`, {
                         file: file.toString(),
                         startLine: dependsLines[i],
                         title: 'Metadata/DependsFormat'
@@ -687,7 +687,7 @@ const reportChecks = (messages) => __awaiter(void 0, void 0, void 0, function* (
             const tableData = [
                 ['Cookbook', 'Field', 'Expected', 'Actual', 'Line'],
                 ...messageList.flatMap(m => (m.errors || []).map(err => [
-                    m.name.includes(' - ') ? m.name.split(' - ')[1] : m.name,
+                    m.name, // m.name already contains the relative path
                     err.field,
                     err.expected,
                     err.actual,
@@ -701,16 +701,18 @@ const reportChecks = (messages) => __awaiter(void 0, void 0, void 0, function* (
             start_line: err.line || 1,
             end_line: err.line || 1,
             annotation_level: 'failure',
-            message: `${err.field}: expected ${err.expected}, got ${err.actual}`,
-            title: `Invalid ${err.field}`
+            message: `${err.field}: expected '${err.expected}', got '${err.actual}'`,
+            title: `Metadata/${err.field.charAt(0).toUpperCase() + err.field.slice(1)}`
         }));
+        // Use head SHA for PRs to ensure annotations show up correctly
+        const head_sha = ((_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.head.sha) || github.context.sha;
         const result = yield github
             .getOctokit(core.getInput('github-token', { required: true }))
             .rest.checks.create({
             owner: github.context.repo.owner,
             repo: github.context.repo.repo,
             name: 'Metadata Validation',
-            head_sha: (_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.head.sha,
+            head_sha,
             status: 'completed',
             conclusion: overallConclusion,
             output: {
@@ -718,7 +720,7 @@ const reportChecks = (messages) => __awaiter(void 0, void 0, void 0, function* (
                     ? 'Metadata validated'
                     : 'Metadata validation failed',
                 summary,
-                annotations: annotations.length > 0 ? annotations.slice(0, 50) : undefined // GitHub limit is 50 per call
+                annotations: annotations.length > 0 ? annotations.slice(0, 50) : undefined
             }
         });
         core.info(`Created check run: ${result.data.id}`);
