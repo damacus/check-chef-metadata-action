@@ -10,13 +10,13 @@
 - [x] Task: Conductor - User Manual Verification 'Multi-Cookbook Support' (Protocol in workflow.md)
 
 ## Phase 2: Robust Parsing & Dependencies
-- [ ] Task: Enhance parser for Ruby symbols
-    - [ ] Write unit tests for fields using symbol syntax (e.g., `license :apache2`) in `test/metadata.test.ts`
-    - [ ] Update regex in `src/metadata.ts` to support optional leading colons and unquoted symbol values
-- [ ] Task: Implement `depends` field validation
-    - [ ] Write unit tests for valid/invalid `depends` entries in `test/metadata.test.ts`
-    - [ ] Add `depends` validation logic to `src/checkMetadata.ts` and ensure it's aggregated
-- [ ] Task: Conductor - User Manual Verification 'Robust Parsing & Dependencies' (Protocol in workflow.md)
+- [x] Task: Enhance parser for Ruby symbols
+    - [x] Write unit tests for fields using symbol syntax (e.g., `license :apache2`) in `test/metadata.test.ts`
+    - [x] Update regex in `src/metadata.ts` to support optional leading colons and unquoted symbol values
+- [x] Task: Implement `depends` field validation
+    - [x] Write unit tests for valid/invalid `depends` entries in `test/metadata.test.ts`
+    - [x] Add `depends` validation logic to `src/checkMetadata.ts` and ensure it's aggregated
+- [x] Task: Conductor - User Manual Verification 'Robust Parsing & Dependencies' (Protocol in workflow.md)
 
 ## Phase 3: URL Validation & Configurable Strictness
 - [ ] Task: Implement live URL verification

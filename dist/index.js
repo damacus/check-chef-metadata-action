@@ -79,7 +79,7 @@ const COMMON_SPDX_LICENSES = [
     'Unlicense'
 ];
 function checkMetadata(file) {
-    var _a, _b, _c, _d, _e, _f;
+    var _a, _b, _c, _d, _e, _f, _g;
     return __awaiter(this, void 0, void 0, function* () {
         /**
          * Read metadata file
@@ -242,6 +242,29 @@ function checkMetadata(file) {
                 }
             }
         }
+        // Depends
+        const depends = data.get('depends');
+        const dependsLines = lines.get('depends');
+        if (depends) {
+            for (let i = 0; i < depends.length; i++) {
+                if (!(0, metadata_1.isValidDepends)(depends[i])) {
+                    message.conclusion = 'failure';
+                    const errorMsg = `depends entry ${depends[i]} is malformed`;
+                    message.summary.push(errorMsg);
+                    (_g = message.errors) === null || _g === void 0 ? void 0 : _g.push({
+                        field: 'depends',
+                        expected: 'Valid cookbook/constraint',
+                        actual: depends[i],
+                        line: dependsLines[i]
+                    });
+                    core.error(errorMsg, {
+                        file: file.toString(),
+                        startLine: dependsLines[i],
+                        title: 'Invalid Dependency'
+                    });
+                }
+            }
+        }
         if (message.conclusion === 'failure') {
             message.summary = message.summary.filter(s => s !== 'Metadata validated');
             message.message = "Metadata doesn't match";
@@ -377,7 +400,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.isValidSupport = exports.isValidVersionConstraint = exports.isValidSemVer = exports.metadata = void 0;
+exports.isValidDepends = exports.isValidSupport = exports.isValidVersionConstraint = exports.isValidSemVer = exports.metadata = void 0;
 const fs_1 = __importDefault(__nccwpck_require__(9896));
 /**
  * Load Cookbook metdata file
@@ -390,6 +413,8 @@ const metadata = (file_path) => {
     const lines = new Map();
     const supports = [];
     const supportsLines = [];
+    const depends = [];
+    const dependsLines = [];
     const allowed_keys = [
         'name',
         'maintainer',
@@ -427,13 +452,19 @@ const metadata = (file_path) => {
             supports.push(value);
             supportsLines.push(lineNumber);
         }
+        else if (key === 'depends') {
+            const value = trimmedElement.substring(key.length).trim();
+            depends.push(value);
+            dependsLines.push(lineNumber);
+        }
         else if (allowed_keys.includes(key)) {
-            // Define a regular expression to match key-value pairs in the `element` string
-            const regex = /(\w+)\s+('|")(.*?)('|")/;
-            // Use the regular expression to extract the key and value from the `element` string
+            // Support both quoted strings and symbols
+            const regex = /(\w+)\s+(?:(?:'|")(.*?)('|")|:(\w+))/;
             const item = element.match(regex);
-            // Get the key and value from the `item` array using array indexing and nullish coalescing operators
-            const value = item ? item[3] : '';
+            let value = '';
+            if (item) {
+                value = item[2] || item[4] || '';
+            }
             // If the `key` is allowed, add it to the `data` Map object
             data.set(key, value);
             lines.set(key, lineNumber);
@@ -441,6 +472,8 @@ const metadata = (file_path) => {
     }
     data.set('supports', supports);
     lines.set('supports', supportsLines);
+    data.set('depends', depends);
+    lines.set('depends', dependsLines);
     return { data, lines };
 };
 exports.metadata = metadata;
@@ -470,18 +503,38 @@ exports.isValidVersionConstraint = isValidVersionConstraint;
  * @returns boolean
  */
 const isValidSupport = (support) => {
-    const supportRegex = /^(?:'|")([a-z0-9_-]+)(?:'|")(?:\s*,\s*(?:'|")([^'"]+)(?:'|"))?$/;
+    // Matches 'platform' or 'platform', 'constraint' or :platform or :platform, 'constraint'
+    const supportRegex = /^(?:(?:'|")([a-z0-9_-]+)(?:'|")|:([a-z0-9_-]+))(?:\s*,\s*(?:'|")([^'"]+)(?:'|"))?$/;
     const match = support.match(supportRegex);
     if (!match)
         return false;
-    const platform = match[1];
-    const constraint = match[2];
+    const platform = match[1] || match[2];
+    const constraint = match[3];
     if (constraint && !(0, exports.isValidVersionConstraint)(constraint)) {
         return false;
     }
     return !!platform;
 };
 exports.isValidSupport = isValidSupport;
+/**
+ * Validates if a string is a valid Chef depends entry
+ * @param depends The depends string to validate
+ * @returns boolean
+ */
+const isValidDepends = (depends) => {
+    // Matches 'cookbook' or 'cookbook', 'constraint'
+    const dependsRegex = /^(?:(?:'|")([a-z0-9_-]+)(?:'|"))(?:\s*,\s*(?:'|")([^'"]+)(?:'|"))?$/;
+    const match = depends.match(dependsRegex);
+    if (!match)
+        return false;
+    const cookbook = match[1];
+    const constraint = match[2];
+    if (constraint && !(0, exports.isValidVersionConstraint)(constraint)) {
+        return false;
+    }
+    return !!cookbook;
+};
+exports.isValidDepends = isValidDepends;
 
 
 /***/ }),

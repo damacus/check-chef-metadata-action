@@ -6,7 +6,8 @@ import {
   metadata,
   isValidSemVer,
   isValidVersionConstraint,
-  isValidSupport
+  isValidSupport,
+  isValidDepends
 } from './metadata'
 
 /**
@@ -229,6 +230,30 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
           file: file.toString(),
           startLine: supportsLines[i],
           title: 'Invalid Support'
+        })
+      }
+    }
+  }
+
+  // Depends
+  const depends = data.get('depends') as string[]
+  const dependsLines = lines.get('depends') as number[]
+  if (depends) {
+    for (let i = 0; i < depends.length; i++) {
+      if (!isValidDepends(depends[i])) {
+        message.conclusion = 'failure'
+        const errorMsg = `depends entry ${depends[i]} is malformed`
+        message.summary.push(errorMsg)
+        message.errors?.push({
+          field: 'depends',
+          expected: 'Valid cookbook/constraint',
+          actual: depends[i],
+          line: dependsLines[i]
+        })
+        core.error(errorMsg, {
+          file: file.toString(),
+          startLine: dependsLines[i],
+          title: 'Invalid Dependency'
         })
       }
     }

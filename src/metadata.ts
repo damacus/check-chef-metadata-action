@@ -16,6 +16,8 @@ export const metadata = (file_path: fs.PathLike): MetadataResult => {
   const lines = new Map<string, number | number[]>()
   const supports: string[] = []
   const supportsLines: number[] = []
+  const depends: string[] = []
+  const dependsLines: number[] = []
 
   const allowed_keys = [
     'name',
@@ -62,13 +64,18 @@ export const metadata = (file_path: fs.PathLike): MetadataResult => {
       const value = trimmedElement.substring(key.length).trim()
       supports.push(value)
       supportsLines.push(lineNumber)
+    } else if (key === 'depends') {
+      const value = trimmedElement.substring(key.length).trim()
+      depends.push(value)
+      dependsLines.push(lineNumber)
     } else if (allowed_keys.includes(key)) {
-      // Define a regular expression to match key-value pairs in the `element` string
-      const regex = /(\w+)\s+('|")(.*?)('|")/
-      // Use the regular expression to extract the key and value from the `element` string
+      // Support both quoted strings and symbols
+      const regex = /(\w+)\s+(?:(?:'|")(.*?)('|")|:(\w+))/
       const item = element.match(regex)
-      // Get the key and value from the `item` array using array indexing and nullish coalescing operators
-      const value: string = item ? item[3] : ''
+      let value = ''
+      if (item) {
+        value = item[2] || item[4] || ''
+      }
 
       // If the `key` is allowed, add it to the `data` Map object
       data.set(key, value)
@@ -78,6 +85,8 @@ export const metadata = (file_path: fs.PathLike): MetadataResult => {
 
   data.set('supports', supports)
   lines.set('supports', supportsLines)
+  data.set('depends', depends)
+  lines.set('depends', dependsLines)
 
   return {data, lines}
 }
@@ -110,17 +119,40 @@ export const isValidVersionConstraint = (constraint: string): boolean => {
  * @returns boolean
  */
 export const isValidSupport = (support: string): boolean => {
+  // Matches 'platform' or 'platform', 'constraint' or :platform or :platform, 'constraint'
   const supportRegex =
-    /^(?:'|")([a-z0-9_-]+)(?:'|")(?:\s*,\s*(?:'|")([^'"]+)(?:'|"))?$/
+    /^(?:(?:'|")([a-z0-9_-]+)(?:'|")|:([a-z0-9_-]+))(?:\s*,\s*(?:'|")([^'"]+)(?:'|"))?$/
   const match = support.match(supportRegex)
   if (!match) return false
 
-  const platform = match[1]
-  const constraint = match[2]
+  const platform = match[1] || match[2]
+  const constraint = match[3]
 
   if (constraint && !isValidVersionConstraint(constraint)) {
     return false
   }
 
   return !!platform
+}
+
+/**
+ * Validates if a string is a valid Chef depends entry
+ * @param depends The depends string to validate
+ * @returns boolean
+ */
+export const isValidDepends = (depends: string): boolean => {
+  // Matches 'cookbook' or 'cookbook', 'constraint'
+  const dependsRegex =
+    /^(?:(?:'|")([a-z0-9_-]+)(?:'|"))(?:\s*,\s*(?:'|")([^'"]+)(?:'|"))?$/
+  const match = depends.match(dependsRegex)
+  if (!match) return false
+
+  const cookbook = match[1]
+  const constraint = match[2]
+
+  if (constraint && !isValidVersionConstraint(constraint)) {
+    return false
+  }
+
+  return !!cookbook
 }
