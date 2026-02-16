@@ -124,11 +124,18 @@ function checkMetadata(file) {
             errors: [],
             rawMetadata: Object.fromEntries(data)
         };
+        const getLine = (field, index) => {
+            const lineVal = lines.get(field);
+            if (Array.isArray(lineVal)) {
+                return index !== undefined ? lineVal[index] : lineVal[0];
+            }
+            return lineVal;
+        };
         const checkField = (field, expected, actual) => {
             var _a;
             if (actual !== expected) {
                 message.conclusion = 'failure';
-                const line = lines.get(field);
+                const line = getLine(field);
                 (_a = message.errors) === null || _a === void 0 ? void 0 : _a.push({
                     field,
                     expected,
@@ -159,7 +166,7 @@ function checkMetadata(file) {
             const isAccessible = yield (0, metadata_1.isUrlAccessible)(actualSourceUrl);
             if (!isAccessible) {
                 message.conclusion = 'failure';
-                const line = lines.get('source_url');
+                const line = getLine('source_url');
                 const summaryMsg = `source_url: '${actualSourceUrl}' is not accessible`;
                 message.summary.push(summaryMsg);
                 (_a = message.errors) === null || _a === void 0 ? void 0 : _a.push({
@@ -181,7 +188,7 @@ function checkMetadata(file) {
             const isAccessible = yield (0, metadata_1.isUrlAccessible)(actualIssuesUrl);
             if (!isAccessible) {
                 message.conclusion = 'failure';
-                const line = lines.get('issues_url');
+                const line = getLine('issues_url');
                 const summaryMsg = `issues_url: '${actualIssuesUrl}' is not accessible`;
                 message.summary.push(summaryMsg);
                 (_b = message.errors) === null || _b === void 0 ? void 0 : _b.push({
@@ -229,7 +236,7 @@ function checkMetadata(file) {
         const version = data.get('version');
         if (version && !(0, metadata_1.isValidSemVer)(version)) {
             message.conclusion = 'failure';
-            const line = lines.get('version');
+            const line = getLine('version');
             const summaryMsg = `version: '${version}' is not a valid Semantic Version`;
             message.summary.push(summaryMsg);
             (_d = message.errors) === null || _d === void 0 ? void 0 : _d.push({
@@ -249,7 +256,7 @@ function checkMetadata(file) {
         const chefVersion = data.get('chef_version');
         if (chefVersion && !(0, metadata_1.isValidVersionConstraint)(chefVersion)) {
             message.conclusion = 'failure';
-            const line = lines.get('chef_version');
+            const line = getLine('chef_version');
             const summaryMsg = `chef_version: '${chefVersion}' is not a valid version constraint`;
             message.summary.push(summaryMsg);
             (_e = message.errors) === null || _e === void 0 ? void 0 : _e.push({
@@ -272,18 +279,19 @@ function checkMetadata(file) {
             for (let i = 0; i < supports.length; i++) {
                 if (!(0, metadata_1.isValidSupport)(supports[i])) {
                     message.conclusion = 'failure';
-                    const errorMsg = `supports: entry ${supports[i]} is malformed`;
-                    message.summary.push(errorMsg);
+                    const line = supportsLines[i];
+                    const summaryMsg = `supports: entry ${supports[i]} is malformed`;
+                    message.summary.push(summaryMsg);
                     (_f = message.errors) === null || _f === void 0 ? void 0 : _f.push({
                         field: 'supports',
                         expected: 'Valid platform/constraint',
                         actual: supports[i],
-                        line: supportsLines[i],
+                        line,
                         path: file.toString()
                     });
                     core.error(`supports: entry ${supports[i]} is malformed`, {
                         file: file.toString(),
-                        startLine: supportsLines[i],
+                        startLine: line,
                         title: 'Metadata/SupportsFormat'
                     });
                 }
@@ -296,18 +304,19 @@ function checkMetadata(file) {
             for (let i = 0; i < depends.length; i++) {
                 if (!(0, metadata_1.isValidDepends)(depends[i])) {
                     message.conclusion = 'failure';
-                    const errorMsg = `depends: entry ${depends[i]} is malformed`;
-                    message.summary.push(errorMsg);
+                    const line = dependsLines[i];
+                    const summaryMsg = `depends: entry ${depends[i]} is malformed`;
+                    message.summary.push(summaryMsg);
                     (_g = message.errors) === null || _g === void 0 ? void 0 : _g.push({
                         field: 'depends',
                         expected: 'Valid cookbook/constraint',
                         actual: depends[i],
-                        line: dependsLines[i],
+                        line,
                         path: file.toString()
                     });
                     core.error(`depends: entry ${depends[i]} is malformed`, {
                         file: file.toString(),
-                        startLine: dependsLines[i],
+                        startLine: line,
                         title: 'Metadata/DependsFormat'
                     });
                 }

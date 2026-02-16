@@ -104,6 +104,14 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
     rawMetadata: Object.fromEntries(data)
   }
 
+  const getLine = (field: string, index?: number): number | undefined => {
+    const lineVal = lines.get(field)
+    if (Array.isArray(lineVal)) {
+      return index !== undefined ? lineVal[index] : lineVal[0]
+    }
+    return lineVal
+  }
+
   const checkField = (
     field: string,
     expected: string,
@@ -111,7 +119,7 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
   ): void => {
     if (actual !== expected) {
       message.conclusion = 'failure'
-      const line = lines.get(field) as number | undefined
+      const line = getLine(field)
 
       message.errors?.push({
         field,
@@ -151,7 +159,7 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
     const isAccessible = await isUrlAccessible(actualSourceUrl)
     if (!isAccessible) {
       message.conclusion = 'failure'
-      const line = lines.get('source_url') as number | undefined
+      const line = getLine('source_url')
       const summaryMsg = `source_url: '${actualSourceUrl}' is not accessible`
       message.summary.push(summaryMsg)
       message.errors?.push({
@@ -174,7 +182,7 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
     const isAccessible = await isUrlAccessible(actualIssuesUrl)
     if (!isAccessible) {
       message.conclusion = 'failure'
-      const line = lines.get('issues_url') as number | undefined
+      const line = getLine('issues_url')
       const summaryMsg = `issues_url: '${actualIssuesUrl}' is not accessible`
       message.summary.push(summaryMsg)
       message.errors?.push({
@@ -227,7 +235,7 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
   const version = data.get('version') as string
   if (version && !isValidSemVer(version)) {
     message.conclusion = 'failure'
-    const line = lines.get('version') as number | undefined
+    const line = getLine('version')
     const summaryMsg = `version: '${version}' is not a valid Semantic Version`
     message.summary.push(summaryMsg)
     message.errors?.push({
@@ -248,7 +256,7 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
   const chefVersion = data.get('chef_version') as string
   if (chefVersion && !isValidVersionConstraint(chefVersion)) {
     message.conclusion = 'failure'
-    const line = lines.get('chef_version') as number | undefined
+    const line = getLine('chef_version')
     const summaryMsg = `chef_version: '${chefVersion}' is not a valid version constraint`
     message.summary.push(summaryMsg)
     message.errors?.push({
@@ -275,18 +283,19 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
     for (let i = 0; i < supports.length; i++) {
       if (!isValidSupport(supports[i])) {
         message.conclusion = 'failure'
-        const errorMsg = `supports: entry ${supports[i]} is malformed`
-        message.summary.push(errorMsg)
+        const line = supportsLines[i]
+        const summaryMsg = `supports: entry ${supports[i]} is malformed`
+        message.summary.push(summaryMsg)
         message.errors?.push({
           field: 'supports',
           expected: 'Valid platform/constraint',
           actual: supports[i],
-          line: supportsLines[i],
+          line,
           path: file.toString()
         })
         core.error(`supports: entry ${supports[i]} is malformed`, {
           file: file.toString(),
-          startLine: supportsLines[i],
+          startLine: line,
           title: 'Metadata/SupportsFormat'
         })
       }
@@ -300,18 +309,19 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
     for (let i = 0; i < depends.length; i++) {
       if (!isValidDepends(depends[i])) {
         message.conclusion = 'failure'
-        const errorMsg = `depends: entry ${depends[i]} is malformed`
-        message.summary.push(errorMsg)
+        const line = dependsLines[i]
+        const summaryMsg = `depends: entry ${depends[i]} is malformed`
+        message.summary.push(summaryMsg)
         message.errors?.push({
           field: 'depends',
           expected: 'Valid cookbook/constraint',
           actual: depends[i],
-          line: dependsLines[i],
+          line,
           path: file.toString()
         })
         core.error(`depends: entry ${depends[i]} is malformed`, {
           file: file.toString(),
-          startLine: dependsLines[i],
+          startLine: line,
           title: 'Metadata/DependsFormat'
         })
       }
