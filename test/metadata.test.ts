@@ -1,4 +1,4 @@
-import {metadata, isValidSemVer} from '../src/metadata'
+import {metadata, isValidSemVer, isValidVersionConstraint} from '../src/metadata'
 
 describe('Java cookbook metadata', () => {
   const data = metadata('./test/fixtures/metadata.rb')
@@ -59,5 +59,24 @@ describe('isValidSemVer', () => {
     expect(isValidSemVer('1.2.3.4')).toBe(false)
     expect(isValidSemVer('abc')).toBe(false)
     expect(isValidSemVer('')).toBe(false)
+  })
+})
+
+describe('isValidVersionConstraint', () => {
+  it('identifies valid version constraints', () => {
+    expect(isValidVersionConstraint('>= 15.3')).toBe(true)
+    expect(isValidVersionConstraint('> 15.3')).toBe(true)
+    expect(isValidVersionConstraint('<= 15.3')).toBe(true)
+    expect(isValidVersionConstraint('< 15.3')).toBe(true)
+    expect(isValidVersionConstraint('~> 15.3')).toBe(true)
+    expect(isValidVersionConstraint('= 15.3')).toBe(true)
+    expect(isValidVersionConstraint('15.3')).toBe(true)
+    expect(isValidVersionConstraint('>= 15.3.1')).toBe(true)
+  })
+
+  it('identifies invalid version constraints', () => {
+    expect(isValidVersionConstraint('>> 15.3')).toBe(false)
+    expect(isValidVersionConstraint('abc')).toBe(false)
+    expect(isValidVersionConstraint('')).toBe(false)
   })
 })

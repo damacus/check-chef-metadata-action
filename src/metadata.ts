@@ -68,3 +68,14 @@ export const isValidSemVer = (version: string): boolean => {
     /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/
   return semverRegex.test(version)
 }
+
+/**
+ * Validates if a string is a valid Chef version constraint
+ * @param constraint The constraint string to validate
+ * @returns boolean
+ */
+export const isValidVersionConstraint = (constraint: string): boolean => {
+  const constraintRegex =
+    /^(?:>=|>|<=|<|~>|=)?\s*\d+(?:\.\d+)*(?:-[a-zA-Z0-9.]+)?$/
+  return constraintRegex.test(constraint) && constraint.length > 0
+}
