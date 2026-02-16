@@ -2,7 +2,12 @@ import * as core from '@actions/core'
 import * as fs from 'fs'
 import * as github from '@actions/github'
 import {Message, Conclusion} from './messageInterface'
-import {metadata} from './metadata'
+import {
+  metadata,
+  isValidSemVer,
+  isValidVersionConstraint,
+  isValidSupport
+} from './metadata'
 
 /**
  * Validates email format using a basic regex pattern
@@ -58,7 +63,7 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
     core.error(`${file}: access error!`)
   }
 
-  const data = metadata(file)
+  const {data, lines} = metadata(file)
   const maintainer: string = core.getInput('maintainer')
   const maintainer_email: string = core.getInput('maintainer_email')
   const license: string = core.getInput('license')
@@ -80,82 +85,159 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
   const source_url = `https://github.com/${github.context.repo.owner}/${github.context.repo.repo}`
   const issues_url = `${source_url}/issues`
 
-  const message = {
+  const message: Message = {
     name: 'Check Metadata',
     message: 'Metadata matches',
     conclusion: 'success' as Conclusion,
     summary: ['Metadata validated'],
-    title: 'Metadata validated'
+    title: 'Metadata validated',
+    errors: []
   }
 
-  if (data.get('maintainer_email') !== maintainer_email) {
-    message.conclusion = 'failure'
-    message.summary = message.summary.filter(s => s !== 'Metadata validated')
+  const checkField = (
+    field: string,
+    expected: string,
+    actual: string | undefined
+  ): void => {
+    if (actual !== expected) {
+      message.conclusion = 'failure'
+      const line = lines.get(field) as number | undefined
 
-    message.summary.push(
-      `Maintainer email is not set to ${maintainer_email} (currently set to ${data.get(
-        'maintainer_email'
-      )})`
-    )
+      message.errors?.push({
+        field,
+        expected,
+        actual: actual || 'MISSING',
+        line
+      })
+
+      const errorMsg = `${field} is not set to ${expected} (currently set to ${
+        actual || 'MISSING'
+      })`
+      message.summary.push(errorMsg)
+
+      // Emit annotation
+      core.error(errorMsg, {
+        file: file.toString(),
+        startLine: line,
+        title: `Invalid ${field}`
+      })
+    }
   }
 
-  if (data.get('maintainer') !== maintainer) {
-    message.conclusion = 'failure'
-    message.summary = message.summary.filter(s => s !== 'Metadata validated')
+  // 1. Existing Field Checks
+  checkField(
+    'maintainer_email',
+    maintainer_email,
+    data.get('maintainer_email') as string
+  )
+  checkField('maintainer', maintainer, data.get('maintainer') as string)
+  checkField('license', license, data.get('license') as string)
+  checkField('source_url', source_url, data.get('source_url') as string)
+  checkField('issues_url', issues_url, data.get('issues_url') as string)
 
-    message.summary.push(
-      `Maintainer is not set to ${maintainer} (currently set to ${data.get(
-        'maintainer'
-      )})`
-    )
+  // 2. Mandatory Field Validation (New)
+
+  // Version
+  const version = data.get('version') as string
+  const versionLine = lines.get('version') as number | undefined
+  if (!version) {
+    message.conclusion = 'failure'
+    const errorMsg = 'version field is missing from metadata.rb'
+    message.summary.push(errorMsg)
+    message.errors?.push({
+      field: 'version',
+      expected: 'SemVer string',
+      actual: 'MISSING',
+      line: undefined
+    })
+    core.error(errorMsg, {file: file.toString(), title: 'Missing Version'})
+  } else if (!isValidSemVer(version)) {
+    message.conclusion = 'failure'
+    const errorMsg = `version '${version}' is not a valid Semantic Version`
+    message.summary.push(errorMsg)
+    message.errors?.push({
+      field: 'version',
+      expected: 'SemVer string',
+      actual: version,
+      line: versionLine
+    })
+    core.error(errorMsg, {
+      file: file.toString(),
+      startLine: versionLine,
+      title: 'Invalid Version'
+    })
   }
 
-  if (data.get('license') !== license) {
+  // Chef Version
+  const chefVersion = data.get('chef_version') as string
+  const chefVersionLine = lines.get('chef_version') as number | undefined
+  if (!chefVersion) {
     message.conclusion = 'failure'
-    message.summary = message.summary.filter(s => s !== 'Metadata validated')
-
-    message.summary.push(
-      `License is not set to ${license} (currently set to ${data.get(
-        'license'
-      )})`
-    )
+    const errorMsg = 'chef_version field is missing from metadata.rb'
+    message.summary.push(errorMsg)
+    message.errors?.push({
+      field: 'chef_version',
+      expected: 'Version constraint',
+      actual: 'MISSING',
+      line: undefined
+    })
+    core.error(errorMsg, {file: file.toString(), title: 'Missing Chef Version'})
+  } else if (!isValidVersionConstraint(chefVersion)) {
+    message.conclusion = 'failure'
+    const errorMsg = `chef_version '${chefVersion}' is not a valid version constraint`
+    message.summary.push(errorMsg)
+    message.errors?.push({
+      field: 'chef_version',
+      expected: 'Version constraint',
+      actual: chefVersion,
+      line: chefVersionLine
+    })
+    core.error(errorMsg, {
+      file: file.toString(),
+      startLine: chefVersionLine,
+      title: 'Invalid Chef Version'
+    })
   }
 
-  if (data.get('source_url') !== source_url) {
+  // Supports
+  const supports = data.get('supports') as string[]
+  const supportsLines = lines.get('supports') as number[]
+  if (!supports || supports.length === 0) {
     message.conclusion = 'failure'
-    message.summary = message.summary.filter(s => s !== 'Metadata validated')
-
-    message.summary.push(
-      `Source URL is not set to ${source_url} (currently set to ${data.get(
-        'source_url'
-      )})`
-    )
-  }
-
-  if (data.get('issues_url') !== issues_url) {
-    message.conclusion = 'failure'
-    message.summary = message.summary.filter(s => s !== 'Metadata validated')
-
-    message.summary.push(
-      `Issues URL is not set to ${issues_url} (currently set to ${data.get(
-        'issues_url'
-      )})`
-    )
+    const errorMsg = 'At least one supports field is required in metadata.rb'
+    message.summary.push(errorMsg)
+    message.errors?.push({
+      field: 'supports',
+      expected: 'At least one entry',
+      actual: 'MISSING',
+      line: undefined
+    })
+    core.error(errorMsg, {file: file.toString(), title: 'Missing Supports'})
+  } else {
+    for (let i = 0; i < supports.length; i++) {
+      if (!isValidSupport(supports[i])) {
+        message.conclusion = 'failure'
+        const errorMsg = `supports entry ${supports[i]} is malformed`
+        message.summary.push(errorMsg)
+        message.errors?.push({
+          field: 'supports',
+          expected: 'Valid platform/constraint',
+          actual: supports[i],
+          line: supportsLines[i]
+        })
+        core.error(errorMsg, {
+          file: file.toString(),
+          startLine: supportsLines[i],
+          title: 'Invalid Support'
+        })
+      }
+    }
   }
 
   if (message.conclusion === 'failure') {
+    message.summary = message.summary.filter(s => s !== 'Metadata validated')
     message.message = "Metadata doesn't match"
     message.title = 'Metadata validation failed'
-  }
-
-  // If the conclusion of the message is 'failure', throw an error
-  try {
-    if (message.conclusion === 'failure') {
-      throw new Error(message.summary.join(','))
-    }
-  } catch (error: unknown) {
-    const err = (error as Error).message
-    core.error(err)
   }
 
   return message
