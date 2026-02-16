@@ -8,6 +8,7 @@
 - **Toolkit:** `@actions/core` (For inputs, outputs, and logging)
 - **GitHub API:** `@actions/github` (For interaction with the GitHub API and PR contexts)
 - **Globbing:** `glob` (For resolving multi-cookbook file paths)
+- **HTTP Client:** `undici` (For live URL verification)
 
 ## Build & Distribution
 - **Bundler:** `@vercel/ncc` (Compiles TypeScript and dependencies into a single file for fast execution)

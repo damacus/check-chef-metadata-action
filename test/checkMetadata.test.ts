@@ -1,4 +1,5 @@
 import {checkMetadata} from '../src/checkMetadata'
+import * as metadataModule from '../src/metadata'
 
 const testEnvVars = {
   INPUT_MAINTAINER: 'Sous Chefs',
@@ -11,6 +12,13 @@ describe('Correct metadata', () => {
   beforeEach(() => {
     for (const key in testEnvVars)
       process.env[key] = testEnvVars[key as keyof typeof testEnvVars]
+
+    // Mock URL accessibility to be true by default
+    jest.spyOn(metadataModule, 'isUrlAccessible').mockResolvedValue(true)
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
   })
 
   it('an empty validation message', async () => {
@@ -30,6 +38,8 @@ describe('An incorrect maintainer', () => {
   beforeEach(() => {
     for (const key in testEnvVars)
       process.env[key] = testEnvVars[key as keyof typeof testEnvVars]
+
+    jest.spyOn(metadataModule, 'isUrlAccessible').mockResolvedValue(true)
   })
 
   it('tells the user which property is not set correctly', async () => {
@@ -54,5 +64,31 @@ describe('An incorrect maintainer', () => {
         expected: 'Sous Chefs'
       })
     )
+  })
+})
+
+describe('Mandatory fields configuration', () => {
+  beforeEach(() => {
+    for (const key in testEnvVars)
+      process.env[key] = testEnvVars[key as keyof typeof testEnvVars]
+
+    jest.spyOn(metadataModule, 'isUrlAccessible').mockResolvedValue(true)
+  })
+
+  it('fails if a field specified in mandatory_fields is missing', async () => {
+    process.env['INPUT_MANDATORY_FIELDS'] =
+      'name,maintainer,license,version,chef_version,supports,privacy'
+    // metadata.rb is missing 'privacy'
+    const message = await checkMetadata('./test/fixtures/metadata.rb')
+    expect(message.conclusion).toEqual('failure')
+    expect(message.summary).toContain(
+      'privacy field is missing from metadata.rb'
+    )
+  })
+
+  it('passes if all specified mandatory fields are present', async () => {
+    process.env['INPUT_MANDATORY_FIELDS'] = 'name,version'
+    const message = await checkMetadata('./test/fixtures/metadata.rb')
+    expect(message.conclusion).toEqual('success')
   })
 })

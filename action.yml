@@ -32,6 +32,10 @@ inputs:
     description: 'Comment on the PR with the result'
     required: false
     default: 'true'
+  mandatory_fields:
+    description: 'Comma-separated list of mandatory fields'
+    required: false
+    default: 'version,chef_version,supports'
 runs:
   using: 'node20'
   main: 'dist/index.js'

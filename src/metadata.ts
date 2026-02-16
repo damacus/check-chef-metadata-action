@@ -1,4 +1,5 @@
 import fs from 'fs'
+import {request} from 'undici'
 
 export interface MetadataResult {
   data: Map<string, string | string[]>
@@ -155,4 +156,20 @@ export const isValidDepends = (depends: string): boolean => {
   }
 
   return !!cookbook
+}
+
+/**
+ * Checks if a URL is accessible (HTTP 200)
+ * @param url The URL to check
+ * @returns Promise<boolean>
+ */
+export async function isUrlAccessible(url: string): Promise<boolean> {
+  try {
+    const {statusCode} = await request(url, {
+      method: 'GET'
+    })
+    return statusCode === 200
+  } catch (error) {
+    return false
+  }
 }

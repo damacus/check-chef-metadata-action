@@ -19,13 +19,13 @@
 - [x] Task: Conductor - User Manual Verification 'Robust Parsing & Dependencies' (Protocol in workflow.md)
 
 ## Phase 3: URL Validation & Configurable Strictness
-- [ ] Task: Implement live URL verification
-    - [ ] Write tests using a mocking library (e.g., `nock`) to simulate successful and failed HTTP requests
-    - [ ] Implement async URL checking logic in `src/checkMetadata.ts` using `undici` or `node-fetch`
-- [ ] Task: Implement `mandatory_fields` configuration
-    - [ ] Write tests for various `mandatory_fields` input strings
-    - [ ] Update `src/checkMetadata.ts` to dynamically enforce fields based on the new input
-- [ ] Task: Update documentation and action configuration
-    - [ ] Update `action.yml` with the new `mandatory_fields` input
-    - [ ] Update `README.md` with multi-cookbook and strictness examples
-- [ ] Task: Conductor - User Manual Verification 'URL Validation & Configurable Strictness' (Protocol in workflow.md)
+- [x] Task: Implement live URL verification
+    - [x] Write tests using a mocking library (e.g., `nock`) to simulate successful and failed HTTP requests
+    - [x] Implement async URL checking logic in `src/checkMetadata.ts` using `undici` or `node-fetch`
+- [x] Task: Implement `mandatory_fields` configuration
+    - [x] Write tests for various `mandatory_fields` input strings
+    - [x] Update `src/checkMetadata.ts` to dynamically enforce fields based on the new input
+- [x] Task: Update documentation and action configuration
+    - [x] Update `action.yml` with the new `mandatory_fields` input
+    - [x] Update `README.md` with multi-cookbook and strictness examples
+- [x] Task: Conductor - User Manual Verification 'URL Validation & Configurable Strictness' (Protocol in workflow.md)

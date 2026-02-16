@@ -12,5 +12,8 @@ module.exports = {
   transformIgnorePatterns: [
     'node_modules/(?!(@actions|@octokit|@aki77))'
   ],
+  moduleNameMapper: {
+    '^@actions/glob$': '<rootDir>/test/__mocks__/@actions/glob.js'
+  },
   verbose: true
 }

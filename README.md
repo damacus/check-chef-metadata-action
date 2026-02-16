@@ -17,7 +17,7 @@ We check for the following items:
 | chef_version     | (Mandatory) Must be valid version constraint                                  |
 | supports         | (Mandatory) Must have at least one valid platform entry                       |
 
-Source URL and Issues URL are not configurable.
+Source URL and Issues URL are not configurable and are validated for accessibility (HTTP 200).
 
 ## Configuration
 
@@ -35,7 +35,7 @@ Source URL and Issues URL are not configurable.
     required: false
     default: 'Apache-2.0'
   file_path:
-    description: 'Path to the metadata.rb file'
+    description: 'Path to the metadata.rb file (supports glob patterns)'
     required: false
     default: 'metadata.rb'
   report_checks:
@@ -46,6 +46,30 @@ Source URL and Issues URL are not configurable.
     description: 'Comment on the PR with the result'
     required: false
     default: 'true'
+  mandatory_fields:
+    description: 'Comma-separated list of mandatory fields'
+    required: false
+    default: 'version,chef_version,supports'
+```
+
+## Examples
+
+### Checking multiple cookbooks (Glob pattern)
+
+```yaml
+      - uses: damacus/check-chef-metadata-action@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          file_path: "cookbooks/*/metadata.rb"
+```
+
+### Customizing mandatory fields
+
+```yaml
+      - uses: damacus/check-chef-metadata-action@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          mandatory_fields: "name,version,license"
 ```
 
 ## Changing the defaults
