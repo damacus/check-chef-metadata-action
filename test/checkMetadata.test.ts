@@ -38,6 +38,15 @@ describe('An incorrect maintainer', () => {
     expect(message.summary).toContain(
       'maintainer is not set to Sous Chefs (currently set to Bob)'
     )
+    expect(message.summary).toContain(
+      "chef_version 'invalid' is not a valid version constraint"
+    )
+    expect(message.summary).toContain(
+      "version '9.0' is not a valid Semantic Version"
+    )
+    expect(message.summary).toContain(
+      "supports entry 'ubuntu', 'invalid' is malformed"
+    )
     expect(message.errors).toContainEqual(
       expect.objectContaining({
         field: 'maintainer',
