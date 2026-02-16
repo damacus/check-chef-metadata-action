@@ -55,3 +55,10 @@ jest.mock('@aki77/actions-replace-comment', () => {
     deleteComment: jest.fn().mockResolvedValue(true)
   }
 })
+
+// Mock for markdown-table
+jest.mock('markdown-table', () => {
+  return {
+    markdownTable: jest.fn(data => 'mocked table')
+  }
+})

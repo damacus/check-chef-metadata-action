@@ -1,6 +1,7 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
 import replaceComment, {deleteComment} from '@aki77/actions-replace-comment'
+import {markdownTable} from 'markdown-table'
 import {Issue} from './issueInterface'
 import {Message} from './messageInterface'
 
@@ -36,10 +37,25 @@ export const reportPR = async (message: Message): Promise<void> => {
 
   core.info('Replacing the comment')
 
+  let body = `Metadata summary\n## ${message.title}\n\n${message.summary.join(
+    '\n'
+  )}`
+
+  if (message.errors && message.errors.length > 0) {
+    const tableData = [
+      ['Field', 'Expected', 'Actual', 'Line'],
+      ...message.errors.map(err => [
+        err.field,
+        err.expected,
+        err.actual,
+        err.line ? err.line.toString() : 'N/A'
+      ])
+    ]
+    body += `\n\n${markdownTable(tableData)}`
+  }
+
   await replaceComment({
     ...(await commentGeneralOptions()),
-    body: `Metadata summary\n## ${message.title}\n\n${message.summary.join(
-      '\n'
-    )}`
+    body
   })
 }
