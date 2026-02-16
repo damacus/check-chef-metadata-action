@@ -11,3 +11,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 - [x] **Track: Export Parsed Metadata as Action Outputs**
   *Link: [./tracks/export-outputs_20260216/](./tracks/export-outputs_20260216/)*
+
+---
+
+- [ ] **Track: Streamlined Reporting & Rich Annotations**
+  *Link: [./tracks/streamlined-reporting_20260216/](./tracks/streamlined-reporting_20260216/)*
