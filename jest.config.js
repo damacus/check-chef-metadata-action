@@ -10,7 +10,7 @@ module.exports = {
   setupFiles: ['<rootDir>/test/setup-jest.js'],
   // Don't transform node_modules except for specific packages
   transformIgnorePatterns: [
-    'node_modules/(?!(@actions|@octokit|@aki77)/.)'
+    'node_modules/(?!(@actions|@octokit|@aki77))'
   ],
   verbose: true
 }

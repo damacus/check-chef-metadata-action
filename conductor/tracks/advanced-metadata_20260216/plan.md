@@ -1,13 +1,13 @@
 # Implementation Plan: Advanced Metadata Validation & Multi-Cookbook Support
 
 ## Phase 1: Multi-Cookbook Support
-- [ ] Task: Implement glob pattern matching for `file_path`
-    - [ ] Write unit tests for glob pattern resolution in a mock file system
-    - [ ] Update `src/main.ts` to use a globbing library (e.g., `@actions/glob`) to identify all metadata files
-- [ ] Task: Refactor reporting to support multiple Check Runs
-    - [ ] Update `src/reportChecks.ts` to accept specific cookbook names and paths for the Check Run title/context
-    - [ ] Update the main action loop in `src/main.ts` to iterate over found cookbooks and trigger individual checks/reports
-- [ ] Task: Conductor - User Manual Verification 'Multi-Cookbook Support' (Protocol in workflow.md)
+- [x] Task: Implement glob pattern matching for `file_path`
+    - [x] Write unit tests for glob pattern resolution in a mock file system
+    - [x] Update `src/main.ts` to use a globbing library (e.g., `@actions/glob`) to identify all metadata files
+- [x] Task: Refactor reporting to support multiple Check Runs
+    - [x] Update `src/reportChecks.ts` to accept specific cookbook names and paths for the Check Run title/context
+    - [x] Update the main action loop in `src/main.ts` to iterate over found cookbooks and trigger individual checks/reports
+- [x] Task: Conductor - User Manual Verification 'Multi-Cookbook Support' (Protocol in workflow.md)
 
 ## Phase 2: Robust Parsing & Dependencies
 - [ ] Task: Enhance parser for Ruby symbols

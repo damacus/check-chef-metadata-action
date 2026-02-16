@@ -1,0 +1,210 @@
+---
+name: Check Chef Cookbook Metadata (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      maintainer_email:
+        description: 'Maintainer email'
+        required: false
+        type: string
+        default: 'help@sous-chefs.org'
+      maintainer:
+        description: 'Desired name of the maintainer'
+        required: false
+        type: string
+        default: 'Sous Chefs'
+      license:
+        description: 'A SPDX licence'
+        required: false
+        type: string
+        default: 'Apache-2.0'
+      file_path:
+        description: 'Path to the metadata.rb file'
+        required: false
+        type: string
+        default: 'metadata.rb'
+      report_checks:
+        description: 'Report the result as a check'
+        required: false
+        type: boolean
+        default: true
+      comment_on_pr:
+        description: 'Comment on the PR with the result'
+        required: false
+        type: boolean
+        default: true
+    secrets:
+      github-token:
+        description: 'GitHub token for API access'
+        required: false
+
+jobs:
+  check-metadata:
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      pull-requests: write
+      statuses: write
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate metadata.rb
+        id: validate
+        shell: bash
+        env:
+          FILE_PATH: ${{ inputs.file_path }}
+          MAINTAINER: ${{ inputs.maintainer }}
+          MAINTAINER_EMAIL: ${{ inputs.maintainer_email }}
+          LICENSE: ${{ inputs.license }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          set -e
+          
+          # Check if file exists
+          if [[ ! -f "$FILE_PATH" ]]; then
+            echo "::error::Metadata file not found: $FILE_PATH"
+            exit 1
+          fi
+          
+          # Parse metadata.rb file
+          parse_metadata() {
+            local key=$1
+            grep -E "^[[:space:]]*${key}[[:space:]]+" "$FILE_PATH" | \
+              sed -E "s/^[[:space:]]*${key}[[:space:]]+['\"](.+)['\"].*/\1/" | \
+              head -n 1
+          }
+          
+          # Validate email format
+          validate_email() {
+            local email=$1
+            if [[ ! "$email" =~ ^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$ ]]; then
+              echo "::error::Invalid email format: $email"
+              return 1
+            fi
+          }
+          
+          # Extract values from metadata.rb
+          ACTUAL_MAINTAINER=$(parse_metadata "maintainer")
+          ACTUAL_MAINTAINER_EMAIL=$(parse_metadata "maintainer_email")
+          ACTUAL_LICENSE=$(parse_metadata "license")
+          ACTUAL_SOURCE_URL=$(parse_metadata "source_url")
+          ACTUAL_ISSUES_URL=$(parse_metadata "issues_url")
+          
+          # Expected values
+          EXPECTED_SOURCE_URL="https://github.com/${GITHUB_REPOSITORY}"
+          EXPECTED_ISSUES_URL="${EXPECTED_SOURCE_URL}/issues"
+          
+          # Validate input email
+          validate_email "$MAINTAINER_EMAIL"
+          
+          # Initialize validation results
+          ERRORS=()
+          SUCCESS=true
+          
+          # Check maintainer
+          if [[ "$ACTUAL_MAINTAINER" != "$MAINTAINER" ]]; then
+            ERRORS+=("❌ Maintainer is not set to \`${MAINTAINER}\` (currently set to \`${ACTUAL_MAINTAINER}\`)")
+            SUCCESS=false
+          fi
+          
+          # Check maintainer_email
+          if [[ "$ACTUAL_MAINTAINER_EMAIL" != "$MAINTAINER_EMAIL" ]]; then
+            ERRORS+=("❌ Maintainer email is not set to \`${MAINTAINER_EMAIL}\` (currently set to \`${ACTUAL_MAINTAINER_EMAIL}\`)")
+            SUCCESS=false
+          fi
+          
+          # Check license
+          if [[ "$ACTUAL_LICENSE" != "$LICENSE" ]]; then
+            ERRORS+=("❌ License is not set to \`${LICENSE}\` (currently set to \`${ACTUAL_LICENSE}\`)")
+            SUCCESS=false
+          fi
+          
+          # Check source_url
+          if [[ "$ACTUAL_SOURCE_URL" != "$EXPECTED_SOURCE_URL" ]]; then
+            ERRORS+=("❌ Source URL is not set to \`${EXPECTED_SOURCE_URL}\` (currently set to \`${ACTUAL_SOURCE_URL}\`)")
+            SUCCESS=false
+          fi
+          
+          # Check issues_url
+          if [[ "$ACTUAL_ISSUES_URL" != "$EXPECTED_ISSUES_URL" ]]; then
+            ERRORS+=("❌ Issues URL is not set to \`${EXPECTED_ISSUES_URL}\` (currently set to \`${ACTUAL_ISSUES_URL}\`)")
+            SUCCESS=false
+          fi
+          
+          # Generate output
+          if [[ "$SUCCESS" == "true" ]]; then
+            echo "result=success" >> $GITHUB_OUTPUT
+            echo "summary=✅ Metadata validated successfully" >> $GITHUB_OUTPUT
+            echo "::notice::Metadata validated successfully"
+          else
+            echo "result=failure" >> $GITHUB_OUTPUT
+            ERROR_MSG=$(printf '%s\n' "${ERRORS[@]}")
+            {
+              echo "summary<<EOF"
+              echo "## Metadata Validation Failed"
+              echo ""
+              printf '%s\n' "${ERRORS[@]}"
+              echo "EOF"
+            } >> $GITHUB_OUTPUT
+            
+            # Log errors
+            for error in "${ERRORS[@]}"; do
+              echo "::error::${error}"
+            done
+            
+            exit 1
+          fi
+
+      - name: Create check run
+        if: |
+          inputs.report_checks && 
+          github.event_name == 'pull_request' &&
+          !github.event.pull_request.head.repo.fork &&
+          github.ref != 'refs/heads/main'
+        uses: actions/github-script@v7
+        env:
+          CHECK_RESULT: ${{ steps.validate.outputs.result }}
+          CHECK_SUMMARY: ${{ steps.validate.outputs.summary }}
+        with:
+          github-token: ${{ secrets.github-token || secrets.GITHUB_TOKEN }}
+          script: |
+            const result = process.env.CHECK_RESULT;
+            const summary = process.env.CHECK_SUMMARY;
+            
+            await github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: 'Check Metadata',
+              head_sha: context.payload.pull_request.head.sha,
+              status: 'completed',
+              conclusion: result,
+              output: {
+                title: result === 'success' ? 'Metadata validated' : 'Metadata validation failed',
+                summary: summary
+              }
+            });
+
+      - name: Comment on PR
+        if: |
+          inputs.comment_on_pr && 
+          github.event_name == 'pull_request' &&
+          !github.event.pull_request.head.repo.fork &&
+          github.ref != 'refs/heads/main' &&
+          steps.validate.outputs.result == 'failure'
+        uses: actions/github-script@v7
+        env:
+          CHECK_SUMMARY: ${{ steps.validate.outputs.summary }}
+        with:
+          github-token: ${{ secrets.github-token || secrets.GITHUB_TOKEN }}
+          script: |
+            const summary = process.env.CHECK_SUMMARY;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: summary
+            });

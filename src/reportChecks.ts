@@ -1,11 +1,27 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
+import {markdownTable} from 'markdown-table'
 import {Message} from './messageInterface'
 
 // Reports the results of the check through the Checks API
 
 export const reportChecks = async (message: Message): Promise<void> => {
   try {
+    let summary = message.summary.join('\n')
+
+    if (message.errors && message.errors.length > 0) {
+      const tableData = [
+        ['Field', 'Expected', 'Actual', 'Line'],
+        ...message.errors.map(err => [
+          err.field,
+          err.expected,
+          err.actual,
+          err.line ? err.line.toString() : 'N/A'
+        ])
+      ]
+      summary += `\n\n${markdownTable(tableData)}`
+    }
+
     const result = await github
       .getOctokit(core.getInput('github-token', {required: true}))
       .rest.checks.create({
@@ -17,7 +33,7 @@ export const reportChecks = async (message: Message): Promise<void> => {
         conclusion: message.conclusion,
         output: {
           title: message.title,
-          summary: message.summary.join('\n')
+          summary
         }
       })
     core.info(JSON.stringify(result))
