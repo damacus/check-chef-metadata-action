@@ -115,7 +115,8 @@ function checkMetadata(file) {
             conclusion: 'success',
             summary: ['Metadata validated'],
             title: 'Metadata validated',
-            errors: []
+            errors: [],
+            rawMetadata: Object.fromEntries(data)
         };
         const checkField = (field, expected, actual) => {
             var _a;
@@ -354,7 +355,7 @@ const checkMetadata_1 = __nccwpck_require__(3745);
 const reportChecks_1 = __nccwpck_require__(2945);
 const reportPR_1 = __nccwpck_require__(1078);
 function run() {
-    var _a, _b, _c;
+    var _a, _b, _c, _d, _e;
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const file_pattern = core.getInput('file_path', { required: false }) || 'metadata.rb';
@@ -399,6 +400,25 @@ function run() {
             // Report aggregated results to PR
             if (comment_on_pr) {
                 yield (0, reportPR_1.reportPR)(results);
+            }
+            // Set Action Outputs
+            const cookbookOutputs = results.map(r => {
+                var _a, _b;
+                return ({
+                    name: (_a = r.rawMetadata) === null || _a === void 0 ? void 0 : _a.name,
+                    version: (_b = r.rawMetadata) === null || _b === void 0 ? void 0 : _b.version,
+                    path: r.name.includes(' - ') ? r.name.split(' - ')[1] : 'metadata.rb'
+                });
+            });
+            core.setOutput('cookbooks', JSON.stringify(cookbookOutputs));
+            if (results.length === 1) {
+                const singleResult = results[0];
+                if ((_d = singleResult.rawMetadata) === null || _d === void 0 ? void 0 : _d.name) {
+                    core.setOutput('cookbook-name', singleResult.rawMetadata.name);
+                }
+                if ((_e = singleResult.rawMetadata) === null || _e === void 0 ? void 0 : _e.version) {
+                    core.setOutput('cookbook-version', singleResult.rawMetadata.version);
+                }
             }
             // If any check failed, set the action as failed
             if (!overallSuccess) {

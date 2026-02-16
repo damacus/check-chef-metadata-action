@@ -52,6 +52,28 @@ Source URL and Issues URL are not configurable and are validated for accessibili
     default: 'version,chef_version,supports'
 ```
 
+## Outputs
+
+| Output             | Description                                                                 |
+| ------------------ | --------------------------------------------------------------------------- |
+| `cookbooks`        | A JSON string representing an array of validated cookbook objects.          |
+| `cookbook-name`    | The name of the cookbook (if exactly one cookbook was found).               |
+| `cookbook-version` | The version of the cookbook (if exactly one cookbook was found).            |
+
+### Example: Using outputs
+
+```yaml
+      - name: Check Metadata
+        id: check
+        uses: damacus/check-chef-metadata-action@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Use Outputs
+        run: |
+          echo "Cookbook: ${{ steps.check.outputs.cookbook-name }}"
+          echo "Version: ${{ steps.check.outputs.cookbook-version }}"
+```
+
 ## Examples
 
 ### Checking multiple cookbooks (Glob pattern)

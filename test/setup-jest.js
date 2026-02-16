@@ -45,6 +45,7 @@ jest.mock('@actions/core', () => {
       return defaults[name] || ''
     }),
     setFailed: jest.fn(),
+    setOutput: jest.fn(),
     info: jest.fn(),
     warning: jest.fn(),
     error: jest.fn()

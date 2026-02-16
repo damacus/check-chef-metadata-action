@@ -93,7 +93,8 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
     conclusion: 'success' as Conclusion,
     summary: ['Metadata validated'],
     title: 'Metadata validated',
-    errors: []
+    errors: [],
+    rawMetadata: Object.fromEntries(data)
   }
 
   const checkField = (

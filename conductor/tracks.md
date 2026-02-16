@@ -9,5 +9,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: Export Parsed Metadata as Action Outputs**
+- [~] **Track: Export Parsed Metadata as Action Outputs**
   *Link: [./tracks/export-outputs_20260216/](./tracks/export-outputs_20260216/)*

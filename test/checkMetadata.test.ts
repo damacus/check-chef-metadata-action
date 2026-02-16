@@ -29,8 +29,11 @@ describe('Correct metadata', () => {
       message: 'Metadata matches',
       summary: ['Metadata validated'],
       title: 'Metadata validated',
-      errors: []
+      errors: [],
+      rawMetadata: expect.any(Object)
     })
+    expect(message.rawMetadata?.name).toEqual('java')
+    expect(message.rawMetadata?.version).toEqual('9.0.0')
   })
 })
 

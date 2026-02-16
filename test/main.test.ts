@@ -3,14 +3,17 @@ import * as core from '@actions/core'
 import * as github from '@actions/github'
 import {glob} from 'glob'
 import {mocked} from 'jest-mock'
+import {checkMetadata} from '../src/checkMetadata'
 
 jest.mock('@actions/github')
 jest.mock('@actions/core')
 jest.mock('glob')
+jest.mock('../src/checkMetadata')
 
 const mockedGithub = mocked(github, {shallow: true})
 const mockedCore = mocked(core, {shallow: true})
 const mockedGlob = mocked(glob as any)
+const mockedCheckMetadata = mocked(checkMetadata)
 
 describe('run', () => {
   beforeEach(() => {
@@ -22,6 +25,16 @@ describe('run', () => {
     mockedCore.getInput.mockImplementation((name: string) => {
       if (name === 'file_path') return 'metadata.rb'
       return ''
+    })
+
+    mockedCheckMetadata.mockResolvedValue({
+      conclusion: 'success',
+      name: 'Check Metadata',
+      message: 'Metadata matches',
+      summary: ['Metadata validated'],
+      title: 'Metadata validated',
+      errors: [],
+      rawMetadata: {name: 'test-cookbook', version: '1.2.3'}
     })
   })
 
@@ -45,5 +58,26 @@ describe('run', () => {
     await run()
 
     expect(mockedCore.warning).not.toHaveBeenCalled()
+  })
+
+  test('should set outputs for a single cookbook', async () => {
+    mockedGithub.context.payload.pull_request = {
+      head: {repo: {fork: false}}
+    } as any
+
+    await run()
+
+    expect(mockedCore.setOutput).toHaveBeenCalledWith(
+      'cookbook-name',
+      'test-cookbook'
+    )
+    expect(mockedCore.setOutput).toHaveBeenCalledWith(
+      'cookbook-version',
+      '1.2.3'
+    )
+    expect(mockedCore.setOutput).toHaveBeenCalledWith(
+      'cookbooks',
+      expect.stringContaining('"name":"test-cookbook"')
+    )
   })
 })

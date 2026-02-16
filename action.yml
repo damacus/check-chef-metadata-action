@@ -36,6 +36,13 @@ inputs:
     description: 'Comma-separated list of mandatory fields'
     required: false
     default: 'version,chef_version,supports'
+outputs:
+  cookbooks:
+    description: 'A JSON string representing an array of validated cookbook objects.'
+  cookbook-name:
+    description: 'The name of the cookbook (if exactly one cookbook was found).'
+  cookbook-version:
+    description: 'The version of the cookbook (if exactly one cookbook was found).'
 runs:
   using: 'node20'
   main: 'dist/index.js'

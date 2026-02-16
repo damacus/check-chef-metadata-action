@@ -75,6 +75,28 @@ export async function run(): Promise<void> {
       await reportPR(results)
     }
 
+    // Set Action Outputs
+    const cookbookOutputs = results.map(r => ({
+      name: r.rawMetadata?.name,
+      version: r.rawMetadata?.version,
+      path: r.name.includes(' - ') ? r.name.split(' - ')[1] : 'metadata.rb'
+    }))
+
+    core.setOutput('cookbooks', JSON.stringify(cookbookOutputs))
+
+    if (results.length === 1) {
+      const singleResult = results[0]
+      if (singleResult.rawMetadata?.name) {
+        core.setOutput('cookbook-name', singleResult.rawMetadata.name as string)
+      }
+      if (singleResult.rawMetadata?.version) {
+        core.setOutput(
+          'cookbook-version',
+          singleResult.rawMetadata.version as string
+        )
+      }
+    }
+
     // If any check failed, set the action as failed
     if (!overallSuccess) {
       core.setFailed('Metadata check failed for one or more cookbooks')

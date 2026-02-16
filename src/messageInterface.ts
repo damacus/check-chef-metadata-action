@@ -12,6 +12,7 @@ export interface Message {
   summary: string[]
   title: string
   errors?: ValidationError[]
+  rawMetadata?: Record<string, string | string[]>
 }
 
 export type Conclusion =
