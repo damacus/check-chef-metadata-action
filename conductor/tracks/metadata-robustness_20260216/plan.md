@@ -10,7 +10,7 @@
 - [x] Task: Add validation for the `supports` field [dc6908c]
     - [x] Write unit tests for `supports` field parsing (platform + version) in `test/metadata.test.ts`
     - [x] Implement `supports` validation logic in `src/metadata.ts`, ensuring it handles multiple entries
-- [~] Task: Conductor - User Manual Verification 'Validation Logic Expansion' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Validation Logic Expansion' (Protocol in workflow.md) [0dcd3cd]
 
 ## Phase 2: Reporting Robustness & Error Aggregation
 - [x] Task: Implement error aggregation in the core validator [46005aa]
@@ -22,13 +22,13 @@
 - [x] Task: Enhance PR Comment Summary Table [46005aa]
     - [x] Write tests for the refined markdown table generator
     - [x] Update `src/reportPR.ts` to use the more descriptive and actionable table format
-- [ ] Task: Conductor - User Manual Verification 'Reporting Robustness & Error Aggregation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Reporting Robustness & Error Aggregation' (Protocol in workflow.md) [6e696f0]
 
 ## Phase 3: Integration & Finalization
-- [ ] Task: Update mandatory field enforcement
-    - [ ] Write integration tests to ensure the action fails when any of the new mandatory fields are missing
-    - [ ] Update the main action loop in `src/main.ts` to enforce the new mandatory requirements
-- [ ] Task: Update documentation and configuration
-    - [ ] Update `README.md` with examples including the new mandatory fields
-    - [ ] Ensure all public methods are documented with JSDoc
-- [ ] Task: Conductor - User Manual Verification 'Integration & Finalization' (Protocol in workflow.md)
+- [x] Task: Update mandatory field enforcement [6e696f0]
+    - [x] Write integration tests to ensure the action fails when any of the new mandatory fields are missing
+    - [x] Update the main action loop in `src/main.ts` to enforce the new mandatory requirements
+- [x] Task: Update documentation and configuration [d72dbb3]
+    - [x] Update `README.md` with examples including the new mandatory fields
+    - [x] Ensure all public methods are documented with JSDoc
+- [x] Task: Conductor - User Manual Verification 'Integration & Finalization' (Protocol in workflow.md) [0dcd3cd]
