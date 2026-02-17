@@ -6,6 +6,7 @@ import {checkMetadata} from './checkMetadata'
 import {reportChecks} from './reportChecks'
 import {reportPR} from './reportPR'
 import {Message} from './messageInterface'
+import {runInParallel} from './concurrency'
 
 export async function run(): Promise<void> {
   try {
@@ -46,7 +47,7 @@ export async function run(): Promise<void> {
     let overallSuccess = true
     const results: Message[] = []
 
-    for (const file of files) {
+    await runInParallel(files, 10, async file => {
       const relativePath = path.relative(process.cwd(), file)
       core.info(`Checking metadata file: ${relativePath}`)
 
@@ -61,7 +62,10 @@ export async function run(): Promise<void> {
       if (result.conclusion === 'failure') {
         overallSuccess = false
       }
-    }
+    })
+
+    // Sort results to ensure deterministic reporting order
+    results.sort((a, b) => a.name.localeCompare(b.name))
 
     // Consolidated reporting
     await Promise.all([

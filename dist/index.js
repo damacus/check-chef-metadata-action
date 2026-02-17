@@ -335,6 +335,42 @@ exports.checkMetadata = checkMetadata;
 
 /***/ }),
 
+/***/ 8843:
+/***/ (function(__unused_webpack_module, exports) {
+
+"use strict";
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.runInParallel = void 0;
+function runInParallel(items, limit, fn) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const queue = [...items];
+        const workers = Array(Math.min(limit, items.length))
+            .fill(null)
+            .map(() => __awaiter(this, void 0, void 0, function* () {
+            while (queue.length > 0) {
+                const item = queue.shift();
+                if (item !== undefined)
+                    yield fn(item);
+            }
+        }));
+        yield Promise.all(workers);
+    });
+}
+exports.runInParallel = runInParallel;
+
+
+/***/ }),
+
 /***/ 5915:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -381,6 +417,7 @@ const path = __importStar(__nccwpck_require__(6928));
 const checkMetadata_1 = __nccwpck_require__(3745);
 const reportChecks_1 = __nccwpck_require__(2945);
 const reportPR_1 = __nccwpck_require__(1078);
+const concurrency_1 = __nccwpck_require__(8843);
 function run() {
     var _a, _b, _c, _d, _e;
     return __awaiter(this, void 0, void 0, function* () {
@@ -406,7 +443,7 @@ function run() {
             core.info(`Found ${files.length} metadata file(s) to check`);
             let overallSuccess = true;
             const results = [];
-            for (const file of files) {
+            yield (0, concurrency_1.runInParallel)(files, 10, (file) => __awaiter(this, void 0, void 0, function* () {
                 const relativePath = path.relative(process.cwd(), file);
                 core.info(`Checking metadata file: ${relativePath}`);
                 // IMPORTANT: Pass relativePath to ensure annotations use correct file paths
@@ -417,7 +454,9 @@ function run() {
                 if (result.conclusion === 'failure') {
                     overallSuccess = false;
                 }
-            }
+            }));
+            // Sort results to ensure deterministic reporting order
+            results.sort((a, b) => a.name.localeCompare(b.name));
             // Consolidated reporting
             yield Promise.all([
                 report_checks ? (0, reportChecks_1.reportChecks)(results) : Promise.resolve(),
@@ -619,13 +658,16 @@ exports.isValidDepends = isValidDepends;
 /**
  * Checks if a URL is accessible (HTTP 200)
  * @param url The URL to check
+ * @param timeout The timeout in milliseconds (default: 5000)
  * @returns Promise<boolean>
  */
-function isUrlAccessible(url) {
+function isUrlAccessible(url, timeout = 5000) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const { statusCode } = yield (0, undici_1.request)(url, {
-                method: 'GET'
+                method: 'GET',
+                headersTimeout: timeout,
+                bodyTimeout: timeout
             });
             return statusCode === 200;
         }

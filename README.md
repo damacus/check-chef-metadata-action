@@ -19,6 +19,10 @@ We check for the following items:
 
 Source URL and Issues URL are not configurable and are validated for accessibility (HTTP 200).
 
+## Performance
+
+The action processes multiple cookbooks in parallel (up to 10 concurrent checks) to ensure fast execution even in large repositories. URL accessibility checks are also performed with a 5-second timeout to prevent build hangs.
+
 ## Configuration
 
 ```yaml

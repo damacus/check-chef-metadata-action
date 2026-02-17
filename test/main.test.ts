@@ -80,4 +80,35 @@ describe('run', () => {
       expect.stringContaining('"name":"test-cookbook"')
     )
   })
+
+  test('processes multiple cookbooks in parallel', async () => {
+    const files = Array(10).fill('metadata.rb')
+
+    // Mock glob to return 10 files
+
+    mockedGlob.mockResolvedValue(files)
+
+    mockedCheckMetadata.mockImplementation(async () => {
+      await new Promise(resolve => setTimeout(resolve, 50))
+
+      return {
+        conclusion: 'success',
+        name: 'Check Metadata',
+        message: 'Metadata matches',
+        summary: ['Metadata validated'],
+        title: 'Metadata validated',
+        errors: [],
+        rawMetadata: {name: 'test-cookbook', version: '1.2.3'}
+      }
+    })
+
+    const start = Date.now()
+    await run()
+    const duration = Date.now() - start
+
+    // 10 files * 50ms = 500ms sequentially.
+    // Parallel (limit 10) should be closer to 50ms.
+    // We allow some buffer for overhead.
+    expect(duration).toBeLessThan(400)
+  })
 })
