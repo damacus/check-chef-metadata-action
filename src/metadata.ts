@@ -166,16 +166,24 @@ export const isValidDepends = (depends: string): boolean => {
  */
 export async function isUrlAccessible(
   url: string,
-  timeout = 5000
+  timeout = 5000,
+  maxRetries = 2
 ): Promise<boolean> {
-  try {
-    const {statusCode} = await request(url, {
-      method: 'GET',
-      headersTimeout: timeout,
-      bodyTimeout: timeout
-    })
-    return statusCode === 200
-  } catch (error) {
-    return false
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const {statusCode} = await request(url, {
+        method: 'GET',
+        headersTimeout: timeout,
+        bodyTimeout: timeout
+      })
+      return statusCode === 200 // non-200 is definitive (no retry)
+    } catch (error) {
+      if (attempt < maxRetries) {
+        await new Promise(resolve =>
+          setTimeout(resolve, Math.pow(2, attempt) * 1000)
+        )
+      }
+    }
   }
+  return false
 }

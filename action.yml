@@ -36,6 +36,18 @@ inputs:
     description: 'Comma-separated list of mandatory fields'
     required: false
     default: 'version,chef_version,supports'
+  parallel_limit:
+    description: 'Maximum number of metadata files to validate in parallel'
+    required: false
+    default: '10'
+  url_timeout:
+    description: 'Timeout in milliseconds for URL accessibility checks'
+    required: false
+    default: '5000'
+  url_retries:
+    description: 'Number of retries for URL accessibility checks on transient failures'
+    required: false
+    default: '2'
 outputs:
   cookbooks:
     description: 'A JSON string representing an array of validated cookbook objects.'

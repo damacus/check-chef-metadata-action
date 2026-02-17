@@ -33,6 +33,27 @@ export async function run(): Promise<void> {
 
     core.info(`comment_on_pr: ${comment_on_pr}`)
 
+    const parallelLimitRaw = parseInt(
+      core.getInput('parallel_limit', {required: false}) || '10',
+      10
+    )
+    const parallelLimit =
+      isNaN(parallelLimitRaw) || parallelLimitRaw <= 0 ? 10 : parallelLimitRaw
+
+    const urlTimeoutRaw = parseInt(
+      core.getInput('url_timeout', {required: false}) || '5000',
+      10
+    )
+    const urlTimeout =
+      isNaN(urlTimeoutRaw) || urlTimeoutRaw <= 0 ? 5000 : urlTimeoutRaw
+
+    const urlRetriesRaw = parseInt(
+      core.getInput('url_retries', {required: false}) || '2',
+      10
+    )
+    const urlRetries =
+      isNaN(urlRetriesRaw) || urlRetriesRaw < 0 ? 2 : urlRetriesRaw
+
     const files = await glob(file_pattern)
 
     if (files.length === 0) {
@@ -47,12 +68,12 @@ export async function run(): Promise<void> {
     let overallSuccess = true
     const results: Message[] = []
 
-    await runInParallel(files, 10, async file => {
+    await runInParallel(files, parallelLimit, async file => {
       const relativePath = path.relative(process.cwd(), file)
       core.info(`Checking metadata file: ${relativePath}`)
 
       // IMPORTANT: Pass relativePath to ensure annotations use correct file paths
-      const result = await checkMetadata(relativePath)
+      const result = await checkMetadata(relativePath, {urlTimeout, urlRetries})
 
       // result.name already contains relativePath from checkMetadata
       result.title = `Validation for ${relativePath}`

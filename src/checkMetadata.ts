@@ -55,7 +55,10 @@ const COMMON_SPDX_LICENSES = [
   'Unlicense'
 ]
 
-export async function checkMetadata(file: fs.PathLike): Promise<Message> {
+export async function checkMetadata(
+  file: fs.PathLike,
+  options: {urlTimeout?: number; urlRetries?: number} = {}
+): Promise<Message> {
   /**
    * Read metadata file
    * Check it has:
@@ -72,6 +75,7 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
     core.error(`${file}: access error!`)
   }
 
+  const {urlTimeout = 5000, urlRetries = 2} = options
   const {data, lines} = metadata(file)
   const maintainer: string = core.getInput('maintainer')
   const maintainer_email: string = core.getInput('maintainer_email')
@@ -156,7 +160,7 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
   // 2. URL Accessibility Checks
   const actualSourceUrl = data.get('source_url') as string
   if (actualSourceUrl) {
-    const isAccessible = await isUrlAccessible(actualSourceUrl)
+    const isAccessible = await isUrlAccessible(actualSourceUrl, urlTimeout, urlRetries)
     if (!isAccessible) {
       message.conclusion = 'failure'
       const line = getLine('source_url')
@@ -179,7 +183,7 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
 
   const actualIssuesUrl = data.get('issues_url') as string
   if (actualIssuesUrl) {
-    const isAccessible = await isUrlAccessible(actualIssuesUrl)
+    const isAccessible = await isUrlAccessible(actualIssuesUrl, urlTimeout, urlRetries)
     if (!isAccessible) {
       message.conclusion = 'failure'
       const line = getLine('issues_url')

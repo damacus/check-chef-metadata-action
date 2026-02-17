@@ -81,6 +81,50 @@ describe('run', () => {
     )
   })
 
+  test('respects parallel_limit input', async () => {
+    const files = Array(6).fill('metadata.rb')
+    mockedGlob.mockResolvedValue(files)
+
+    mockedCore.getInput.mockImplementation((name: string) => {
+      if (name === 'file_path') return 'metadata.rb'
+      if (name === 'parallel_limit') return '2'
+      return ''
+    })
+
+    let concurrent = 0
+    let maxConcurrent = 0
+    mockedCheckMetadata.mockImplementation(async () => {
+      concurrent++
+      if (concurrent > maxConcurrent) maxConcurrent = concurrent
+      await new Promise(resolve => setTimeout(resolve, 20))
+      concurrent--
+      return {
+        conclusion: 'success',
+        name: 'Check Metadata',
+        message: 'Metadata matches',
+        summary: ['Metadata validated'],
+        title: 'Metadata validated',
+        errors: [],
+        rawMetadata: {name: 'test-cookbook', version: '1.2.3'}
+      }
+    })
+
+    await run()
+
+    expect(maxConcurrent).toBeLessThanOrEqual(2)
+  })
+
+  test('falls back to default parallel_limit on invalid input', async () => {
+    mockedCore.getInput.mockImplementation((name: string) => {
+      if (name === 'file_path') return 'metadata.rb'
+      if (name === 'parallel_limit') return 'abc'
+      return ''
+    })
+
+    await expect(run()).resolves.not.toThrow()
+    expect(mockedCheckMetadata).toHaveBeenCalledTimes(1)
+  })
+
   test('processes multiple cookbooks in parallel', async () => {
     const files = Array(10).fill('metadata.rb')
 
