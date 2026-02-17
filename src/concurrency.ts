@@ -9,7 +9,7 @@ export async function runInParallel<T>(
     .map(async () => {
       while (queue.length > 0) {
         const item = queue.shift()
-        if (item) await fn(item)
+        if (item !== undefined) await fn(item)
       }
     })
   await Promise.all(workers)

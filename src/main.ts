@@ -64,6 +64,9 @@ export async function run(): Promise<void> {
       }
     })
 
+    // Sort results to ensure deterministic reporting order
+    results.sort((a, b) => a.name.localeCompare(b.name))
+
     // Consolidated reporting
     await Promise.all([
       report_checks ? reportChecks(results) : Promise.resolve(),

@@ -359,7 +359,7 @@ function runInParallel(items, limit, fn) {
             .map(() => __awaiter(this, void 0, void 0, function* () {
             while (queue.length > 0) {
                 const item = queue.shift();
-                if (item)
+                if (item !== undefined)
                     yield fn(item);
             }
         }));
@@ -455,6 +455,8 @@ function run() {
                     overallSuccess = false;
                 }
             }));
+            // Sort results to ensure deterministic reporting order
+            results.sort((a, b) => a.name.localeCompare(b.name));
             // Consolidated reporting
             yield Promise.all([
                 report_checks ? (0, reportChecks_1.reportChecks)(results) : Promise.resolve(),
