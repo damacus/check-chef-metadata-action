@@ -161,12 +161,18 @@ export const isValidDepends = (depends: string): boolean => {
 /**
  * Checks if a URL is accessible (HTTP 200)
  * @param url The URL to check
+ * @param timeout The timeout in milliseconds (default: 5000)
  * @returns Promise<boolean>
  */
-export async function isUrlAccessible(url: string): Promise<boolean> {
+export async function isUrlAccessible(
+  url: string,
+  timeout = 5000
+): Promise<boolean> {
   try {
     const {statusCode} = await request(url, {
-      method: 'GET'
+      method: 'GET',
+      headersTimeout: timeout,
+      bodyTimeout: timeout
     })
     return statusCode === 200
   } catch (error) {

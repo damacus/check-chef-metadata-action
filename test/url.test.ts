@@ -34,4 +34,11 @@ describe('URL accessibility check', () => {
     const result = await isUrlAccessible('https://github.com/error')
     expect(result).toBe(false)
   })
+
+  it('returns false when request times out', async () => {
+    ;(request as jest.Mock).mockRejectedValue(new Error('headers timeout'))
+
+    const result = await isUrlAccessible('https://github.com/timeout')
+    expect(result).toBe(false)
+  })
 })
