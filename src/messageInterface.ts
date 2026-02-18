@@ -1,9 +1,12 @@
+export type AnnotationLevel = 'notice' | 'warning' | 'failure'
+
 export interface ValidationError {
   field: string
   expected: string
   actual: string
   line?: number
   path?: string
+  level?: AnnotationLevel
 }
 
 export interface Message {

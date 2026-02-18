@@ -1,7 +1,7 @@
 import * as core from '@actions/core'
 import * as fs from 'fs'
 import * as github from '@actions/github'
-import {Message, Conclusion} from './messageInterface'
+import {Message, Conclusion, AnnotationLevel} from './messageInterface'
 import {
   metadata,
   isValidSemVer,
@@ -130,14 +130,14 @@ export async function checkMetadata(
         expected,
         actual: actual || 'MISSING',
         line,
-        path: file.toString()
+        path: file.toString(),
+        level: 'failure'
       })
 
       const displayActual = actual || 'MISSING'
       const summaryMsg = `${field}: expected '${expected}', got '${displayActual}'`
       message.summary.push(summaryMsg)
 
-      // Emit annotation (Rubocop style)
       core.error(`${field}: expected '${expected}', got '${displayActual}'`, {
         file: file.toString(),
         startLine: line,
@@ -171,9 +171,10 @@ export async function checkMetadata(
         expected: 'HTTP 200',
         actual: 'UNREACHABLE',
         line,
-        path: file.toString()
+        path: file.toString(),
+        level: 'warning'
       })
-      core.error(`source_url: '${actualSourceUrl}' is not accessible`, {
+      core.warning(`source_url: '${actualSourceUrl}' is not accessible`, {
         file: file.toString(),
         startLine: line,
         title: 'Metadata/Reachability'
@@ -194,9 +195,10 @@ export async function checkMetadata(
         expected: 'HTTP 200',
         actual: 'UNREACHABLE',
         line,
-        path: file.toString()
+        path: file.toString(),
+        level: 'warning'
       })
-      core.error(`issues_url: '${actualIssuesUrl}' is not accessible`, {
+      core.warning(`issues_url: '${actualIssuesUrl}' is not accessible`, {
         file: file.toString(),
         startLine: line,
         title: 'Metadata/Reachability'
@@ -224,7 +226,8 @@ export async function checkMetadata(
         expected: 'Field to exist',
         actual: 'MISSING',
         line: undefined,
-        path: file.toString()
+        path: file.toString(),
+        level: 'failure'
       })
       core.error(`${field}: field is missing from metadata.rb`, {
         file: file.toString(),
@@ -247,7 +250,8 @@ export async function checkMetadata(
       expected: 'SemVer string',
       actual: version,
       line,
-      path: file.toString()
+      path: file.toString(),
+      level: 'failure'
     })
     core.error(`version: '${version}' is not a valid Semantic Version`, {
       file: file.toString(),
@@ -268,7 +272,8 @@ export async function checkMetadata(
       expected: 'Version constraint',
       actual: chefVersion,
       line,
-      path: file.toString()
+      path: file.toString(),
+      level: 'failure'
     })
     core.error(
       `chef_version: '${chefVersion}' is not a valid version constraint`,
@@ -295,7 +300,8 @@ export async function checkMetadata(
           expected: 'Valid platform/constraint',
           actual: supports[i],
           line,
-          path: file.toString()
+          path: file.toString(),
+          level: 'failure'
         })
         core.error(`supports: entry ${supports[i]} is malformed`, {
           file: file.toString(),
@@ -321,7 +327,8 @@ export async function checkMetadata(
           expected: 'Valid cookbook/constraint',
           actual: depends[i],
           line,
-          path: file.toString()
+          path: file.toString(),
+          level: 'failure'
         })
         core.error(`depends: entry ${depends[i]} is malformed`, {
           file: file.toString(),
