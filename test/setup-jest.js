@@ -8,7 +8,8 @@ jest.mock('@actions/github', () => {
       },
       payload: {
         pull_request: {
-          number: 123
+          number: 123,
+          head: { sha: 'abc123' }
         }
       }
     },
