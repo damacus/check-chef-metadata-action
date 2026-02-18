@@ -164,7 +164,7 @@ jobs:
           github.event_name == 'pull_request' &&
           !github.event.pull_request.head.repo.fork &&
           github.ref != 'refs/heads/main'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           CHECK_RESULT: ${{ steps.validate.outputs.result }}
           CHECK_SUMMARY: ${{ steps.validate.outputs.summary }}
@@ -194,7 +194,7 @@ jobs:
           !github.event.pull_request.head.repo.fork &&
           github.ref != 'refs/heads/main' &&
           steps.validate.outputs.result == 'failure'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           CHECK_SUMMARY: ${{ steps.validate.outputs.summary }}
         with:
