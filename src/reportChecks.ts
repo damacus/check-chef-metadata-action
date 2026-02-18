@@ -41,7 +41,10 @@ export const reportChecks = async (
       path: err.path || 'metadata.rb',
       start_line: err.line || 1,
       end_line: err.line || 1,
-      annotation_level: 'failure' as const,
+      annotation_level: (err.level || 'failure') as
+        | 'notice'
+        | 'warning'
+        | 'failure',
       message: `${err.field}: expected '${err.expected}', got '${err.actual}'`,
       title: `Metadata/${err.field.charAt(0).toUpperCase() + err.field.slice(1)}`
     }))
