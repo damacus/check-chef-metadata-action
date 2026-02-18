@@ -88,9 +88,7 @@ describe('An incorrect maintainer', () => {
 
   it('sets level to failure on field mismatch errors', async () => {
     const message = await checkMetadata('./test/fixtures/metadata.incorrect.rb')
-    const maintainerError = message.errors?.find(
-      e => e.field === 'maintainer'
-    )
+    const maintainerError = message.errors?.find(e => e.field === 'maintainer')
     expect(maintainerError?.level).toBe('failure')
   })
 })

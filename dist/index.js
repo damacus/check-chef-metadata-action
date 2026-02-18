@@ -141,12 +141,12 @@ function checkMetadata(file) {
                     expected,
                     actual: actual || 'MISSING',
                     line,
-                    path: file.toString()
+                    path: file.toString(),
+                    level: 'failure'
                 });
                 const displayActual = actual || 'MISSING';
                 const summaryMsg = `${field}: expected '${expected}', got '${displayActual}'`;
                 message.summary.push(summaryMsg);
-                // Emit annotation (Rubocop style)
                 core.error(`${field}: expected '${expected}', got '${displayActual}'`, {
                     file: file.toString(),
                     startLine: line,
@@ -174,9 +174,10 @@ function checkMetadata(file) {
                     expected: 'HTTP 200',
                     actual: 'UNREACHABLE',
                     line,
-                    path: file.toString()
+                    path: file.toString(),
+                    level: 'warning'
                 });
-                core.error(`source_url: '${actualSourceUrl}' is not accessible`, {
+                core.warning(`source_url: '${actualSourceUrl}' is not accessible`, {
                     file: file.toString(),
                     startLine: line,
                     title: 'Metadata/Reachability'
@@ -196,9 +197,10 @@ function checkMetadata(file) {
                     expected: 'HTTP 200',
                     actual: 'UNREACHABLE',
                     line,
-                    path: file.toString()
+                    path: file.toString(),
+                    level: 'warning'
                 });
-                core.error(`issues_url: '${actualIssuesUrl}' is not accessible`, {
+                core.warning(`issues_url: '${actualIssuesUrl}' is not accessible`, {
                     file: file.toString(),
                     startLine: line,
                     title: 'Metadata/Reachability'
@@ -223,7 +225,8 @@ function checkMetadata(file) {
                     expected: 'Field to exist',
                     actual: 'MISSING',
                     line: undefined,
-                    path: file.toString()
+                    path: file.toString(),
+                    level: 'failure'
                 });
                 core.error(`${field}: field is missing from metadata.rb`, {
                     file: file.toString(),
@@ -244,7 +247,8 @@ function checkMetadata(file) {
                 expected: 'SemVer string',
                 actual: version,
                 line,
-                path: file.toString()
+                path: file.toString(),
+                level: 'failure'
             });
             core.error(`version: '${version}' is not a valid Semantic Version`, {
                 file: file.toString(),
@@ -264,7 +268,8 @@ function checkMetadata(file) {
                 expected: 'Version constraint',
                 actual: chefVersion,
                 line,
-                path: file.toString()
+                path: file.toString(),
+                level: 'failure'
             });
             core.error(`chef_version: '${chefVersion}' is not a valid version constraint`, {
                 file: file.toString(),
@@ -287,7 +292,8 @@ function checkMetadata(file) {
                         expected: 'Valid platform/constraint',
                         actual: supports[i],
                         line,
-                        path: file.toString()
+                        path: file.toString(),
+                        level: 'failure'
                     });
                     core.error(`supports: entry ${supports[i]} is malformed`, {
                         file: file.toString(),
@@ -312,7 +318,8 @@ function checkMetadata(file) {
                         expected: 'Valid cookbook/constraint',
                         actual: depends[i],
                         line,
-                        path: file.toString()
+                        path: file.toString(),
+                        level: 'failure'
                     });
                     core.error(`depends: entry ${depends[i]} is malformed`, {
                         file: file.toString(),
@@ -751,7 +758,7 @@ const reportChecks = (messages) => __awaiter(void 0, void 0, void 0, function* (
             path: err.path || 'metadata.rb',
             start_line: err.line || 1,
             end_line: err.line || 1,
-            annotation_level: 'failure',
+            annotation_level: (err.level || 'failure'),
             message: `${err.field}: expected '${err.expected}', got '${err.actual}'`,
             title: `Metadata/${err.field.charAt(0).toUpperCase() + err.field.slice(1)}`
         }));
