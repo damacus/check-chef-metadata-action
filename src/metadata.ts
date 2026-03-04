@@ -44,8 +44,28 @@ export const metadata = (file_path: fs.PathLike): MetadataResult => {
 
   const rawLines = fileContent.toString().split('\n')
 
+  const stripInlineComment = (line: string): string => {
+    let inSingleQuote = false
+    let inDoubleQuote = false
+
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i]
+      const prevChar = i > 0 ? line[i - 1] : ''
+
+      if (char === "'" && !inDoubleQuote && prevChar !== '\\') {
+        inSingleQuote = !inSingleQuote
+      } else if (char === '"' && !inSingleQuote && prevChar !== '\\') {
+        inDoubleQuote = !inDoubleQuote
+      } else if (char === '#' && !inSingleQuote && !inDoubleQuote) {
+        return line.slice(0, i).trimEnd()
+      }
+    }
+
+    return line
+  }
+
   for (let i = 0; i < rawLines.length; i++) {
-    const element = rawLines[i]
+    const element = stripInlineComment(rawLines[i])
     const trimmedElement = element.trim()
 
     // Skip comments and empty lines

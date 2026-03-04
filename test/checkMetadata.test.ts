@@ -45,6 +45,15 @@ describe('Correct metadata', () => {
       expect.objectContaining({file: expect.any(String)})
     )
   })
+
+  it('accepts valid supports/depends lines that include inline comments', async () => {
+    const message = await checkMetadata(
+      './test/fixtures/metadata.inline-comments.rb'
+    )
+
+    expect(message.conclusion).toEqual('success')
+    expect(message.errors).toEqual([])
+  })
 })
 
 describe('An incorrect maintainer', () => {
