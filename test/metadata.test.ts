@@ -59,6 +59,18 @@ describe('metadata with comments', () => {
   })
 })
 
+describe('metadata with inline comments', () => {
+  const {data} = metadata('./test/fixtures/metadata.inline-comments.rb')
+
+  it('parses supports and depends values without trailing comment text', () => {
+    const supports = data.get('supports') as string[]
+    const depends = data.get('depends') as string[]
+
+    expect(supports).toEqual(["'ubuntu'", ":centos, '>= 7.0'"])
+    expect(depends).toEqual(["'line'"])
+  })
+})
+
 describe('No metadata file', () => {
   it('Throws error when file not found', () => {
     expect(() => {
