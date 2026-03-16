@@ -671,6 +671,26 @@ exports.isValidDepends = isValidDepends;
 function isUrlAccessible(url, timeout = 5000) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
+            const parsedUrl = new URL(url);
+            // SSRF Protection: Only allow HTTP and HTTPS protocols
+            if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+                return false;
+            }
+            // SSRF Protection: Block known internal/metadata hostnames
+            const forbiddenHostnames = [
+                'localhost',
+                '127.0.0.1',
+                '[::1]',
+                '169.254.169.254',
+                'metadata.google.internal',
+                '100.100.100.200'
+            ];
+            const hostname = parsedUrl.hostname.toLowerCase();
+            if (forbiddenHostnames.includes(hostname) ||
+                hostname.endsWith('.local') ||
+                hostname.endsWith('.internal')) {
+                return false;
+            }
             const { statusCode } = yield (0, undici_1.request)(url, {
                 method: 'GET',
                 headersTimeout: timeout,
