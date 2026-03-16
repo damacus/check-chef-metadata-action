@@ -44,5 +44,5 @@ outputs:
   cookbook-version:
     description: 'The version of the cookbook (if exactly one cookbook was found).'
 runs:
-  using: 'node20'
+  using: 'node24'
   main: 'dist/index.js'
