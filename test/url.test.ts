@@ -41,4 +41,21 @@ describe('URL accessibility check', () => {
     const result = await isUrlAccessible('https://github.com/timeout')
     expect(result).toBe(false)
   })
+
+  it('returns false for file:// protocol (SSRF protection)', async () => {
+    const result = await isUrlAccessible('file:///etc/passwd')
+    expect(result).toBe(false)
+  })
+
+  it('returns false for internal cloud metadata IPs (SSRF protection)', async () => {
+    const result = await isUrlAccessible(
+      'http://169.254.169.254/latest/meta-data/'
+    )
+    expect(result).toBe(false)
+  })
+
+  it('returns false for localhost (SSRF protection)', async () => {
+    const result = await isUrlAccessible('http://127.0.0.1:8080/admin')
+    expect(result).toBe(false)
+  })
 })
