@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.0](https://github.com/damacus/check-chef-metadata-action/compare/v1.0.0...v3.0.0) (2026-03-17)
+
+
+### Miscellaneous Chores
+
+* force release v3.0.0 ([df0c9b4](https://github.com/damacus/check-chef-metadata-action/commit/df0c9b4b898aa6fbe4d714d351d8ffdc09fc0e09))
+
 ## [1.0.0](https://github.com/damacus/check-chef-metadata-action/compare/0.4.0...v1.0.0) (2026-03-17)
 
 
