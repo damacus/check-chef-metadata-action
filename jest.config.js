@@ -2,6 +2,7 @@ module.exports = {
   clearMocks: true,
   moduleFileExtensions: ['js', 'ts'],
   testMatch: ['**/*.test.ts'],
+  testPathIgnorePatterns: ['/node_modules/', '/\\.claude/'],
   transform: {
     '^.+\\.ts$': 'ts-jest'
   },
@@ -13,7 +14,12 @@ module.exports = {
     'node_modules/(?!(@actions|@octokit|@aki77))'
   ],
   moduleNameMapper: {
-    '^@actions/glob$': '<rootDir>/test/__mocks__/@actions/glob.js'
+    '^@actions/glob$': '<rootDir>/test/__mocks__/@actions/glob.js',
+    '^@actions/github$': '<rootDir>/node_modules/@actions/github/lib/github.js',
+    '^@actions/github/lib/(.*)$': '<rootDir>/node_modules/@actions/github/lib/$1',
+    '^@actions/core$': '<rootDir>/node_modules/@actions/core/lib/core.js',
+    '^@actions/core/lib/(.*)$': '<rootDir>/node_modules/@actions/core/lib/$1',
+    '^@octokit/core$': '<rootDir>/node_modules/@octokit/core/dist-node/index.js'
   },
   verbose: true
 }

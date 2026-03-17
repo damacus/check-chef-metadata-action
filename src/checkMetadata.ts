@@ -68,7 +68,7 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
   try {
     core.info(`Reading metadata file: ${file}`)
     fs.accessSync(file, fs.constants.R_OK)
-  } catch (err) {
+  } catch {
     core.error(`${file}: access error!`)
   }
 

@@ -63,7 +63,7 @@ describe('No metadata file', () => {
   it('Throws error when file not found', () => {
     expect(() => {
       metadata('./test/fixtures/metadata.none.rb')
-    }).toThrowError(
+    }).toThrow(
       "Could not read metadata file: Error: ENOENT: no such file or directory, open './test/fixtures/metadata.none.rb'."
     )
   })
