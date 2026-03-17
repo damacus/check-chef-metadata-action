@@ -201,7 +201,7 @@ export async function isUrlAccessible(
       bodyTimeout: timeout
     })
     return statusCode === 200
-  } catch (error) {
+  } catch {
     return false
   }
 }
