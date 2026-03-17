@@ -74242,10 +74242,10 @@ var reportPR = async (messages) => {
 
 // src/concurrency.ts
 async function runInParallel(items, limit, fn) {
-  const queue = [...items];
+  let currentIndex = 0;
   const workers = Array(Math.min(limit, items.length)).fill(null).map(async () => {
-    while (queue.length > 0) {
-      const item = queue.shift();
+    while (currentIndex < items.length) {
+      const item = items[currentIndex++];
       if (item !== void 0) await fn(item);
     }
   });

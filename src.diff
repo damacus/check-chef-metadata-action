@@ -1,0 +1,86 @@
+diff --git a/src/concurrency.ts b/src/concurrency.ts
+index 538be86..e69d92e 100644
+--- a/src/concurrency.ts
++++ b/src/concurrency.ts
+@@ -3,12 +3,15 @@ export async function runInParallel<T>(
+   limit: number,
+   fn: (item: T) => Promise<void>
+ ): Promise<void> {
+-  const queue = [...items]
++  // ⚡ Bolt: Replaced O(N^2) queue.shift() with O(N) index tracker
++  // queue.shift() re-indexes the entire array every time an item is pulled.
++  // Using an index counter prevents this O(N) array shifting operation.
++  let currentIndex = 0
+   const workers = Array(Math.min(limit, items.length))
+     .fill(null)
+     .map(async () => {
+-      while (queue.length > 0) {
+-        const item = queue.shift()
++      while (currentIndex < items.length) {
++        const item = items[currentIndex++]
+         if (item !== undefined) await fn(item)
+       }
+     })
+diff --git a/src/metadata.ts b/src/metadata.ts
+index 3a60839..749ff4d 100644
+--- a/src/metadata.ts
++++ b/src/metadata.ts
+@@ -169,6 +169,32 @@ export async function isUrlAccessible(
+   timeout = 5000
+ ): Promise<boolean> {
+   try {
++    const parsedUrl = new URL(url)
++
++    // SSRF Protection: Only allow HTTP and HTTPS protocols
++    if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
++      return false
++    }
++
++    // SSRF Protection: Block known internal/metadata hostnames
++    const forbiddenHostnames = [
++      'localhost',
++      '127.0.0.1',
++      '[::1]',
++      '169.254.169.254',
++      'metadata.google.internal',
++      '100.100.100.200'
++    ]
++
++    const hostname = parsedUrl.hostname.toLowerCase()
++    if (
++      forbiddenHostnames.includes(hostname) ||
++      hostname.endsWith('.local') ||
++      hostname.endsWith('.internal')
++    ) {
++      return false
++    }
++
+     const {statusCode} = await request(url, {
+       method: 'GET',
+       headersTimeout: timeout,
+diff --git a/test/url.test.ts b/test/url.test.ts
+index aa477b0..05e42bd 100644
+--- a/test/url.test.ts
++++ b/test/url.test.ts
+@@ -41,4 +41,21 @@ describe('URL accessibility check', () => {
+     const result = await isUrlAccessible('https://github.com/timeout')
+     expect(result).toBe(false)
+   })
++
++  it('returns false for file:// protocol (SSRF protection)', async () => {
++    const result = await isUrlAccessible('file:///etc/passwd')
++    expect(result).toBe(false)
++  })
++
++  it('returns false for internal cloud metadata IPs (SSRF protection)', async () => {
++    const result = await isUrlAccessible(
++      'http://169.254.169.254/latest/meta-data/'
++    )
++    expect(result).toBe(false)
++  })
++
++  it('returns false for localhost (SSRF protection)', async () => {
++    const result = await isUrlAccessible('http://127.0.0.1:8080/admin')
++    expect(result).toBe(false)
++  })
+ })
