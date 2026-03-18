@@ -14,7 +14,7 @@ describe('URL accessibility check', () => {
     expect(request).toHaveBeenCalledWith(
       'https://github.com/sous-chefs/java',
       expect.objectContaining({
-        method: 'GET'
+        method: 'HEAD'
       })
     )
   })

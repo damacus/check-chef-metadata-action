@@ -154,52 +154,53 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
   checkField('issues_url', issues_url, data.get('issues_url') as string)
 
   // 2. URL Accessibility Checks
+  // ⚡ Bolt: Run URL checks concurrently to halve network wait time per cookbook
   const actualSourceUrl = data.get('source_url') as string
-  if (actualSourceUrl) {
-    const isAccessible = await isUrlAccessible(actualSourceUrl)
-    if (!isAccessible) {
-      message.conclusion = 'failure'
-      const line = getLine('source_url')
-      const summaryMsg = `source_url: '${actualSourceUrl}' is not accessible`
-      message.summary.push(summaryMsg)
-      message.errors?.push({
-        field: 'source_url',
-        expected: 'HTTP 200',
-        actual: 'UNREACHABLE',
-        line,
-        path: file.toString(),
-        level: 'warning'
-      })
-      core.warning(`source_url: '${actualSourceUrl}' is not accessible`, {
-        file: file.toString(),
-        startLine: line,
-        title: 'Metadata/Reachability'
-      })
-    }
+  const actualIssuesUrl = data.get('issues_url') as string
+
+  const [isSourceAccessible, isIssuesAccessible] = await Promise.all([
+    actualSourceUrl ? isUrlAccessible(actualSourceUrl) : Promise.resolve(true),
+    actualIssuesUrl ? isUrlAccessible(actualIssuesUrl) : Promise.resolve(true)
+  ])
+
+  if (actualSourceUrl && !isSourceAccessible) {
+    message.conclusion = 'failure'
+    const line = getLine('source_url')
+    const summaryMsg = `source_url: '${actualSourceUrl}' is not accessible`
+    message.summary.push(summaryMsg)
+    message.errors?.push({
+      field: 'source_url',
+      expected: 'HTTP 200',
+      actual: 'UNREACHABLE',
+      line,
+      path: file.toString(),
+      level: 'warning'
+    })
+    core.warning(`source_url: '${actualSourceUrl}' is not accessible`, {
+      file: file.toString(),
+      startLine: line,
+      title: 'Metadata/Reachability'
+    })
   }
 
-  const actualIssuesUrl = data.get('issues_url') as string
-  if (actualIssuesUrl) {
-    const isAccessible = await isUrlAccessible(actualIssuesUrl)
-    if (!isAccessible) {
-      message.conclusion = 'failure'
-      const line = getLine('issues_url')
-      const summaryMsg = `issues_url: '${actualIssuesUrl}' is not accessible`
-      message.summary.push(summaryMsg)
-      message.errors?.push({
-        field: 'issues_url',
-        expected: 'HTTP 200',
-        actual: 'UNREACHABLE',
-        line,
-        path: file.toString(),
-        level: 'warning'
-      })
-      core.warning(`issues_url: '${actualIssuesUrl}' is not accessible`, {
-        file: file.toString(),
-        startLine: line,
-        title: 'Metadata/Reachability'
-      })
-    }
+  if (actualIssuesUrl && !isIssuesAccessible) {
+    message.conclusion = 'failure'
+    const line = getLine('issues_url')
+    const summaryMsg = `issues_url: '${actualIssuesUrl}' is not accessible`
+    message.summary.push(summaryMsg)
+    message.errors?.push({
+      field: 'issues_url',
+      expected: 'HTTP 200',
+      actual: 'UNREACHABLE',
+      line,
+      path: file.toString(),
+      level: 'warning'
+    })
+    core.warning(`issues_url: '${actualIssuesUrl}' is not accessible`, {
+      file: file.toString(),
+      startLine: line,
+      title: 'Metadata/Reachability'
+    })
   }
 
   // 3. Mandatory Field Existence

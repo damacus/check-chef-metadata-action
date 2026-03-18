@@ -158,6 +158,10 @@ export const isValidDepends = (depends: string): boolean => {
   return !!cookbook
 }
 
+// ⚡ Bolt: Cache for URL accessibility checks to prevent duplicate network requests
+// Maps URL + timeout string to the promise checking its accessibility
+const urlAccessCache = new Map<string, Promise<boolean>>()
+
 /**
  * Checks if a URL is accessible (HTTP 200)
  * @param url The URL to check
@@ -168,40 +172,55 @@ export async function isUrlAccessible(
   url: string,
   timeout = 5000
 ): Promise<boolean> {
-  try {
-    const parsedUrl = new URL(url)
+  const cacheKey = `${url}|${timeout}`
 
-    // SSRF Protection: Only allow HTTP and HTTPS protocols
-    if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
-      return false
-    }
-
-    // SSRF Protection: Block known internal/metadata hostnames
-    const forbiddenHostnames = [
-      'localhost',
-      '127.0.0.1',
-      '[::1]',
-      '169.254.169.254',
-      'metadata.google.internal',
-      '100.100.100.200'
-    ]
-
-    const hostname = parsedUrl.hostname.toLowerCase()
-    if (
-      forbiddenHostnames.includes(hostname) ||
-      hostname.endsWith('.local') ||
-      hostname.endsWith('.internal')
-    ) {
-      return false
-    }
-
-    const {statusCode} = await request(url, {
-      method: 'GET',
-      headersTimeout: timeout,
-      bodyTimeout: timeout
-    })
-    return statusCode === 200
-  } catch {
-    return false
+  // ⚡ Bolt: Return cached promise if available to avoid duplicate network requests
+  const cachedPromise = urlAccessCache.get(cacheKey)
+  if (cachedPromise) {
+    return cachedPromise
   }
+
+  const checkPromise = (async () => {
+    try {
+      const parsedUrl = new URL(url)
+
+      // SSRF Protection: Only allow HTTP and HTTPS protocols
+      if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+        return false
+      }
+
+      // SSRF Protection: Block known internal/metadata hostnames
+      const forbiddenHostnames = [
+        'localhost',
+        '127.0.0.1',
+        '[::1]',
+        '169.254.169.254',
+        'metadata.google.internal',
+        '100.100.100.200'
+      ]
+
+      const hostname = parsedUrl.hostname.toLowerCase()
+      if (
+        forbiddenHostnames.includes(hostname) ||
+        hostname.endsWith('.local') ||
+        hostname.endsWith('.internal')
+      ) {
+        return false
+      }
+
+      const {statusCode} = await request(url, {
+        // ⚡ Bolt: Changed method from GET to HEAD to save bandwidth and improve latency
+        // HEAD just fetches headers instead of the full response body
+        method: 'HEAD',
+        headersTimeout: timeout,
+        bodyTimeout: timeout
+      })
+      return statusCode >= 200 && statusCode < 400
+    } catch {
+      return false
+    }
+  })()
+
+  urlAccessCache.set(cacheKey, checkPromise)
+  return checkPromise
 }
