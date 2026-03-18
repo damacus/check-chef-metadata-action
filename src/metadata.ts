@@ -1,4 +1,5 @@
 import fs from 'fs'
+import * as net from 'net'
 import {request} from 'undici'
 
 export interface MetadataResult {
@@ -179,20 +180,75 @@ export async function isUrlAccessible(
     // SSRF Protection: Block known internal/metadata hostnames
     const forbiddenHostnames = [
       'localhost',
-      '127.0.0.1',
-      '[::1]',
-      '169.254.169.254',
       'metadata.google.internal',
-      '100.100.100.200'
+      '[::1]'
     ]
 
-    const hostname = parsedUrl.hostname.toLowerCase()
+    let hostname = parsedUrl.hostname.toLowerCase()
+
     if (
       forbiddenHostnames.includes(hostname) ||
       hostname.endsWith('.local') ||
       hostname.endsWith('.internal')
     ) {
       return false
+    }
+
+    // SSRF Protection: Block internal and private IPs
+    if (hostname.startsWith('[') && hostname.endsWith(']')) {
+      hostname = hostname.substring(1, hostname.length - 1)
+    }
+
+    if (net.isIP(hostname)) {
+      if (net.isIPv4(hostname)) {
+        const parts = hostname.split('.')
+        const first = parseInt(parts[0], 10)
+        const second = parseInt(parts[1], 10)
+
+        // 10.0.0.0/8 (RFC 1918)
+        if (first === 10) return false
+        // 127.0.0.0/8 (Loopback)
+        if (first === 127) return false
+        // 169.254.0.0/16 (Link-local)
+        if (first === 169 && second === 254) return false
+        // 0.0.0.0/8 (Current network)
+        if (first === 0) return false
+        // 172.16.0.0/12 (RFC 1918)
+        if (first === 172 && second >= 16 && second <= 31) return false
+        // 192.168.0.0/16 (RFC 1918)
+        if (first === 192 && second === 168) return false
+        // 100.64.0.0/10 (CGNAT)
+        if (first === 100 && second >= 64 && second <= 127) return false
+        // 198.18.0.0/15 (Benchmarking)
+        if (first === 198 && second >= 18 && second <= 19) return false
+      } else if (net.isIPv6(hostname)) {
+        if (hostname === '::1' || hostname === '::') return false
+        if (hostname.startsWith('fd') || hostname.startsWith('fc')) return false // ULA
+        if (
+          hostname.startsWith('fe8') ||
+          hostname.startsWith('fe9') ||
+          hostname.startsWith('fea') ||
+          hostname.startsWith('feb')
+        )
+          return false // Link-local
+        if (hostname.startsWith('::ffff:')) {
+          // IPv4-mapped IPv6
+          const ipv4Part = hostname.substring(7)
+          if (net.isIPv4(ipv4Part)) {
+            const parts = ipv4Part.split('.')
+            const first = parseInt(parts[0], 10)
+            const second = parseInt(parts[1], 10)
+            if (first === 10) return false
+            if (first === 127) return false
+            if (first === 169 && second === 254) return false
+            if (first === 0) return false
+            if (first === 172 && second >= 16 && second <= 31) return false
+            if (first === 192 && second === 168) return false
+            if (first === 100 && second >= 64 && second <= 127) return false
+            if (first === 198 && second >= 18 && second <= 19) return false
+          }
+        }
+      }
     }
 
     const {statusCode} = await request(url, {

@@ -58,4 +58,25 @@ describe('URL accessibility check', () => {
     const result = await isUrlAccessible('http://127.0.0.1:8080/admin')
     expect(result).toBe(false)
   })
+
+  it('returns false for obfuscated loopback IPs (SSRF protection)', async () => {
+    expect(await isUrlAccessible('http://2130706433/')).toBe(false)
+    expect(await isUrlAccessible('http://0x7f.0.0.1/')).toBe(false)
+    expect(await isUrlAccessible('http://127.1/')).toBe(false)
+  })
+
+  it('returns false for private IPv4 addresses (SSRF protection)', async () => {
+    expect(await isUrlAccessible('http://10.0.0.1/')).toBe(false)
+    expect(await isUrlAccessible('http://172.16.0.1/')).toBe(false)
+    expect(await isUrlAccessible('http://172.31.255.255/')).toBe(false)
+    expect(await isUrlAccessible('http://192.168.1.1/')).toBe(false)
+  })
+
+  it('returns false for IPv6 loopback and mapped addresses (SSRF protection)', async () => {
+    expect(await isUrlAccessible('http://[::1]/')).toBe(false)
+    expect(await isUrlAccessible('http://[::ffff:127.0.0.1]/')).toBe(false)
+    expect(await isUrlAccessible('http://[::ffff:10.0.0.1]/')).toBe(false)
+    expect(await isUrlAccessible('http://[fc00::1]/')).toBe(false)
+    expect(await isUrlAccessible('http://[fe80::1]/')).toBe(false)
+  })
 })
