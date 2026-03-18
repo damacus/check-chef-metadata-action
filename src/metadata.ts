@@ -178,13 +178,9 @@ export async function isUrlAccessible(
     }
 
     // SSRF Protection: Block known internal/metadata hostnames
-    const forbiddenHostnames = [
-      'localhost',
-      'metadata.google.internal',
-      '[::1]'
-    ]
+    const forbiddenHostnames = ['localhost', 'metadata.google.internal']
 
-    let hostname = parsedUrl.hostname.toLowerCase()
+    const hostname = parsedUrl.hostname.toLowerCase()
 
     if (
       forbiddenHostnames.includes(hostname) ||
@@ -195,10 +191,6 @@ export async function isUrlAccessible(
     }
 
     // SSRF Protection: Block internal and private IPs
-    if (hostname.startsWith('[') && hostname.endsWith(']')) {
-      hostname = hostname.substring(1, hostname.length - 1)
-    }
-
     if (net.isIP(hostname)) {
       if (net.isIPv4(hostname)) {
         const parts = hostname.split('.')
