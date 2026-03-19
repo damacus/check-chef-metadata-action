@@ -1,4 +1,6 @@
 import fs from 'fs'
+import * as net from 'net'
+import * as dns from 'dns/promises'
 import {request} from 'undici'
 
 export interface MetadataResult {
@@ -177,22 +179,66 @@ export async function isUrlAccessible(
     }
 
     // SSRF Protection: Block known internal/metadata hostnames
-    const forbiddenHostnames = [
-      'localhost',
-      '127.0.0.1',
-      '[::1]',
-      '169.254.169.254',
-      'metadata.google.internal',
-      '100.100.100.200'
-    ]
+    const forbiddenHostnames = ['localhost', 'metadata.google.internal']
 
     const hostname = parsedUrl.hostname.toLowerCase()
+
     if (
       forbiddenHostnames.includes(hostname) ||
       hostname.endsWith('.local') ||
       hostname.endsWith('.internal')
     ) {
       return false
+    }
+
+    // Resolve the hostname to an IP address to prevent DNS rebinding and alternate IP encodings
+    // Extract hostname from brackets if it's an IPv6 literal
+    const lookupHostname =
+      hostname.startsWith('[') && hostname.endsWith(']')
+        ? hostname.slice(1, -1)
+        : hostname
+
+    let resolvedIp = ''
+    try {
+      // If it's already a valid IP string (IPv4 or IPv6 literal), dns.lookup will just return it
+      const {address} = await dns.lookup(lookupHostname)
+      resolvedIp = address
+    } catch {
+      // If DNS resolution fails, the URL is unreachable
+      return false
+    }
+
+    // If the resolved IP is an IPv4-mapped IPv6 address (e.g., ::ffff:127.0.0.1), extract the IPv4 part
+    const ipToCheck = resolvedIp.toLowerCase().startsWith('::ffff:')
+      ? resolvedIp.substring(7)
+      : resolvedIp.toLowerCase()
+
+    if (net.isIPv4(ipToCheck)) {
+      const parts = ipToCheck.split('.').map(Number)
+      if (
+        parts[0] === 127 || // Loopback
+        parts[0] === 10 || // Private 10.x.x.x
+        (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) || // Private 172.16.x.x - 172.31.x.x
+        (parts[0] === 192 && parts[1] === 168) || // Private 192.168.x.x
+        (parts[0] === 169 && parts[1] === 254) || // Link-local
+        parts[0] === 0 || // Current network / unroutable
+        (parts[0] === 100 && parts[1] >= 64 && parts[1] <= 127) // Carrier-grade NAT
+      ) {
+        return false
+      }
+    } else if (net.isIPv6(ipToCheck)) {
+      if (
+        ipToCheck === '::1' || // Loopback
+        ipToCheck === '::' || // Unspecified
+        ipToCheck.startsWith('fc') || // Unique local address (fc00::/7)
+        ipToCheck.startsWith('fd') ||
+        ipToCheck.startsWith('fe8') || // Link-local (fe80::/10)
+        ipToCheck.startsWith('fe9') ||
+        ipToCheck.startsWith('fea') ||
+        ipToCheck.startsWith('feb')
+      ) {
+        return false
+      }
     }
 
     const {statusCode} = await request(url, {

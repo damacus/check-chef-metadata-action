@@ -58,4 +58,42 @@ describe('URL accessibility check', () => {
     const result = await isUrlAccessible('http://127.0.0.1:8080/admin')
     expect(result).toBe(false)
   })
+
+  it('returns false for alternate loopback IPs (SSRF protection)', async () => {
+    const result = await isUrlAccessible('http://127.0.0.2:8080/admin')
+    expect(result).toBe(false)
+  })
+
+  it('returns false for private IPs (SSRF protection)', async () => {
+    const result1 = await isUrlAccessible('http://10.0.0.1/admin')
+    expect(result1).toBe(false)
+
+    const result2 = await isUrlAccessible('http://192.168.1.1/admin')
+    expect(result2).toBe(false)
+
+    const result3 = await isUrlAccessible('http://172.16.0.1/admin')
+    expect(result3).toBe(false)
+  })
+
+  it('returns false for 0.0.0.0 (SSRF protection)', async () => {
+    const result = await isUrlAccessible('http://0.0.0.0/admin')
+    expect(result).toBe(false)
+  })
+
+  it('returns false for alternate IP encodings (SSRF protection)', async () => {
+    // 0x7f000001 is 127.0.0.1
+    const result = await isUrlAccessible('http://0x7f000001/admin')
+    expect(result).toBe(false)
+  })
+
+  it('returns false for IPv6 loopback and private IPs (SSRF protection)', async () => {
+    const result1 = await isUrlAccessible('http://[::1]/admin')
+    expect(result1).toBe(false)
+
+    const result2 = await isUrlAccessible('http://[fc00::1]/admin')
+    expect(result2).toBe(false)
+
+    const result3 = await isUrlAccessible('http://[::ffff:127.0.0.1]/admin')
+    expect(result3).toBe(false)
+  })
 })
