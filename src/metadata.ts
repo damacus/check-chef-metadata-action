@@ -195,12 +195,33 @@ export async function isUrlAccessible(
       return false
     }
 
-    const {statusCode} = await request(url, {
-      method: 'GET',
+    // ⚡ Bolt: Use HEAD instead of GET to avoid downloading response bodies
+    // This significantly reduces bandwidth and latency for URL reachability checks
+    const headRes = await request(url, {
+      method: 'HEAD',
       headersTimeout: timeout,
       bodyTimeout: timeout
     })
-    return statusCode === 200
+    // Consume body to free up memory/connections
+    if (headRes.body) {
+      await headRes.body.text()
+    }
+
+    // ⚡ Bolt: Some servers reject HEAD requests with 405 Method Not Allowed or 403 Forbidden.
+    // If HEAD fails with a client error, fallback to GET to be safe.
+    if (headRes.statusCode === 405 || headRes.statusCode === 403) {
+      const getRes = await request(url, {
+        method: 'GET',
+        headersTimeout: timeout,
+        bodyTimeout: timeout
+      })
+      if (getRes.body) {
+        await getRes.body.text()
+      }
+      return getRes.statusCode === 200
+    }
+
+    return headRes.statusCode === 200
   } catch {
     return false
   }

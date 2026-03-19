@@ -73700,12 +73700,26 @@ async function isUrlAccessible(url, timeout = 5e3) {
     if (forbiddenHostnames.includes(hostname) || hostname.endsWith(".local") || hostname.endsWith(".internal")) {
       return false;
     }
-    const { statusCode } = await (0, import_undici3.request)(url, {
-      method: "GET",
+    const headRes = await (0, import_undici3.request)(url, {
+      method: "HEAD",
       headersTimeout: timeout,
       bodyTimeout: timeout
     });
-    return statusCode === 200;
+    if (headRes.body) {
+      await headRes.body.text();
+    }
+    if (headRes.statusCode === 405 || headRes.statusCode === 403) {
+      const getRes = await (0, import_undici3.request)(url, {
+        method: "GET",
+        headersTimeout: timeout,
+        bodyTimeout: timeout
+      });
+      if (getRes.body) {
+        await getRes.body.text();
+      }
+      return getRes.statusCode === 200;
+    }
+    return headRes.statusCode === 200;
   } catch {
     return false;
   }
