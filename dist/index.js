@@ -73590,6 +73590,22 @@ var fs5 = __toESM(require("fs"));
 // src/metadata.ts
 var import_fs4 = __toESM(require("fs"));
 var import_undici3 = __toESM(require_undici3());
+var ALLOWED_KEYS = /* @__PURE__ */ new Set([
+  "name",
+  "maintainer",
+  "maintainer_email",
+  "license",
+  "description",
+  "source_url",
+  "issues_url",
+  "chef_version",
+  "version"
+]);
+var KEY_VALUE_REGEX = /(\w+)\s+(?:(?:'|")(.*?)('|")|:(\w+))/;
+var SEMVER_REGEX = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/;
+var CONSTRAINT_REGEX = /^(?:>=|>|<=|<|~>|=)?\s*\d+(?:\.\d+)*(?:-[a-zA-Z0-9.]+)?$/;
+var SUPPORT_REGEX = /^(?:(?:'|")([a-z0-9_-]+)(?:'|")|:([a-z0-9_-]+))(?:\s*,\s*(?:'|")([^'"]+)(?:'|"))?$/;
+var DEPENDS_REGEX = /^(?:(?:'|")([a-z0-9_-]+)(?:'|"))(?:\s*,\s*(?:'|")([^'"]+)(?:'|"))?$/;
 var metadata = (file_path) => {
   let fileContent;
   const data = /* @__PURE__ */ new Map();
@@ -73598,17 +73614,6 @@ var metadata = (file_path) => {
   const supportsLines = [];
   const depends = [];
   const dependsLines = [];
-  const allowed_keys = [
-    "name",
-    "maintainer",
-    "maintainer_email",
-    "license",
-    "description",
-    "source_url",
-    "issues_url",
-    "chef_version",
-    "version"
-  ];
   try {
     fileContent = import_fs4.default.readFileSync(file_path, "utf8");
   } catch (error2) {
@@ -73635,9 +73640,8 @@ var metadata = (file_path) => {
       const value = trimmedElement.substring(key.length).trim();
       depends.push(value);
       dependsLines.push(lineNumber);
-    } else if (allowed_keys.includes(key)) {
-      const regex = /(\w+)\s+(?:(?:'|")(.*?)('|")|:(\w+))/;
-      const item = element.match(regex);
+    } else if (ALLOWED_KEYS.has(key)) {
+      const item = element.match(KEY_VALUE_REGEX);
       let value = "";
       if (item) {
         value = item[2] || item[4] || "";
@@ -73653,16 +73657,13 @@ var metadata = (file_path) => {
   return { data, lines };
 };
 var isValidSemVer = (version) => {
-  const semverRegex = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/;
-  return semverRegex.test(version);
+  return SEMVER_REGEX.test(version);
 };
 var isValidVersionConstraint = (constraint) => {
-  const constraintRegex = /^(?:>=|>|<=|<|~>|=)?\s*\d+(?:\.\d+)*(?:-[a-zA-Z0-9.]+)?$/;
-  return constraintRegex.test(constraint) && constraint.length > 0;
+  return CONSTRAINT_REGEX.test(constraint) && constraint.length > 0;
 };
 var isValidSupport = (support) => {
-  const supportRegex = /^(?:(?:'|")([a-z0-9_-]+)(?:'|")|:([a-z0-9_-]+))(?:\s*,\s*(?:'|")([^'"]+)(?:'|"))?$/;
-  const match = support.match(supportRegex);
+  const match = support.match(SUPPORT_REGEX);
   if (!match) return false;
   const platform2 = match[1] || match[2];
   const constraint = match[3];
@@ -73672,8 +73673,7 @@ var isValidSupport = (support) => {
   return !!platform2;
 };
 var isValidDepends = (depends) => {
-  const dependsRegex = /^(?:(?:'|")([a-z0-9_-]+)(?:'|"))(?:\s*,\s*(?:'|")([^'"]+)(?:'|"))?$/;
-  const match = depends.match(dependsRegex);
+  const match = depends.match(DEPENDS_REGEX);
   if (!match) return false;
   const cookbook = match[1];
   const constraint = match[2];
