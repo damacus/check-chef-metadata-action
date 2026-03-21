@@ -1,5 +1,7 @@
 import fs from 'fs'
 import {request} from 'undici'
+import * as dns from 'dns'
+import * as net from 'net'
 
 export interface MetadataResult {
   data: Map<string, string | string[]>
@@ -177,26 +179,58 @@ export async function isUrlAccessible(
     }
 
     // SSRF Protection: Block known internal/metadata hostnames
-    const forbiddenHostnames = [
-      'localhost',
-      '127.0.0.1',
-      '[::1]',
-      '169.254.169.254',
-      'metadata.google.internal',
-      '100.100.100.200'
-    ]
-
     const hostname = parsedUrl.hostname.toLowerCase()
-    if (
-      forbiddenHostnames.includes(hostname) ||
-      hostname.endsWith('.local') ||
-      hostname.endsWith('.internal')
-    ) {
+
+    // Resolve hostname to IP to prevent DNS rebinding and alternate IP encoding (e.g. 0x7f000001)
+    let ipAddress: string
+
+    // Check if hostname is an IP, handle decimal encodings like 0x7f000001
+    try {
+      const lookupResult = await dns.promises.lookup(hostname)
+      ipAddress = lookupResult.address
+    } catch {
+      return false // DNS resolution failed
+    }
+
+    if (ipAddress === '0.0.0.0' || ipAddress === '255.255.255.255') {
       return false
     }
 
-    const {statusCode} = await request(url, {
+    if (net.isIPv4(ipAddress)) {
+      const parts = ipAddress.split('.').map(Number)
+      if (
+        parts[0] === 127 || // Loopback (127.0.0.0/8)
+        parts[0] === 10 || // Private (10.0.0.0/8)
+        (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) || // Private (172.16.0.0/12)
+        (parts[0] === 192 && parts[1] === 168) || // Private (192.168.0.0/16)
+        (parts[0] === 169 && parts[1] === 254) || // Link-local (169.254.0.0/16)
+        (parts[0] === 100 && parts[1] >= 64 && parts[1] <= 127) // Carrier-grade NAT (100.64.0.0/10)
+      ) {
+        return false
+      }
+    } else if (net.isIPv6(ipAddress)) {
+      const ip = ipAddress.toLowerCase()
+      if (
+        ip === '::1' || // Loopback
+        ip.startsWith('::ffff:127.') || // IPv4-mapped IPv6 loopback
+        ip.startsWith('fc00:') ||
+        ip.startsWith('fd00:') || // Unique local address (ULA)
+        ip.startsWith('fe80:') // Link-local
+      ) {
+        return false
+      }
+    }
+
+    // SSRF Protection: Prevent DNS rebinding by sending request directly to the validated IP
+    // and specifying the original hostname in the Host header.
+    const safeUrl = new URL(url)
+    safeUrl.hostname = ipAddress
+
+    const {statusCode} = await request(safeUrl.toString(), {
       method: 'GET',
+      headers: {
+        Host: parsedUrl.hostname
+      },
       headersTimeout: timeout,
       bodyTimeout: timeout
     })

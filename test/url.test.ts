@@ -12,9 +12,10 @@ describe('URL accessibility check', () => {
     const result = await isUrlAccessible('https://github.com/sous-chefs/java')
     expect(result).toBe(true)
     expect(request).toHaveBeenCalledWith(
-      'https://github.com/sous-chefs/java',
+      expect.stringMatching(/^https:\/\/[0-9.]+\/sous-chefs\/java$/),
       expect.objectContaining({
-        method: 'GET'
+        method: 'GET',
+        headers: {Host: 'github.com'}
       })
     )
   })
@@ -56,6 +57,16 @@ describe('URL accessibility check', () => {
 
   it('returns false for localhost (SSRF protection)', async () => {
     const result = await isUrlAccessible('http://127.0.0.1:8080/admin')
+    expect(result).toBe(false)
+  })
+
+  it('returns false for alternate loopback IP encoding (SSRF protection)', async () => {
+    const result = await isUrlAccessible('http://0x7f000001:8080/admin')
+    expect(result).toBe(false)
+  })
+
+  it('returns false for loopback-resolving domains like localtest.me (SSRF protection)', async () => {
+    const result = await isUrlAccessible('http://localtest.me/admin')
     expect(result).toBe(false)
   })
 })
