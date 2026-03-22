@@ -73835,50 +73835,48 @@ async function checkMetadata(file) {
   checkField("source_url", source_url, data.get("source_url"));
   checkField("issues_url", issues_url, data.get("issues_url"));
   const actualSourceUrl = data.get("source_url");
-  if (actualSourceUrl) {
-    const isAccessible = await isUrlAccessible(actualSourceUrl);
-    if (!isAccessible) {
-      message.conclusion = "failure";
-      const line = getLine("source_url");
-      const summaryMsg = `source_url: '${actualSourceUrl}' is not accessible`;
-      message.summary.push(summaryMsg);
-      message.errors?.push({
-        field: "source_url",
-        expected: "HTTP 200",
-        actual: "UNREACHABLE",
-        line,
-        path: file.toString(),
-        level: "warning"
-      });
-      warning(`source_url: '${actualSourceUrl}' is not accessible`, {
-        file: file.toString(),
-        startLine: line,
-        title: "Metadata/Reachability"
-      });
-    }
-  }
   const actualIssuesUrl = data.get("issues_url");
-  if (actualIssuesUrl) {
-    const isAccessible = await isUrlAccessible(actualIssuesUrl);
-    if (!isAccessible) {
-      message.conclusion = "failure";
-      const line = getLine("issues_url");
-      const summaryMsg = `issues_url: '${actualIssuesUrl}' is not accessible`;
-      message.summary.push(summaryMsg);
-      message.errors?.push({
-        field: "issues_url",
-        expected: "HTTP 200",
-        actual: "UNREACHABLE",
-        line,
-        path: file.toString(),
-        level: "warning"
-      });
-      warning(`issues_url: '${actualIssuesUrl}' is not accessible`, {
-        file: file.toString(),
-        startLine: line,
-        title: "Metadata/Reachability"
-      });
-    }
+  const [isSourceAccessible, isIssuesAccessible] = await Promise.all([
+    actualSourceUrl ? isUrlAccessible(actualSourceUrl) : Promise.resolve(true),
+    actualIssuesUrl ? isUrlAccessible(actualIssuesUrl) : Promise.resolve(true)
+  ]);
+  if (actualSourceUrl && !isSourceAccessible) {
+    message.conclusion = "failure";
+    const line = getLine("source_url");
+    const summaryMsg = `source_url: '${actualSourceUrl}' is not accessible`;
+    message.summary.push(summaryMsg);
+    message.errors?.push({
+      field: "source_url",
+      expected: "HTTP 200",
+      actual: "UNREACHABLE",
+      line,
+      path: file.toString(),
+      level: "warning"
+    });
+    warning(`source_url: '${actualSourceUrl}' is not accessible`, {
+      file: file.toString(),
+      startLine: line,
+      title: "Metadata/Reachability"
+    });
+  }
+  if (actualIssuesUrl && !isIssuesAccessible) {
+    message.conclusion = "failure";
+    const line = getLine("issues_url");
+    const summaryMsg = `issues_url: '${actualIssuesUrl}' is not accessible`;
+    message.summary.push(summaryMsg);
+    message.errors?.push({
+      field: "issues_url",
+      expected: "HTTP 200",
+      actual: "UNREACHABLE",
+      line,
+      path: file.toString(),
+      level: "warning"
+    });
+    warning(`issues_url: '${actualIssuesUrl}' is not accessible`, {
+      file: file.toString(),
+      startLine: line,
+      title: "Metadata/Reachability"
+    });
   }
   const mandatoryFieldsInput = getInput("mandatory_fields", { required: false }) || "version,chef_version,supports";
   const mandatoryFields = mandatoryFieldsInput.split(",").map((f) => f.trim()).filter((f) => f !== "");
