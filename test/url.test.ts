@@ -1,9 +1,20 @@
+import * as dns from 'dns'
 import {request} from 'undici'
 import {isUrlAccessible} from '../src/metadata'
 
 jest.mock('undici')
 
 describe('URL accessibility check', () => {
+  beforeEach(() => {
+    jest
+      .spyOn(dns.promises, 'lookup')
+      .mockResolvedValue({address: '140.82.121.4', family: 4})
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
   it('returns true for a reachable URL', async () => {
     ;(request as jest.Mock).mockResolvedValue({
       statusCode: 200
@@ -49,6 +60,10 @@ describe('URL accessibility check', () => {
   })
 
   it('returns false for internal cloud metadata IPs (SSRF protection)', async () => {
+    jest
+      .spyOn(dns.promises, 'lookup')
+      .mockResolvedValue({address: '169.254.169.254', family: 4})
+
     const result = await isUrlAccessible(
       'http://169.254.169.254/latest/meta-data/'
     )
@@ -56,16 +71,28 @@ describe('URL accessibility check', () => {
   })
 
   it('returns false for localhost (SSRF protection)', async () => {
+    jest
+      .spyOn(dns.promises, 'lookup')
+      .mockResolvedValue({address: '127.0.0.1', family: 4})
+
     const result = await isUrlAccessible('http://127.0.0.1:8080/admin')
     expect(result).toBe(false)
   })
 
   it('returns false for alternate loopback IP encoding (SSRF protection)', async () => {
+    jest
+      .spyOn(dns.promises, 'lookup')
+      .mockResolvedValue({address: '127.0.0.1', family: 4})
+
     const result = await isUrlAccessible('http://0x7f000001:8080/admin')
     expect(result).toBe(false)
   })
 
   it('returns false for loopback-resolving domains like localtest.me (SSRF protection)', async () => {
+    jest
+      .spyOn(dns.promises, 'lookup')
+      .mockResolvedValue({address: '127.0.0.1', family: 4})
+
     const result = await isUrlAccessible('http://localtest.me/admin')
     expect(result).toBe(false)
   })
