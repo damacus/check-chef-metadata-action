@@ -271,6 +271,18 @@ export async function isUrlAccessible(
     }
   })()
 
-  urlAccessibilityCache.set(cacheKey, checkPromise)
-  return checkPromise
+  const cachedPromise = (async () => {
+    const result = await checkPromise
+
+    // Preserve deduplication for concurrent callers, but only retain successful
+    // results so a transient network failure does not poison the whole run.
+    if (!result) {
+      urlAccessibilityCache.delete(cacheKey)
+    }
+
+    return result
+  })()
+
+  urlAccessibilityCache.set(cacheKey, cachedPromise)
+  return cachedPromise
 }

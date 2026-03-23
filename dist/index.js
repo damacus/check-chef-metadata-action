@@ -73758,8 +73758,15 @@ async function isUrlAccessible(url, timeout = 5e3) {
       return false;
     }
   })();
-  urlAccessibilityCache.set(cacheKey, checkPromise);
-  return checkPromise;
+  const cachedPromise = (async () => {
+    const result = await checkPromise;
+    if (!result) {
+      urlAccessibilityCache.delete(cacheKey);
+    }
+    return result;
+  })();
+  urlAccessibilityCache.set(cacheKey, cachedPromise);
+  return cachedPromise;
 }
 
 // src/checkMetadata.ts
