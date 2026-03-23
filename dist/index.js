@@ -73700,56 +73700,66 @@ var isValidDepends = (depends) => {
   }
   return !!cookbook;
 };
+var urlAccessibilityCache = /* @__PURE__ */ new Map();
 async function isUrlAccessible(url, timeout = 5e3) {
-  try {
-    const parsedUrl = new URL(url);
-    if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
-      return false;
-    }
-    const hostname = parsedUrl.hostname.toLowerCase();
-    let ipAddress;
+  const cacheKey = `${url}|${timeout}`;
+  const cached = urlAccessibilityCache.get(cacheKey);
+  if (cached !== void 0) {
+    return cached;
+  }
+  const checkPromise = (async () => {
     try {
-      const lookupResult = await dns.promises.lookup(hostname);
-      ipAddress = lookupResult.address;
+      const parsedUrl = new URL(url);
+      if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+        return false;
+      }
+      const hostname = parsedUrl.hostname.toLowerCase();
+      let ipAddress;
+      try {
+        const lookupResult = await dns.promises.lookup(hostname);
+        ipAddress = lookupResult.address;
+      } catch {
+        return false;
+      }
+      if (ipAddress === "0.0.0.0" || ipAddress === "255.255.255.255") {
+        return false;
+      }
+      if (net.isIPv4(ipAddress)) {
+        const parts = ipAddress.split(".").map(Number);
+        if (parts[0] === 127 || // Loopback (127.0.0.0/8)
+        parts[0] === 10 || // Private (10.0.0.0/8)
+        parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31 || // Private (172.16.0.0/12)
+        parts[0] === 192 && parts[1] === 168 || // Private (192.168.0.0/16)
+        parts[0] === 169 && parts[1] === 254 || // Link-local (169.254.0.0/16)
+        parts[0] === 100 && parts[1] >= 64 && parts[1] <= 127) {
+          return false;
+        }
+      } else if (net.isIPv6(ipAddress)) {
+        const ip = ipAddress.toLowerCase();
+        if (ip === "::1" || // Loopback
+        ip.startsWith("::ffff:127.") || // IPv4-mapped IPv6 loopback
+        ip.startsWith("fc00:") || ip.startsWith("fd00:") || // Unique local address (ULA)
+        ip.startsWith("fe80:")) {
+          return false;
+        }
+      }
+      const safeUrl = new URL(url);
+      safeUrl.hostname = ipAddress;
+      const { statusCode } = await (0, import_undici3.request)(safeUrl.toString(), {
+        method: "GET",
+        headers: {
+          Host: parsedUrl.hostname
+        },
+        headersTimeout: timeout,
+        bodyTimeout: timeout
+      });
+      return statusCode === 200;
     } catch {
       return false;
     }
-    if (ipAddress === "0.0.0.0" || ipAddress === "255.255.255.255") {
-      return false;
-    }
-    if (net.isIPv4(ipAddress)) {
-      const parts = ipAddress.split(".").map(Number);
-      if (parts[0] === 127 || // Loopback (127.0.0.0/8)
-      parts[0] === 10 || // Private (10.0.0.0/8)
-      parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31 || // Private (172.16.0.0/12)
-      parts[0] === 192 && parts[1] === 168 || // Private (192.168.0.0/16)
-      parts[0] === 169 && parts[1] === 254 || // Link-local (169.254.0.0/16)
-      parts[0] === 100 && parts[1] >= 64 && parts[1] <= 127) {
-        return false;
-      }
-    } else if (net.isIPv6(ipAddress)) {
-      const ip = ipAddress.toLowerCase();
-      if (ip === "::1" || // Loopback
-      ip.startsWith("::ffff:127.") || // IPv4-mapped IPv6 loopback
-      ip.startsWith("fc00:") || ip.startsWith("fd00:") || // Unique local address (ULA)
-      ip.startsWith("fe80:")) {
-        return false;
-      }
-    }
-    const safeUrl = new URL(url);
-    safeUrl.hostname = ipAddress;
-    const { statusCode } = await (0, import_undici3.request)(safeUrl.toString(), {
-      method: "GET",
-      headers: {
-        Host: parsedUrl.hostname
-      },
-      headersTimeout: timeout,
-      bodyTimeout: timeout
-    });
-    return statusCode === 200;
-  } catch {
-    return false;
-  }
+  })();
+  urlAccessibilityCache.set(cacheKey, checkPromise);
+  return checkPromise;
 }
 
 // src/checkMetadata.ts
