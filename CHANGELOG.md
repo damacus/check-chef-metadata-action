@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.1](https://github.com/damacus/check-chef-metadata-action/compare/v3.0.0...v3.0.1) (2026-03-23)
+
+
+### Performance Improvements
+
+* cache URL accessibility checks ([#703](https://github.com/damacus/check-chef-metadata-action/issues/703)) ([8cff7a3](https://github.com/damacus/check-chef-metadata-action/commit/8cff7a382cde486f22f4f7503e4ef17124c9043b))
+
 ## [3.0.0](https://github.com/damacus/check-chef-metadata-action/compare/v1.0.0...v3.0.0) (2026-03-17)
 
 
