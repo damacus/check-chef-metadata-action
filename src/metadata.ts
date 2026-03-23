@@ -180,6 +180,10 @@ export const isValidDepends = (depends: string): boolean => {
   return !!cookbook
 }
 
+// ⚡ Bolt: Cache URL accessibility checks to prevent redundant network requests and DNS lookups
+// This drastically speeds up execution when many cookbooks share the same source_url or issues_url
+const urlAccessibilityCache = new Map<string, Promise<boolean>>()
+
 /**
  * Checks if a URL is accessible (HTTP 200)
  * @param url The URL to check
@@ -190,72 +194,95 @@ export async function isUrlAccessible(
   url: string,
   timeout = 5000
 ): Promise<boolean> {
-  try {
-    const parsedUrl = new URL(url)
-
-    // SSRF Protection: Only allow HTTP and HTTPS protocols
-    if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
-      return false
-    }
-
-    // SSRF Protection: Block known internal/metadata hostnames
-    const hostname = parsedUrl.hostname.toLowerCase()
-
-    // Resolve hostname to IP to prevent DNS rebinding and alternate IP encoding (e.g. 0x7f000001)
-    let ipAddress: string
-
-    // Check if hostname is an IP, handle decimal encodings like 0x7f000001
-    try {
-      const lookupResult = await dns.promises.lookup(hostname)
-      ipAddress = lookupResult.address
-    } catch {
-      return false // DNS resolution failed
-    }
-
-    if (ipAddress === '0.0.0.0' || ipAddress === '255.255.255.255') {
-      return false
-    }
-
-    if (net.isIPv4(ipAddress)) {
-      const parts = ipAddress.split('.').map(Number)
-      if (
-        parts[0] === 127 || // Loopback (127.0.0.0/8)
-        parts[0] === 10 || // Private (10.0.0.0/8)
-        (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) || // Private (172.16.0.0/12)
-        (parts[0] === 192 && parts[1] === 168) || // Private (192.168.0.0/16)
-        (parts[0] === 169 && parts[1] === 254) || // Link-local (169.254.0.0/16)
-        (parts[0] === 100 && parts[1] >= 64 && parts[1] <= 127) // Carrier-grade NAT (100.64.0.0/10)
-      ) {
-        return false
-      }
-    } else if (net.isIPv6(ipAddress)) {
-      const ip = ipAddress.toLowerCase()
-      if (
-        ip === '::1' || // Loopback
-        ip.startsWith('::ffff:127.') || // IPv4-mapped IPv6 loopback
-        ip.startsWith('fc00:') ||
-        ip.startsWith('fd00:') || // Unique local address (ULA)
-        ip.startsWith('fe80:') // Link-local
-      ) {
-        return false
-      }
-    }
-
-    // SSRF Protection: Prevent DNS rebinding by sending request directly to the validated IP
-    // and specifying the original hostname in the Host header.
-    const safeUrl = new URL(url)
-    safeUrl.hostname = ipAddress
-
-    const {statusCode} = await request(safeUrl.toString(), {
-      method: 'GET',
-      headers: {
-        Host: parsedUrl.hostname
-      },
-      headersTimeout: timeout,
-      bodyTimeout: timeout
-    })
-    return statusCode === 200
-  } catch {
-    return false
+  const cacheKey = `${url}|${timeout}`
+  const cached = urlAccessibilityCache.get(cacheKey)
+  if (cached !== undefined) {
+    return cached
   }
+
+  const checkPromise = (async () => {
+    try {
+      const parsedUrl = new URL(url)
+
+      // SSRF Protection: Only allow HTTP and HTTPS protocols
+      if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+        return false
+      }
+
+      // SSRF Protection: Block known internal/metadata hostnames
+      const hostname = parsedUrl.hostname.toLowerCase()
+
+      // Resolve hostname to IP to prevent DNS rebinding and alternate IP encoding (e.g. 0x7f000001)
+      let ipAddress: string
+
+      // Check if hostname is an IP, handle decimal encodings like 0x7f000001
+      try {
+        const lookupResult = await dns.promises.lookup(hostname)
+        ipAddress = lookupResult.address
+      } catch {
+        return false // DNS resolution failed
+      }
+
+      if (ipAddress === '0.0.0.0' || ipAddress === '255.255.255.255') {
+        return false
+      }
+
+      if (net.isIPv4(ipAddress)) {
+        const parts = ipAddress.split('.').map(Number)
+        if (
+          parts[0] === 127 || // Loopback (127.0.0.0/8)
+          parts[0] === 10 || // Private (10.0.0.0/8)
+          (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) || // Private (172.16.0.0/12)
+          (parts[0] === 192 && parts[1] === 168) || // Private (192.168.0.0/16)
+          (parts[0] === 169 && parts[1] === 254) || // Link-local (169.254.0.0/16)
+          (parts[0] === 100 && parts[1] >= 64 && parts[1] <= 127) // Carrier-grade NAT (100.64.0.0/10)
+        ) {
+          return false
+        }
+      } else if (net.isIPv6(ipAddress)) {
+        const ip = ipAddress.toLowerCase()
+        if (
+          ip === '::1' || // Loopback
+          ip.startsWith('::ffff:127.') || // IPv4-mapped IPv6 loopback
+          ip.startsWith('fc00:') ||
+          ip.startsWith('fd00:') || // Unique local address (ULA)
+          ip.startsWith('fe80:') // Link-local
+        ) {
+          return false
+        }
+      }
+
+      // SSRF Protection: Prevent DNS rebinding by sending request directly to the validated IP
+      // and specifying the original hostname in the Host header.
+      const safeUrl = new URL(url)
+      safeUrl.hostname = ipAddress
+
+      const {statusCode} = await request(safeUrl.toString(), {
+        method: 'GET',
+        headers: {
+          Host: parsedUrl.hostname
+        },
+        headersTimeout: timeout,
+        bodyTimeout: timeout
+      })
+      return statusCode === 200
+    } catch {
+      return false
+    }
+  })()
+
+  const cachedPromise = (async () => {
+    const result = await checkPromise
+
+    // Preserve deduplication for concurrent callers, but only retain successful
+    // results so a transient network failure does not poison the whole run.
+    if (!result) {
+      urlAccessibilityCache.delete(cacheKey)
+    }
+
+    return result
+  })()
+
+  urlAccessibilityCache.set(cacheKey, cachedPromise)
+  return cachedPromise
 }

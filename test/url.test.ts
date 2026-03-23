@@ -6,6 +6,7 @@ jest.mock('undici')
 
 describe('URL accessibility check', () => {
   beforeEach(() => {
+    jest.clearAllMocks()
     jest
       .spyOn(dns.promises, 'lookup')
       .mockResolvedValue({address: '140.82.121.4', family: 4})
@@ -95,5 +96,31 @@ describe('URL accessibility check', () => {
 
     const result = await isUrlAccessible('http://localtest.me/admin')
     expect(result).toBe(false)
+  })
+
+  it('reuses a successful accessibility check for repeated calls', async () => {
+    ;(request as jest.Mock).mockResolvedValue({
+      statusCode: 200
+    })
+
+    const url = 'https://github.com/sous-chefs/shared-success'
+
+    await expect(isUrlAccessible(url)).resolves.toBe(true)
+    await expect(isUrlAccessible(url)).resolves.toBe(true)
+
+    expect(request).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not cache a failed accessibility check', async () => {
+    ;(request as jest.Mock)
+      .mockRejectedValueOnce(new Error('Transient network failure'))
+      .mockResolvedValueOnce({statusCode: 200})
+
+    const url = 'https://github.com/sous-chefs/retry-after-failure'
+
+    await expect(isUrlAccessible(url)).resolves.toBe(false)
+    await expect(isUrlAccessible(url)).resolves.toBe(true)
+
+    expect(request).toHaveBeenCalledTimes(2)
   })
 })
