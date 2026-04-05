@@ -5703,7 +5703,7 @@ var require_client_h1 = __commonJS({
       kResume,
       kHTTPContext
     } = require_symbols();
-    var constants4 = require_constants2();
+    var constants3 = require_constants2();
     var EMPTY_BUF = Buffer.alloc(0);
     var FastBuffer = Buffer[Symbol.species];
     var addListener = util.addListener;
@@ -5775,7 +5775,7 @@ var require_client_h1 = __commonJS({
       constructor(client, socket, { exports: exports3 }) {
         assert(Number.isFinite(client[kMaxHeadersSize]) && client[kMaxHeadersSize] > 0);
         this.llhttp = exports3;
-        this.ptr = this.llhttp.llhttp_alloc(constants4.TYPE.RESPONSE);
+        this.ptr = this.llhttp.llhttp_alloc(constants3.TYPE.RESPONSE);
         this.client = client;
         this.socket = socket;
         this.timeout = null;
@@ -5870,19 +5870,19 @@ var require_client_h1 = __commonJS({
             currentBufferRef = null;
           }
           const offset = llhttp.llhttp_get_error_pos(this.ptr) - currentBufferPtr;
-          if (ret === constants4.ERROR.PAUSED_UPGRADE) {
+          if (ret === constants3.ERROR.PAUSED_UPGRADE) {
             this.onUpgrade(data.slice(offset));
-          } else if (ret === constants4.ERROR.PAUSED) {
+          } else if (ret === constants3.ERROR.PAUSED) {
             this.paused = true;
             socket.unshift(data.slice(offset));
-          } else if (ret !== constants4.ERROR.OK) {
+          } else if (ret !== constants3.ERROR.OK) {
             const ptr = llhttp.llhttp_get_error_reason(this.ptr);
             let message = "";
             if (ptr) {
               const len = new Uint8Array(llhttp.memory.buffer, ptr).indexOf(0);
               message = "Response does not match the HTTP/1.1 protocol (" + Buffer.from(llhttp.memory.buffer, ptr, len).toString() + ")";
             }
-            throw new HTTPParserError(message, constants4.ERROR[ret], data.slice(offset));
+            throw new HTTPParserError(message, constants3.ERROR[ret], data.slice(offset));
           }
         } catch (err) {
           util.destroy(socket, err);
@@ -6057,7 +6057,7 @@ var require_client_h1 = __commonJS({
           socket[kBlocking] = false;
           client[kResume]();
         }
-        return pause ? constants4.ERROR.PAUSED : 0;
+        return pause ? constants3.ERROR.PAUSED : 0;
       }
       onBody(buf) {
         const { client, socket, statusCode, maxResponseSize } = this;
@@ -6079,7 +6079,7 @@ var require_client_h1 = __commonJS({
         }
         this.bytesRead += buf.length;
         if (request4.onData(buf) === false) {
-          return constants4.ERROR.PAUSED;
+          return constants3.ERROR.PAUSED;
         }
       }
       onMessageComplete() {
@@ -6114,13 +6114,13 @@ var require_client_h1 = __commonJS({
         if (socket[kWriting]) {
           assert(client[kRunning] === 0);
           util.destroy(socket, new InformationalError("reset"));
-          return constants4.ERROR.PAUSED;
+          return constants3.ERROR.PAUSED;
         } else if (!shouldKeepAlive) {
           util.destroy(socket, new InformationalError("reset"));
-          return constants4.ERROR.PAUSED;
+          return constants3.ERROR.PAUSED;
         } else if (socket[kReset] && client[kRunning] === 0) {
           util.destroy(socket, new InformationalError("reset"));
-          return constants4.ERROR.PAUSED;
+          return constants3.ERROR.PAUSED;
         } else if (client[kPipelining] == null || client[kPipelining] === 1) {
           setImmediate(() => client[kResume]());
         } else {
@@ -24105,7 +24105,7 @@ var require_client_h12 = __commonJS({
       kResume,
       kHTTPContext
     } = require_symbols6();
-    var constants4 = require_constants7();
+    var constants3 = require_constants7();
     var EMPTY_BUF = Buffer.alloc(0);
     var FastBuffer = Buffer[Symbol.species];
     var addListener = util.addListener;
@@ -24177,7 +24177,7 @@ var require_client_h12 = __commonJS({
       constructor(client, socket, { exports: exports3 }) {
         assert(Number.isFinite(client[kMaxHeadersSize]) && client[kMaxHeadersSize] > 0);
         this.llhttp = exports3;
-        this.ptr = this.llhttp.llhttp_alloc(constants4.TYPE.RESPONSE);
+        this.ptr = this.llhttp.llhttp_alloc(constants3.TYPE.RESPONSE);
         this.client = client;
         this.socket = socket;
         this.timeout = null;
@@ -24272,19 +24272,19 @@ var require_client_h12 = __commonJS({
             currentBufferRef = null;
           }
           const offset = llhttp.llhttp_get_error_pos(this.ptr) - currentBufferPtr;
-          if (ret === constants4.ERROR.PAUSED_UPGRADE) {
+          if (ret === constants3.ERROR.PAUSED_UPGRADE) {
             this.onUpgrade(data.slice(offset));
-          } else if (ret === constants4.ERROR.PAUSED) {
+          } else if (ret === constants3.ERROR.PAUSED) {
             this.paused = true;
             socket.unshift(data.slice(offset));
-          } else if (ret !== constants4.ERROR.OK) {
+          } else if (ret !== constants3.ERROR.OK) {
             const ptr = llhttp.llhttp_get_error_reason(this.ptr);
             let message = "";
             if (ptr) {
               const len = new Uint8Array(llhttp.memory.buffer, ptr).indexOf(0);
               message = "Response does not match the HTTP/1.1 protocol (" + Buffer.from(llhttp.memory.buffer, ptr, len).toString() + ")";
             }
-            throw new HTTPParserError(message, constants4.ERROR[ret], data.slice(offset));
+            throw new HTTPParserError(message, constants3.ERROR[ret], data.slice(offset));
           }
         } catch (err) {
           util.destroy(socket, err);
@@ -24459,7 +24459,7 @@ var require_client_h12 = __commonJS({
           socket[kBlocking] = false;
           client[kResume]();
         }
-        return pause ? constants4.ERROR.PAUSED : 0;
+        return pause ? constants3.ERROR.PAUSED : 0;
       }
       onBody(buf) {
         const { client, socket, statusCode, maxResponseSize } = this;
@@ -24481,7 +24481,7 @@ var require_client_h12 = __commonJS({
         }
         this.bytesRead += buf.length;
         if (request4.onData(buf) === false) {
-          return constants4.ERROR.PAUSED;
+          return constants3.ERROR.PAUSED;
         }
       }
       onMessageComplete() {
@@ -24516,13 +24516,13 @@ var require_client_h12 = __commonJS({
         if (socket[kWriting]) {
           assert(client[kRunning] === 0);
           util.destroy(socket, new InformationalError("reset"));
-          return constants4.ERROR.PAUSED;
+          return constants3.ERROR.PAUSED;
         } else if (!shouldKeepAlive) {
           util.destroy(socket, new InformationalError("reset"));
-          return constants4.ERROR.PAUSED;
+          return constants3.ERROR.PAUSED;
         } else if (socket[kReset] && client[kRunning] === 0) {
           util.destroy(socket, new InformationalError("reset"));
-          return constants4.ERROR.PAUSED;
+          return constants3.ERROR.PAUSED;
         } else if (client[kPipelining] == null || client[kPipelining] === 1) {
           setImmediate(() => client[kResume]());
         } else {
@@ -44220,7 +44220,7 @@ var require_client_h13 = __commonJS({
       kHTTPContext,
       kClosed
     } = require_symbols11();
-    var constants4 = require_constants12();
+    var constants3 = require_constants12();
     var EMPTY_BUF = Buffer.alloc(0);
     var FastBuffer = Buffer[Symbol.species];
     var removeAllListeners = util.removeAllListeners;
@@ -44346,7 +44346,7 @@ var require_client_h13 = __commonJS({
          */
       constructor(client, socket, { exports: exports3 }) {
         this.llhttp = exports3;
-        this.ptr = this.llhttp.llhttp_alloc(constants4.TYPE.RESPONSE);
+        this.ptr = this.llhttp.llhttp_alloc(constants3.TYPE.RESPONSE);
         this.client = client;
         this.socket = socket;
         this.timeout = null;
@@ -44441,11 +44441,11 @@ var require_client_h13 = __commonJS({
             currentParser = null;
             currentBufferRef = null;
           }
-          if (ret !== constants4.ERROR.OK) {
+          if (ret !== constants3.ERROR.OK) {
             const data = chunk.subarray(llhttp.llhttp_get_error_pos(this.ptr) - currentBufferPtr);
-            if (ret === constants4.ERROR.PAUSED_UPGRADE) {
+            if (ret === constants3.ERROR.PAUSED_UPGRADE) {
               this.onUpgrade(data);
-            } else if (ret === constants4.ERROR.PAUSED) {
+            } else if (ret === constants3.ERROR.PAUSED) {
               this.paused = true;
               socket.unshift(data);
             } else {
@@ -44455,7 +44455,7 @@ var require_client_h13 = __commonJS({
                 const len = new Uint8Array(llhttp.memory.buffer, ptr).indexOf(0);
                 message = "Response does not match the HTTP/1.1 protocol (" + Buffer.from(llhttp.memory.buffer, ptr, len).toString() + ")";
               }
-              throw new HTTPParserError(message, constants4.ERROR[ret], data);
+              throw new HTTPParserError(message, constants3.ERROR[ret], data);
             }
           }
         } catch (err) {
@@ -44662,7 +44662,7 @@ var require_client_h13 = __commonJS({
           socket[kBlocking] = false;
           client[kResume]();
         }
-        return pause ? constants4.ERROR.PAUSED : 0;
+        return pause ? constants3.ERROR.PAUSED : 0;
       }
       /**
        * @param {Buffer} buf
@@ -44688,7 +44688,7 @@ var require_client_h13 = __commonJS({
         }
         this.bytesRead += buf.length;
         if (request4.onResponseData(buf) === false) {
-          return constants4.ERROR.PAUSED;
+          return constants3.ERROR.PAUSED;
         }
         return 0;
       }
@@ -44727,13 +44727,13 @@ var require_client_h13 = __commonJS({
         if (socket[kWriting]) {
           assert(client[kRunning] === 0);
           util.destroy(socket, new InformationalError("reset"));
-          return constants4.ERROR.PAUSED;
+          return constants3.ERROR.PAUSED;
         } else if (!shouldKeepAlive) {
           util.destroy(socket, new InformationalError("reset"));
-          return constants4.ERROR.PAUSED;
+          return constants3.ERROR.PAUSED;
         } else if (socket[kReset] && client[kRunning] === 0) {
           util.destroy(socket, new InformationalError("reset"));
-          return constants4.ERROR.PAUSED;
+          return constants3.ERROR.PAUSED;
         } else if (client[kPipelining] == null || client[kPipelining] === 1) {
           setImmediate(client[kResume]);
         } else {
@@ -73720,9 +73720,6 @@ Ze.glob = Ze;
 // src/main.ts
 var path = __toESM(require("path"));
 
-// src/checkMetadata.ts
-var fs5 = __toESM(require("fs"));
-
 // src/metadata.ts
 var import_fs4 = __toESM(require("fs"));
 var import_undici3 = __toESM(require_undici3());
@@ -73736,7 +73733,7 @@ var metadata = (file_path) => {
   const supportsLines = [];
   const depends = [];
   const dependsLines = [];
-  const allowed_keys = [
+  const allowed_keys = /* @__PURE__ */ new Set([
     "name",
     "maintainer",
     "maintainer_email",
@@ -73746,7 +73743,7 @@ var metadata = (file_path) => {
     "issues_url",
     "chef_version",
     "version"
-  ];
+  ]);
   try {
     fileContent = import_fs4.default.readFileSync(file_path, "utf8");
   } catch (error2) {
@@ -73789,7 +73786,7 @@ var metadata = (file_path) => {
       const value = trimmedElement.substring(key.length).trim();
       depends.push(value);
       dependsLines.push(lineNumber);
-    } else if (allowed_keys.includes(key)) {
+    } else if (allowed_keys.has(key)) {
       const regex = /(\w+)\s+(?:(?:'|")(.*?)('|")|:(\w+))/;
       const item = element.match(regex);
       let value = "";
@@ -73932,12 +73929,7 @@ var COMMON_SPDX_LICENSES = [
   "Unlicense"
 ];
 async function checkMetadata(file) {
-  try {
-    info(`Reading metadata file: ${file}`);
-    fs5.accessSync(file, fs5.constants.R_OK);
-  } catch {
-    error(`${file}: access error!`);
-  }
+  info(`Reading metadata file: ${file}`);
   const { data, lines } = metadata(file);
   const maintainer = getInput("maintainer");
   const maintainer_email = getInput("maintainer_email");
@@ -74345,10 +74337,12 @@ var reportChecks = async (messages) => {
       title: `Metadata/${err.field.charAt(0).toUpperCase() + err.field.slice(1)}`
     }));
     const head_sha = context2.payload.pull_request?.head.sha || context2.sha;
+    const jobName = context2.job;
+    const checkName = jobName ? `Metadata Validation [${jobName}]` : "Metadata Validation";
     const result = await getOctokit(getInput("github-token", { required: true })).rest.checks.create({
       owner: context2.repo.owner,
       repo: context2.repo.repo,
-      name: "Metadata Validation",
+      name: checkName,
       head_sha,
       status: "completed",
       conclusion: overallConclusion,
