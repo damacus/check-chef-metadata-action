@@ -53,12 +53,17 @@ export const reportChecks = async (
     const head_sha =
       github.context.payload.pull_request?.head.sha || github.context.sha
 
+    const jobName = github.context.job
+    const checkName = jobName
+      ? `Metadata Validation [${jobName}]`
+      : 'Metadata Validation'
+
     const result = await github
       .getOctokit(core.getInput('github-token', {required: true}))
       .rest.checks.create({
         owner: github.context.repo.owner,
         repo: github.context.repo.repo,
-        name: 'Metadata Validation',
+        name: checkName,
         head_sha,
         status: 'completed',
         conclusion: overallConclusion,
