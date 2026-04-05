@@ -74209,10 +74209,12 @@ var reportChecks = async (messages) => {
       title: `Metadata/${err.field.charAt(0).toUpperCase() + err.field.slice(1)}`
     }));
     const head_sha = context2.payload.pull_request?.head.sha || context2.sha;
+    const jobName = context2.job;
+    const checkName = jobName ? `Metadata Validation [${jobName}]` : "Metadata Validation";
     const result = await getOctokit(getInput("github-token", { required: true })).rest.checks.create({
       owner: context2.repo.owner,
       repo: context2.repo.repo,
-      name: "Metadata Validation",
+      name: checkName,
       head_sha,
       status: "completed",
       conclusion: overallConclusion,
