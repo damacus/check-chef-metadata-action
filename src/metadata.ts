@@ -22,7 +22,7 @@ export const metadata = (file_path: fs.PathLike): MetadataResult => {
   const depends: string[] = []
   const dependsLines: number[] = []
 
-  const allowed_keys = [
+  const allowed_keys = new Set([
     'name',
     'maintainer',
     'maintainer_email',
@@ -32,7 +32,7 @@ export const metadata = (file_path: fs.PathLike): MetadataResult => {
     'issues_url',
     'chef_version',
     'version'
-  ]
+  ])
 
   try {
     fileContent = fs.readFileSync(file_path, 'utf8')
@@ -91,7 +91,7 @@ export const metadata = (file_path: fs.PathLike): MetadataResult => {
       const value = trimmedElement.substring(key.length).trim()
       depends.push(value)
       dependsLines.push(lineNumber)
-    } else if (allowed_keys.includes(key)) {
+    } else if (allowed_keys.has(key)) {
       // Support both quoted strings and symbols
       const regex = /(\w+)\s+(?:(?:'|")(.*?)('|")|:(\w+))/
       const item = element.match(regex)

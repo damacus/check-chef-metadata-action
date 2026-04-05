@@ -65,12 +65,7 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
    * contain one of the accepted licences
    */
 
-  try {
-    core.info(`Reading metadata file: ${file}`)
-    fs.accessSync(file, fs.constants.R_OK)
-  } catch {
-    core.error(`${file}: access error!`)
-  }
+  core.info(`Reading metadata file: ${file}`)
 
   const {data, lines} = metadata(file)
   const maintainer: string = core.getInput('maintainer')
