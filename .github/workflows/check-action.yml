@@ -11,13 +11,22 @@ name: Check action
 
 jobs:
   test-failure:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-slim
     permissions:
       checks: write # required for the status check
       pull-requests: write # required for the PR comment
       statuses: write # required for the status check
     steps:
       - uses: actions/checkout@v6
+
+      - name: Set Node.js 24.x
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+
+      - name: Build dist/
+        run: npm ci && npm run build && npm run package
+
       - uses: ./
         continue-on-error: true
         with:
@@ -28,13 +37,22 @@ jobs:
 
   test-success:
     needs: test-failure
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-slim
     permissions:
       checks: write
       pull-requests: write
       statuses: write
     steps:
       - uses: actions/checkout@v6
+
+      - name: Set Node.js 24.x
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+
+      - name: Build dist/
+        run: npm ci && npm run build && npm run package
+
       - uses: ./
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
