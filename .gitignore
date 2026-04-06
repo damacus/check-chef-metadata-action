@@ -98,3 +98,6 @@ Thumbs.db
 __tests__/runner/*
 lib/**/*
 .claude
+
+# Stryker mutation testing reports
+reports/
