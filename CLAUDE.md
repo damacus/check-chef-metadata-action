@@ -14,7 +14,7 @@ This runs: `build → format → lint → package → test`
 
 ## What CI Checks
 
-**On pull requests** (`.github/workflows/check-dist.yml`):
+**On pull requests** (`.github/workflows/ci.yml`):
 
 1. `npm ci` — clean install from lockfile
 2. `npm run format-check` — Prettier formatting check

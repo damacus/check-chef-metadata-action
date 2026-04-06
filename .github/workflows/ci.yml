@@ -1,4 +1,4 @@
-name: Check dist
+name: CI
 
 'on':
   pull_request:
@@ -6,7 +6,7 @@ name: Check dist
   workflow_dispatch:
 
 jobs:
-  check-dist:
+  ci:
     runs-on: ubuntu-24.04-slim
     steps:
       - uses: actions/checkout@v6
