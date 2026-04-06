@@ -7,7 +7,7 @@ name: Check dist
 
 jobs:
   check-dist:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-slim
     steps:
       - uses: actions/checkout@v6
 
