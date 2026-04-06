@@ -98,3 +98,6 @@ Thumbs.db
 __tests__/runner/*
 lib/**/*
 .claude
+
+# dist/ is auto-rebuilt and committed by CI on push to main
+dist/
