@@ -2,8 +2,7 @@
 
 ## Before Every Commit
 
-The `check-dist` CI workflow will fail if any of the following are not satisfied.
-Always run this sequence before committing:
+Always run the full check suite before committing:
 
 ```bash
 npm run all
@@ -11,33 +10,23 @@ npm run all
 
 This runs: `build → format → lint → package → test`
 
-Then verify the dist is in sync:
+**Do not commit `dist/`** — it is gitignored and automatically rebuilt by CI when changes are merged to `main`.
 
-```bash
-git diff dist/
-```
+## What CI Checks
 
-If `dist/` has changes, stage and commit them alongside the source changes:
-
-```bash
-git add dist/index.js dist/index.js.map
-```
-
-**Never commit source changes in `src/` without also committing the rebuilt `dist/`.**
-
-## What `check-dist` Checks
-
-The CI workflow (`.github/workflows/check-dist.yml`) does the following in order:
+**On pull requests** (`.github/workflows/ci.yml`):
 
 1. `npm ci` — clean install from lockfile
 2. `npm run format-check` — Prettier formatting check
 3. `npm run lint` — ESLint
-4. `npm run build && npm run package` — rebuilds `dist/index.js`
+4. `npm run build && npm run package` — ensures the build succeeds
 5. `npm run test` — Jest test suite
-6. `git diff dist/` — fails if dist differs from committed version
+
+**On merge to main** (`.github/workflows/update-dist.yml`):
+
+Automatically rebuilds `dist/index.js` and commits it if changed. This is the file GitHub Actions executes when the action is used with `uses: damacus/check-chef-metadata-action@main`.
 
 ## Key Notes
 
 - Use `npm ci` (not `npm install`) to match what CI does.
-- The `dist/index.js` and `dist/index.js.map` are the actual files GitHub Actions executes — they must stay in sync with `src/`.
 - `npm run format` auto-fixes formatting; `npm run format-check` only validates.
