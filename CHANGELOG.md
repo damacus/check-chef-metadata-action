@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.0.2](https://github.com/damacus/check-chef-metadata-action/compare/v3.0.1...v3.0.2) (2026-05-01)
+
+
+### Bug Fixes
+
+* **deps:** update dependency undici to v8 ([#713](https://github.com/damacus/check-chef-metadata-action/issues/713)) ([1e32040](https://github.com/damacus/check-chef-metadata-action/commit/1e320402f64c22a8737aba77e8bec9c9b66fe7f5))
+* **reporting:** namespace check run name by job to prevent random container assignment ([#719](https://github.com/damacus/check-chef-metadata-action/issues/719)) ([61c2fa8](https://github.com/damacus/check-chef-metadata-action/commit/61c2fa8a8dd938f8fdd59c8afe63d96fe0314378))
+
+
+### Performance Improvements
+
+* replace allowed_keys array with Set and remove redundant fs.accessSync ([#718](https://github.com/damacus/check-chef-metadata-action/issues/718)) ([2d00c25](https://github.com/damacus/check-chef-metadata-action/commit/2d00c25b2a6c730017fecf4b9c59e843a94f3bb1))
+
 ## [3.0.1](https://github.com/damacus/check-chef-metadata-action/compare/v3.0.0...v3.0.1) (2026-03-23)
 
 
