@@ -55,101 +55,38 @@ const COMMON_SPDX_LICENSES = [
   'Unlicense'
 ]
 
-export async function checkMetadata(file: fs.PathLike): Promise<Message> {
-  /**
-   * Read metadata file
-   * Check it has:
-   * - A correct issues URL
-   * - A correct source URL (same as the HTTP clone URL)
-   * maintainer URL should be the same as is configured in the config.yaml
-   * contain one of the accepted licences
-   */
-
-  core.info(`Reading metadata file: ${file}`)
-
-  const {data, lines} = metadata(file)
-  const maintainer: string = core.getInput('maintainer')
-  const maintainer_email: string = core.getInput('maintainer_email')
-  const license: string = core.getInput('license')
-
-  // Validate inputs
-  if (maintainer_email && !isValidEmail(maintainer_email)) {
-    throw new Error(
-      `Invalid email format for maintainer_email: ${maintainer_email}`
-    )
-  }
-
-  if (license && !isValidSPDXLicense(license)) {
-    core.warning(
-      `License '${license}' may not be a valid SPDX identifier. Common licenses: ${COMMON_SPDX_LICENSES.join(
-        ', '
-      )}`
-    )
-  }
-  const source_url = `https://github.com/${github.context.repo.owner}/${github.context.repo.repo}`
-  const issues_url = `${source_url}/issues`
-
-  const message: Message = {
-    name: file.toString(),
-    message: 'Metadata matches',
-    conclusion: 'success',
-    summary: ['Metadata validated'],
-    title: 'Metadata validated',
-    errors: [],
-    rawMetadata: Object.fromEntries(data)
-  }
-
-  const getLine = (field: string, index?: number): number | undefined => {
-    const lineVal = lines.get(field)
-    if (Array.isArray(lineVal)) {
-      return index !== undefined ? lineVal[index] : lineVal[0]
-    }
-    return lineVal
-  }
-
-  const checkField = (
+function checkExistingFields(
+  data: Map<string, string | string[]>,
+  checkField: (
     field: string,
     expected: string,
     actual: string | undefined
-  ): void => {
-    if (actual !== expected) {
-      message.conclusion = 'failure'
-      const line = getLine(field)
-
-      message.errors?.push({
-        field,
-        expected,
-        actual: actual || 'MISSING',
-        line,
-        path: file.toString(),
-        level: 'failure'
-      })
-
-      const displayActual = actual || 'MISSING'
-      const summaryMsg = `${field}: expected '${expected}', got '${displayActual}'`
-      message.summary.push(summaryMsg)
-
-      core.error(`${field}: expected '${expected}', got '${displayActual}'`, {
-        file: file.toString(),
-        startLine: line,
-        title: `Metadata/${capitalize(field)}`
-      })
-    }
+  ) => void,
+  inputs: {
+    maintainer: string
+    maintainer_email: string
+    license: string
+    source_url: string
+    issues_url: string
   }
-
-  // 1. Existing Field Content Checks
+): void {
   checkField(
     'maintainer_email',
-    maintainer_email,
+    inputs.maintainer_email,
     data.get('maintainer_email') as string
   )
-  checkField('maintainer', maintainer, data.get('maintainer') as string)
-  checkField('license', license, data.get('license') as string)
-  checkField('source_url', source_url, data.get('source_url') as string)
-  checkField('issues_url', issues_url, data.get('issues_url') as string)
+  checkField('maintainer', inputs.maintainer, data.get('maintainer') as string)
+  checkField('license', inputs.license, data.get('license') as string)
+  checkField('source_url', inputs.source_url, data.get('source_url') as string)
+  checkField('issues_url', inputs.issues_url, data.get('issues_url') as string)
+}
 
-  // 2. URL Accessibility Checks
-  // ⚡ Bolt: Run URL validation requests concurrently to halve network wait time
+async function checkUrlAccessibility(
+  data: Map<string, string | string[]>,
+  message: Message,
+  getLine: (field: string, index?: number) => number | undefined,
+  file: fs.PathLike
+): Promise<void> {
   const actualSourceUrl = data.get('source_url') as string
   const actualIssuesUrl = data.get('issues_url') as string
 
@@ -197,8 +134,13 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
       title: 'Metadata/Reachability'
     })
   }
+}
 
-  // 3. Mandatory Field Existence
+function checkMandatoryFields(
+  data: Map<string, string | string[]>,
+  message: Message,
+  file: fs.PathLike
+): void {
   const mandatoryFieldsInput =
     core.getInput('mandatory_fields', {required: false}) ||
     'version,chef_version,supports'
@@ -227,9 +169,15 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
       })
     }
   }
+}
 
-  // 4. Format Validations (if field is present)
-
+function checkFormatValidations(
+  data: Map<string, string | string[]>,
+  lines: Map<string, number | number[]>,
+  message: Message,
+  getLine: (field: string, index?: number) => number | undefined,
+  file: fs.PathLike
+): void {
   // Version
   const version = data.get('version') as string
   if (version && !isValidSemVer(version)) {
@@ -330,6 +278,107 @@ export async function checkMetadata(file: fs.PathLike): Promise<Message> {
       }
     }
   }
+}
+
+export async function checkMetadata(file: fs.PathLike): Promise<Message> {
+  /**
+   * Read metadata file
+   * Check it has:
+   * - A correct issues URL
+   * - A correct source URL (same as the HTTP clone URL)
+   * maintainer URL should be the same as is configured in the config.yaml
+   * contain one of the accepted licences
+   */
+
+  core.info(`Reading metadata file: ${file}`)
+
+  const {data, lines} = metadata(file)
+  const maintainer: string = core.getInput('maintainer')
+  const maintainer_email: string = core.getInput('maintainer_email')
+  const license: string = core.getInput('license')
+
+  // Validate inputs
+  if (maintainer_email && !isValidEmail(maintainer_email)) {
+    throw new Error(
+      `Invalid email format for maintainer_email: ${maintainer_email}`
+    )
+  }
+
+  if (license && !isValidSPDXLicense(license)) {
+    core.warning(
+      `License '${license}' may not be a valid SPDX identifier. Common licenses: ${COMMON_SPDX_LICENSES.join(
+        ', '
+      )}`
+    )
+  }
+  const source_url = `https://github.com/${github.context.repo.owner}/${github.context.repo.repo}`
+  const issues_url = `${source_url}/issues`
+
+  const message: Message = {
+    name: file.toString(),
+    message: 'Metadata matches',
+    conclusion: 'success',
+    summary: ['Metadata validated'],
+    title: 'Metadata validated',
+    errors: [],
+    rawMetadata: Object.fromEntries(data)
+  }
+
+  const getLine = (field: string, index?: number): number | undefined => {
+    const lineVal = lines.get(field)
+    if (Array.isArray(lineVal)) {
+      return index !== undefined ? lineVal[index] : lineVal[0]
+    }
+    return lineVal
+  }
+
+  const checkField = (
+    field: string,
+    expected: string,
+    actual: string | undefined
+  ): void => {
+    if (actual !== expected) {
+      message.conclusion = 'failure'
+      const line = getLine(field)
+
+      message.errors?.push({
+        field,
+        expected,
+        actual: actual || 'MISSING',
+        line,
+        path: file.toString(),
+        level: 'failure'
+      })
+
+      const displayActual = actual || 'MISSING'
+      const summaryMsg = `${field}: expected '${expected}', got '${displayActual}'`
+      message.summary.push(summaryMsg)
+
+      core.error(`${field}: expected '${expected}', got '${displayActual}'`, {
+        file: file.toString(),
+        startLine: line,
+        title: `Metadata/${capitalize(field)}`
+      })
+    }
+  }
+
+  // 1. Existing Field Content Checks
+  checkExistingFields(data, checkField, {
+    maintainer,
+    maintainer_email,
+    license,
+    source_url,
+    issues_url
+  })
+
+  // 2. URL Accessibility Checks
+  await checkUrlAccessibility(data, message, getLine, file)
+
+  // 3. Mandatory Field Existence
+  checkMandatoryFields(data, message, file)
+
+  // 4. Format Validations
+  checkFormatValidations(data, lines, message, getLine, file)
 
   if (message.conclusion === 'failure') {
     message.summary = message.summary.filter(s => s !== 'Metadata validated')

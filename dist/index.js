@@ -74971,73 +74971,18 @@ var COMMON_SPDX_LICENSES = [
   "CC0-1.0",
   "Unlicense"
 ];
-async function checkMetadata(file) {
-  info(`Reading metadata file: ${file}`);
-  const { data, lines } = metadata(file);
-  const maintainer = getInput("maintainer");
-  const maintainer_email = getInput("maintainer_email");
-  const license = getInput("license");
-  if (maintainer_email && !isValidEmail(maintainer_email)) {
-    throw new Error(
-      `Invalid email format for maintainer_email: ${maintainer_email}`
-    );
-  }
-  if (license && !isValidSPDXLicense(license)) {
-    warning(
-      `License '${license}' may not be a valid SPDX identifier. Common licenses: ${COMMON_SPDX_LICENSES.join(
-        ", "
-      )}`
-    );
-  }
-  const source_url = `https://github.com/${context2.repo.owner}/${context2.repo.repo}`;
-  const issues_url = `${source_url}/issues`;
-  const message = {
-    name: file.toString(),
-    message: "Metadata matches",
-    conclusion: "success",
-    summary: ["Metadata validated"],
-    title: "Metadata validated",
-    errors: [],
-    rawMetadata: Object.fromEntries(data)
-  };
-  const getLine = (field, index) => {
-    const lineVal = lines.get(field);
-    if (Array.isArray(lineVal)) {
-      return index !== void 0 ? lineVal[index] : lineVal[0];
-    }
-    return lineVal;
-  };
-  const checkField = (field, expected, actual) => {
-    if (actual !== expected) {
-      message.conclusion = "failure";
-      const line = getLine(field);
-      message.errors?.push({
-        field,
-        expected,
-        actual: actual || "MISSING",
-        line,
-        path: file.toString(),
-        level: "failure"
-      });
-      const displayActual = actual || "MISSING";
-      const summaryMsg = `${field}: expected '${expected}', got '${displayActual}'`;
-      message.summary.push(summaryMsg);
-      error(`${field}: expected '${expected}', got '${displayActual}'`, {
-        file: file.toString(),
-        startLine: line,
-        title: `Metadata/${capitalize(field)}`
-      });
-    }
-  };
+function checkExistingFields(data, checkField, inputs) {
   checkField(
     "maintainer_email",
-    maintainer_email,
+    inputs.maintainer_email,
     data.get("maintainer_email")
   );
-  checkField("maintainer", maintainer, data.get("maintainer"));
-  checkField("license", license, data.get("license"));
-  checkField("source_url", source_url, data.get("source_url"));
-  checkField("issues_url", issues_url, data.get("issues_url"));
+  checkField("maintainer", inputs.maintainer, data.get("maintainer"));
+  checkField("license", inputs.license, data.get("license"));
+  checkField("source_url", inputs.source_url, data.get("source_url"));
+  checkField("issues_url", inputs.issues_url, data.get("issues_url"));
+}
+async function checkUrlAccessibility(data, message, getLine, file) {
   const actualSourceUrl = data.get("source_url");
   const actualIssuesUrl = data.get("issues_url");
   const [isSourceAccessible, isIssuesAccessible] = await Promise.all([
@@ -75082,6 +75027,8 @@ async function checkMetadata(file) {
       title: "Metadata/Reachability"
     });
   }
+}
+function checkMandatoryFields(data, message, file) {
   const mandatoryFieldsInput = getInput("mandatory_fields", { required: false }) || "version,chef_version,supports";
   const mandatoryFields = mandatoryFieldsInput.split(",").map((f) => f.trim()).filter((f) => f !== "");
   for (const field of mandatoryFields) {
@@ -75104,6 +75051,8 @@ async function checkMetadata(file) {
       });
     }
   }
+}
+function checkFormatValidations(data, lines, message, getLine, file) {
   const version = data.get("version");
   if (version && !isValidSemVer(version)) {
     message.conclusion = "failure";
@@ -75197,6 +75146,75 @@ async function checkMetadata(file) {
       }
     }
   }
+}
+async function checkMetadata(file) {
+  info(`Reading metadata file: ${file}`);
+  const { data, lines } = metadata(file);
+  const maintainer = getInput("maintainer");
+  const maintainer_email = getInput("maintainer_email");
+  const license = getInput("license");
+  if (maintainer_email && !isValidEmail(maintainer_email)) {
+    throw new Error(
+      `Invalid email format for maintainer_email: ${maintainer_email}`
+    );
+  }
+  if (license && !isValidSPDXLicense(license)) {
+    warning(
+      `License '${license}' may not be a valid SPDX identifier. Common licenses: ${COMMON_SPDX_LICENSES.join(
+        ", "
+      )}`
+    );
+  }
+  const source_url = `https://github.com/${context2.repo.owner}/${context2.repo.repo}`;
+  const issues_url = `${source_url}/issues`;
+  const message = {
+    name: file.toString(),
+    message: "Metadata matches",
+    conclusion: "success",
+    summary: ["Metadata validated"],
+    title: "Metadata validated",
+    errors: [],
+    rawMetadata: Object.fromEntries(data)
+  };
+  const getLine = (field, index) => {
+    const lineVal = lines.get(field);
+    if (Array.isArray(lineVal)) {
+      return index !== void 0 ? lineVal[index] : lineVal[0];
+    }
+    return lineVal;
+  };
+  const checkField = (field, expected, actual) => {
+    if (actual !== expected) {
+      message.conclusion = "failure";
+      const line = getLine(field);
+      message.errors?.push({
+        field,
+        expected,
+        actual: actual || "MISSING",
+        line,
+        path: file.toString(),
+        level: "failure"
+      });
+      const displayActual = actual || "MISSING";
+      const summaryMsg = `${field}: expected '${expected}', got '${displayActual}'`;
+      message.summary.push(summaryMsg);
+      error(`${field}: expected '${expected}', got '${displayActual}'`, {
+        file: file.toString(),
+        startLine: line,
+        title: `Metadata/${capitalize(field)}`
+      });
+    }
+  };
+  checkExistingFields(data, checkField, {
+    maintainer,
+    maintainer_email,
+    license,
+    source_url,
+    issues_url
+  });
+  await checkUrlAccessibility(data, message, getLine, file);
+  checkMandatoryFields(data, message, file);
+  checkFormatValidations(data, lines, message, getLine, file);
   if (message.conclusion === "failure") {
     message.summary = message.summary.filter((s) => s !== "Metadata validated");
     message.message = "Metadata doesn't match";
