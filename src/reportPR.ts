@@ -6,7 +6,7 @@ import {Issue} from './issueInterface'
 import {Message} from './messageInterface'
 
 // Report the results of the checks to the PR
-const commentGeneralOptions = async (): Promise<Issue> => {
+const commentGeneralOptions = (): Issue => {
   const pullRequestId = github.context.issue.number
 
   return {
@@ -34,6 +34,8 @@ export const reportPR = async (
     return
   }
 
+  const options = commentGeneralOptions()
+
   // Use job name to avoid race conditions between parallel jobs in the same PR
   const jobName = github.context.job
   const commentIdentifier = `Metadata summary [${jobName}]`
@@ -43,7 +45,7 @@ export const reportPR = async (
   if (failures.length === 0) {
     core.info(`Deleting comment for ${jobName} as all checks passed`)
     await deleteComment({
-      ...(await commentGeneralOptions()),
+      ...options,
       body: commentIdentifier,
       startsWith: true
     })
@@ -71,7 +73,6 @@ export const reportPR = async (
   }
 
   try {
-    const options = await commentGeneralOptions()
     await replaceComment({
       ...options,
       body

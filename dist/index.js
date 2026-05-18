@@ -75405,7 +75405,7 @@ var reportChecks = async (messages) => {
 
 // src/reportPR.ts
 var import_actions_replace_comment = __toESM(require_lib2());
-var commentGeneralOptions = async () => {
+var commentGeneralOptions = () => {
   const pullRequestId = context2.issue.number;
   return {
     token: getInput("github-token", { required: true }),
@@ -75422,13 +75422,14 @@ var reportPR = async (messages) => {
     info("No PR ID found, skipping PR comment");
     return;
   }
+  const options = commentGeneralOptions();
   const jobName = context2.job;
   const commentIdentifier = `Metadata summary [${jobName}]`;
   const failures = messageList.filter((m) => m.conclusion === "failure");
   if (failures.length === 0) {
     info(`Deleting comment for ${jobName} as all checks passed`);
     await (0, import_actions_replace_comment.deleteComment)({
-      ...await commentGeneralOptions(),
+      ...options,
       body: commentIdentifier,
       startsWith: true
     });
@@ -75457,7 +75458,6 @@ var reportPR = async (messages) => {
 `;
   }
   try {
-    const options = await commentGeneralOptions();
     await (0, import_actions_replace_comment.default)({
       ...options,
       body
