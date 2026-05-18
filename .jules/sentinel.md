@@ -17,3 +17,8 @@
 **Vulnerability:** The code protected against SSRF by checking for known private IPs. However, it used simple `startsWith` checks for IPv6 (e.g. `ip.startsWith('fc00:')`) which fails to block all valid private ranges (e.g., `fd00:` is also ULA, and `fc...` can be written in many compressed/uncompressed formats). Furthermore, IPv4-mapped IPv6 addresses (e.g., `::ffff:127.0.0.1`) could bypass the loopback check if not exact matched.
 **Learning:** Checking IPv6 representations via strings is dangerous and flawed due to multiple valid representations (zero compression, leading zero dropping, uppercase/lowercase, and v4 mapped formats).
 **Prevention:** Normalize IPv6 addresses securely before validation. Node.js `URL` object can normalize them (`new URL('http://[' + ip + ']').hostname`). And always map IPv4-mapped IPv6 formats back to their IPv4 equivalents before applying blacklist logic.
+
+## 2024-05-24 - Conventional Commits in PR Titles
+**Vulnerability:** CI fails on PR creation if the title doesn't follow Conventional Commits formatting.
+**Learning:** The `amannn/action-semantic-pull-request` action strictly enforces Conventional Commit prefixes (`fix:`, `feat:`, etc.). My persona formatting (`🛡️ Sentinel: ...`) caused validation to fail.
+**Prevention:** Always prefix PR titles with a Conventional Commit type (e.g., `fix: 🛡️ Sentinel: ...`).
