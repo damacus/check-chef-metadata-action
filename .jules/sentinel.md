@@ -22,3 +22,8 @@
 **Vulnerability:** CI fails on PR creation if the title doesn't follow Conventional Commits formatting.
 **Learning:** The `amannn/action-semantic-pull-request` action strictly enforces Conventional Commit prefixes (`fix:`, `feat:`, etc.). My persona formatting (`🛡️ Sentinel: ...`) caused validation to fail.
 **Prevention:** Always prefix PR titles with a Conventional Commit type (e.g., `fix: 🛡️ Sentinel: ...`).
+
+## 2024-05-24 - Semantic Pull Request Checks
+**Vulnerability:** Pull requests fail in CI if they lack a valid Semantic Pull Request prefix.
+**Learning:** Even when applying persona formatting like `🛡️ Sentinel: `, the pull request title *must* start with a valid semantic prefix (like `fix:`, `feat:`, `chore:`), otherwise actions like `amannn/action-semantic-pull-request` will fail.
+**Prevention:** Construct PR titles like `fix: 🛡️ Sentinel: [Critical] Fix incomplete SSRF Protection in IPv6 Address Validation`.
