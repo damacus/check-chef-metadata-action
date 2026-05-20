@@ -11,7 +11,7 @@ name: Check action
 
 jobs:
   build:
-    runs-on: ubuntu-24.04-slim
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
 
@@ -30,7 +30,7 @@ jobs:
 
   test-failure:
     needs: build
-    runs-on: ubuntu-24.04-slim
+    runs-on: ubuntu-24.04
     permissions:
       checks: write
       pull-requests: write
@@ -53,7 +53,7 @@ jobs:
 
   test-success:
     needs: build
-    runs-on: ubuntu-24.04-slim
+    runs-on: ubuntu-24.04
     permissions:
       checks: write
       pull-requests: write
