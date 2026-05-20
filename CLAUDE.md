@@ -10,23 +10,33 @@ npm run all
 
 This runs: `build → format → lint → package → test`
 
-**Do not commit `dist/`** — it is gitignored and automatically rebuilt by CI when changes are merged to `main`.
+Then verify the generated action bundle is in sync:
+
+```bash
+git diff -- dist/
+```
+
+If `dist/` has changes, stage and commit them alongside the source changes:
+
+```bash
+git add dist/index.js dist/index.js.map dist/licenses.txt dist/sourcemap-register.js
+```
+
+**Never commit source changes in `src/` without also committing the rebuilt `dist/`.**
 
 ## What CI Checks
 
-**On pull requests** (`.github/workflows/ci.yml`):
+**On pull requests and pushes to `main`** (`.github/workflows/ci.yml`):
 
 1. `npm ci` — clean install from lockfile
 2. `npm run format-check` — Prettier formatting check
 3. `npm run lint` — ESLint
-4. `npm run build && npm run package` — ensures the build succeeds
+4. `npm run build && npm run package` — rebuilds `dist/index.js`
 5. `npm run test` — Jest test suite
-
-**On merge to main** (`.github/workflows/update-dist.yml`):
-
-Automatically rebuilds `dist/index.js` and commits it if changed. This is the file GitHub Actions executes when the action is used with `uses: damacus/check-chef-metadata-action@main`.
+6. `git diff dist/` — fails if the committed action bundle is out of sync
 
 ## Key Notes
 
 - Use `npm ci` (not `npm install`) to match what CI does.
+- The `dist/index.js` and `dist/index.js.map` files are the actual files GitHub Actions executes, so they must stay in sync with `src/`.
 - `npm run format` auto-fixes formatting; `npm run format-check` only validates.
