@@ -115,6 +115,11 @@ describe('isValidSemVer', () => {
     expect(isValidSemVer('abc')).toBe(false)
     expect(isValidSemVer('')).toBe(false)
   })
+
+  it('rejects SemVer strings that are too long (ReDoS protection)', () => {
+    const longVersion = '1.2.3-' + 'a'.repeat(260)
+    expect(isValidSemVer(longVersion)).toBe(false)
+  })
 })
 
 describe('isValidVersionConstraint', () => {
