@@ -47831,8 +47831,8 @@ var require_socks5_client = __commonJS({
           return;
         }
         if (reply !== REPLY_CODES.SUCCEEDED) {
-          const errorMessage = this.getReplyErrorMessage(reply);
-          throw new Socks5ProxyError(`SOCKS5 connection failed: ${errorMessage}`, `UND_ERR_SOCKS5_REPLY_${reply}`);
+          const errorMessage2 = this.getReplyErrorMessage(reply);
+          throw new Socks5ProxyError(`SOCKS5 connection failed: ${errorMessage2}`, `UND_ERR_SOCKS5_REPLY_${reply}`);
         }
         let boundAddress;
         let offset = 4;
@@ -67017,6 +67017,9 @@ function setFailed(message) {
   process.exitCode = ExitCode.Failure;
   error(message);
 }
+function debug(message) {
+  issueCommand("debug", {}, message);
+}
 function error(message, properties = {}) {
   issueCommand("error", toCommandProperties(properties), message instanceof Error ? message.toString() : message);
 }
@@ -73834,7 +73837,31 @@ var isValidDepends = (depends) => {
   return !!cookbook;
 };
 var urlAccessibilityCache = /* @__PURE__ */ new Map();
-async function isUrlAccessible(url, timeout = 5e3) {
+var URL_ACCESSIBILITY_TIMEOUT_MS = 15e3;
+var URL_ACCESSIBILITY_ATTEMPTS = 3;
+var URL_ACCESSIBILITY_BODY_DUMP_LIMIT_BYTES = 1024 * 1024;
+var TRANSIENT_HTTP_STATUSES = /* @__PURE__ */ new Set([408, 429, 500, 502, 503, 504]);
+var sleep = async (ms2) => new Promise((resolve) => setTimeout(resolve, ms2));
+var errorMessage = (error2) => {
+  if (error2 instanceof Error) {
+    const maybeCode = error2.code;
+    return maybeCode ? `${maybeCode}: ${error2.message}` : error2.message;
+  }
+  return String(error2);
+};
+var drainResponseBody = async (url, body) => {
+  if (typeof body.dump !== "function") {
+    return;
+  }
+  try {
+    await body.dump({ limit: URL_ACCESSIBILITY_BODY_DUMP_LIMIT_BYTES });
+  } catch (error2) {
+    debug(
+      `Unable to drain response body for ${url}: ${errorMessage(error2)}`
+    );
+  }
+};
+async function isUrlAccessible(url, timeout = URL_ACCESSIBILITY_TIMEOUT_MS) {
   const cacheKey = `${url}|${timeout}`;
   const cached = urlAccessibilityCache.get(cacheKey);
   if (cached !== void 0) {
@@ -73878,16 +73905,54 @@ async function isUrlAccessible(url, timeout = 5e3) {
       }
       const safeUrl = new URL(url);
       safeUrl.hostname = ipAddress;
-      const { statusCode } = await (0, import_undici3.request)(safeUrl.toString(), {
-        method: "GET",
-        headers: {
-          Host: parsedUrl.hostname
-        },
-        headersTimeout: timeout,
-        bodyTimeout: timeout
-      });
-      return statusCode === 200;
-    } catch {
+      let lastError;
+      for (let attempt = 1; attempt <= URL_ACCESSIBILITY_ATTEMPTS; attempt++) {
+        try {
+          const { statusCode, body } = await (0, import_undici3.request)(safeUrl.toString(), {
+            method: "GET",
+            headers: {
+              Host: parsedUrl.hostname
+            },
+            headersTimeout: timeout,
+            bodyTimeout: timeout
+          });
+          await drainResponseBody(url, body);
+          if (statusCode === 200) {
+            return true;
+          }
+          lastError = `HTTP ${statusCode}`;
+          if (TRANSIENT_HTTP_STATUSES.has(statusCode)) {
+            if (attempt < URL_ACCESSIBILITY_ATTEMPTS) {
+              debug(
+                `URL accessibility check failed for ${url} on attempt ${attempt}/${URL_ACCESSIBILITY_ATTEMPTS}: ${lastError}`
+              );
+              await sleep(500 * attempt);
+              continue;
+            }
+            break;
+          }
+          debug(
+            `URL accessibility check for ${url} returned HTTP ${statusCode}`
+          );
+          return false;
+        } catch (error2) {
+          lastError = errorMessage(error2);
+        }
+        if (attempt < URL_ACCESSIBILITY_ATTEMPTS) {
+          debug(
+            `URL accessibility check failed for ${url} on attempt ${attempt}/${URL_ACCESSIBILITY_ATTEMPTS}: ${lastError}`
+          );
+          await sleep(500 * attempt);
+        }
+      }
+      warning(
+        `URL accessibility check failed for ${url} after ${URL_ACCESSIBILITY_ATTEMPTS} attempts: ${lastError}`
+      );
+      return false;
+    } catch (error2) {
+      warning(
+        `URL accessibility check failed for ${url}: ${errorMessage(error2)}`
+      );
       return false;
     }
   })();

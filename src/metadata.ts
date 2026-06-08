@@ -2,6 +2,7 @@ import fs from 'fs'
 import {request} from 'undici'
 import * as dns from 'dns'
 import * as net from 'net'
+import * as core from '@actions/core'
 
 export interface MetadataResult {
   data: Map<string, string | string[]>
@@ -184,15 +185,53 @@ export const isValidDepends = (depends: string): boolean => {
 // This drastically speeds up execution when many cookbooks share the same source_url or issues_url
 const urlAccessibilityCache = new Map<string, Promise<boolean>>()
 
+const URL_ACCESSIBILITY_TIMEOUT_MS = 15000
+const URL_ACCESSIBILITY_ATTEMPTS = 3
+const URL_ACCESSIBILITY_BODY_DUMP_LIMIT_BYTES = 1024 * 1024
+const TRANSIENT_HTTP_STATUSES = new Set([408, 429, 500, 502, 503, 504])
+
+type ResponseBody = {
+  dump?: (opts?: {limit: number; signal?: AbortSignal}) => Promise<void>
+}
+
+const sleep = async (ms: number): Promise<void> =>
+  new Promise(resolve => setTimeout(resolve, ms))
+
+const errorMessage = (error: unknown): string => {
+  if (error instanceof Error) {
+    const maybeCode = (error as Error & {code?: string}).code
+    return maybeCode ? `${maybeCode}: ${error.message}` : error.message
+  }
+
+  return String(error)
+}
+
+const drainResponseBody = async (
+  url: string,
+  body: ResponseBody
+): Promise<void> => {
+  if (typeof body.dump !== 'function') {
+    return
+  }
+
+  try {
+    await body.dump({limit: URL_ACCESSIBILITY_BODY_DUMP_LIMIT_BYTES})
+  } catch (error) {
+    core.debug(
+      `Unable to drain response body for ${url}: ${errorMessage(error)}`
+    )
+  }
+}
+
 /**
  * Checks if a URL is accessible (HTTP 200)
  * @param url The URL to check
- * @param timeout The timeout in milliseconds (default: 5000)
+ * @param timeout The timeout in milliseconds (default: 15000)
  * @returns Promise<boolean>
  */
 export async function isUrlAccessible(
   url: string,
-  timeout = 5000
+  timeout = URL_ACCESSIBILITY_TIMEOUT_MS
 ): Promise<boolean> {
   const cacheKey = `${url}|${timeout}`
   const cached = urlAccessibilityCache.get(cacheKey)
@@ -257,16 +296,63 @@ export async function isUrlAccessible(
       const safeUrl = new URL(url)
       safeUrl.hostname = ipAddress
 
-      const {statusCode} = await request(safeUrl.toString(), {
-        method: 'GET',
-        headers: {
-          Host: parsedUrl.hostname
-        },
-        headersTimeout: timeout,
-        bodyTimeout: timeout
-      })
-      return statusCode === 200
-    } catch {
+      let lastError: string | undefined
+
+      for (let attempt = 1; attempt <= URL_ACCESSIBILITY_ATTEMPTS; attempt++) {
+        try {
+          const {statusCode, body} = await request(safeUrl.toString(), {
+            method: 'GET',
+            headers: {
+              Host: parsedUrl.hostname
+            },
+            headersTimeout: timeout,
+            bodyTimeout: timeout
+          })
+
+          await drainResponseBody(url, body)
+
+          if (statusCode === 200) {
+            return true
+          }
+
+          lastError = `HTTP ${statusCode}`
+
+          if (TRANSIENT_HTTP_STATUSES.has(statusCode)) {
+            if (attempt < URL_ACCESSIBILITY_ATTEMPTS) {
+              core.debug(
+                `URL accessibility check failed for ${url} on attempt ${attempt}/${URL_ACCESSIBILITY_ATTEMPTS}: ${lastError}`
+              )
+              await sleep(500 * attempt)
+              continue
+            }
+
+            break
+          }
+
+          core.debug(
+            `URL accessibility check for ${url} returned HTTP ${statusCode}`
+          )
+          return false
+        } catch (error) {
+          lastError = errorMessage(error)
+        }
+
+        if (attempt < URL_ACCESSIBILITY_ATTEMPTS) {
+          core.debug(
+            `URL accessibility check failed for ${url} on attempt ${attempt}/${URL_ACCESSIBILITY_ATTEMPTS}: ${lastError}`
+          )
+          await sleep(500 * attempt)
+        }
+      }
+
+      core.warning(
+        `URL accessibility check failed for ${url} after ${URL_ACCESSIBILITY_ATTEMPTS} attempts: ${lastError}`
+      )
+      return false
+    } catch (error) {
+      core.warning(
+        `URL accessibility check failed for ${url}: ${errorMessage(error)}`
+      )
       return false
     }
   })()
