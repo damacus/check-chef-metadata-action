@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.0.3](https://github.com/damacus/check-chef-metadata-action/compare/v3.0.2...v3.0.3) (2026-06-08)
+
+
+### Bug Fixes
+
+* harden IPv6 SSRF protection ([#750](https://github.com/damacus/check-chef-metadata-action/issues/750)) ([06b78b2](https://github.com/damacus/check-chef-metadata-action/commit/06b78b22ff13a1e2dc1c5fc74fedb9898873dd17))
+* prevent ReDoS in semantic version validation ([#749](https://github.com/damacus/check-chef-metadata-action/issues/749)) ([66fcb01](https://github.com/damacus/check-chef-metadata-action/commit/66fcb0131cc16d371db94cc019f7d8cca368b7c0))
+* retry URL accessibility checks ([#760](https://github.com/damacus/check-chef-metadata-action/issues/760)) ([170b09b](https://github.com/damacus/check-chef-metadata-action/commit/170b09b730125a1efdde38916f605e4a7d08d017))
+
+
+### Performance Improvements
+
+* optimize reportPR comment options ([#752](https://github.com/damacus/check-chef-metadata-action/issues/752)) ([c947891](https://github.com/damacus/check-chef-metadata-action/commit/c9478918e36201b167533eef075e2bb7879d02b1))
+
 ## [3.0.2](https://github.com/damacus/check-chef-metadata-action/compare/v3.0.1...v3.0.2) (2026-05-14)
 
 
