@@ -1,7 +1,7 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
 import {markdownTable} from 'markdown-table'
-import {Message} from './messageInterface'
+import {AnnotationLevel, Message} from './messageInterface'
 
 // Reports the results of multiple checks through a single consolidated Checks API run
 
@@ -37,14 +37,12 @@ export const reportChecks = async (
       summary += `${markdownTable(tableData)}`
     }
 
+    const defaultAnnotationLevel: AnnotationLevel = 'failure'
     const annotations = allErrors.map(err => ({
       path: err.path || 'metadata.rb',
       start_line: err.line || 1,
       end_line: err.line || 1,
-      annotation_level: (err.level || 'failure') as
-        | 'notice'
-        | 'warning'
-        | 'failure',
+      annotation_level: err.level || defaultAnnotationLevel,
       message: `${err.field}: expected '${err.expected}', got '${err.actual}'`,
       title: `Metadata/${err.field.charAt(0).toUpperCase() + err.field.slice(1)}`
     }))
