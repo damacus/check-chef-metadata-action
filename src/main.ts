@@ -85,13 +85,10 @@ export async function run(): Promise<void> {
     if (results.length === 1) {
       const singleResult = results[0]
       if (singleResult.rawMetadata?.name) {
-        core.setOutput('cookbook-name', singleResult.rawMetadata.name as string)
+        core.setOutput('cookbook-name', singleResult.rawMetadata.name)
       }
       if (singleResult.rawMetadata?.version) {
-        core.setOutput(
-          'cookbook-version',
-          singleResult.rawMetadata.version as string
-        )
+        core.setOutput('cookbook-version', singleResult.rawMetadata.version)
       }
     }
 

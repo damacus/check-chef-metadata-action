@@ -38,9 +38,11 @@ export const metadata = (file_path: fs.PathLike): MetadataResult => {
   try {
     fileContent = fs.readFileSync(file_path, 'utf8')
   } catch (error) {
-    throw new Error(
+    const metadataError = new Error(
       `Could not read metadata file: ${error}. Did you forget to checkout the file?`
     )
+    ;(metadataError as Error & {cause: unknown}).cause = error
+    throw metadataError
   }
 
   const rawLines = fileContent.toString().split('\n')
